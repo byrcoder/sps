@@ -1,13 +1,26 @@
 #!/bin/bash
 
+
+
+function cmake_project() {
+    TARGET_DIR=$1
+    TMP_BUILD_DIR=$2
+    cd ${TARGET_DIR} && cmake ${TARGET_DIR} -DENABLE_ENCRYPTION=OFF -DENABLE_UNITTESTS=OFF && make && cd -
+    ret=$?;  if [[ $ret -ne 0 ]]; then echo "build srt failed, ret=$ret"; exit $ret; fi
+
+    ln -s ${TARGET_DIR} ${TMP_BUILD_DIR}
+
+    echo "PWD:".`pwd`
+}
 echo "======building srt====="
-
 SRT_TARGET_DIR=${WORK_DIR}/3rdparty/srt
-cd ${SRT_TARGET_DIR} && cmake ${SRT_TARGET_DIR} -DENABLE_ENCRYPTION=OFF -DENABLE_UNITTESTS=OFF && make && cd -
-ret=$?;  if [[ $ret -ne 0 ]]; then echo "build srt failed, ret=$ret"; exit $ret; fi
-
-ln -s  ${SRT_TARGET_DIR} ${SRT_BUILD} 
+cmake_project ${SRT_TARGET_DIR} ${SRT_BUILD}
 echo "======build srt success ${SRT_BUILD} ${SRT_TARGET_DIR}====="
+
+echo "======building gtest====="
+GTEST_TARGET_DIR=${WORK_DIR}/3rdparty/gtest
+cmake_project ${GTEST_TARGET_DIR} ${GTEST_BUILD}
+echo "======build gtest success ${GTEST_BUILD} ${GTEST_TARGET_DIR}====="
 
 ln -s
 
