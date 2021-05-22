@@ -3,11 +3,13 @@ project(sps)
 
 set(CMAKE_CXX_STANDARD 11)
 
-option(ENABLE_UNITTESTS "Enable unit tests" OFF)
+option(ENABLE_UNITTESTS "Enable unit tests" ON)
 
 set(CMAKE_CXX_STANDARD 11)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg -g")
+
+message("building sps...")
 
 find_package (Git)
 # git 代码信息
@@ -43,9 +45,13 @@ file(APPEND ${AUTO_HEAD} "#endif")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg -g")
 
-include_directories(${PROJECT_SOURCE_DIR}/3rdparty/state-threads/ ${PROJECT_SOURCE_DIR}/3rdparty/srt/)
+include_directories(${PROJECT_SOURCE_DIR}/3rdparty/state-threads/
+        ${PROJECT_SOURCE_DIR}/3rdparty/srt/
+        ${PROJECT_SOURCE_DIR}/3rdparty/gtest/googletest/include/
+        )
 link_directories(3rdparty/state-threads/obj)
 link_directories(3rdparty/srt/)
+link_directories(3rdparty/gtest/lib)
 
 include_directories(${PROJECT_SOURCE_DIR}/src)
 
@@ -108,19 +114,26 @@ TARGET_LINK_LIBRARIES(sps
 
 if(ENABLE_UNITTESTS)
 
-    find_package(GTest)
-    if (NOT GTEST_FOUND)
-        warn("gtest not found skip it ...")
-    else()
-        message("building gtest ...")
+    add_executable(test_tcp
+            ${Log_Headers}
+            ${Log_Cpps}
 
-        add_test(
-                NAME
-                test_tcp
-                COMMAND
-                ${CMAKE_BINARY_DIR}/test_tcp
-        )
+            ${Coroutine_Cpps}
+            ${Coroutine_Headers}
 
-        enable_testing()
-    endif()
+            ${Kernel_Cpps}
+            ${Kernel_Headers}
+            ${StNet_Cpps}
+            ${StNet_Headers}
+            ${PROJECT_SOURCE_DIR}/test/test_tcp.cpp)
+
+    add_test(
+            NAME
+            test_tcp
+            COMMAND
+            ${CMAKE_BINARY_DIR}/test_tcp
+    )
+
+    enable_testing()
+
 endif()
