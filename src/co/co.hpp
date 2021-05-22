@@ -24,7 +24,7 @@ class ICo {
     virtual ~ICo() = default;
 
  public:
-    virtual errno_t start() = 0;
+    virtual error_t start() = 0;
 };
 
 typedef std::shared_ptr<ICo> PICo;

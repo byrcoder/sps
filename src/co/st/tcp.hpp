@@ -23,7 +23,7 @@ int           st_tcp_fd(st_netfd_t fd);
 // 创建stfd，eg.用于tcp客户端上
 error_t       st_tcp_create_fd(st_netfd_t& fd);
 // 手动创建文件句柄fd，设置属性，需要生成对应的st句柄， eg. 主要用于服务器上
-__unused st_netfd_t    st_tcp_open_fd(int fd);
+st_netfd_t    st_tcp_open_fd(int fd);
 // 释放stfd，同时关闭文件句柄
 error_t       st_tcp_close(st_netfd_t& fd);
 
