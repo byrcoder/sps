@@ -1,0 +1,4 @@
+src/sps_auto_header.hpp
+*.o
+cmake-build-debug
+build
