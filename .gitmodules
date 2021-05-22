@@ -1,0 +1,7 @@
+[submodule "3rdparty/srt"]
+	path = 3rdparty/srt
+	url = https://github.com/Haivision/srt.git
+
+[submodule "3rdparty/state-threads"]
+	path = 3rdparty/state-threads
+	url = https://github.com/ossrs/state-threads.git
