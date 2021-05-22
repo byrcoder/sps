@@ -4,13 +4,8 @@ project(sps)
 set(CMAKE_CXX_STANDARD 11)
 
 option(ENABLE_UNITTESTS "Enable unit tests" OFF)
-# 关闭 加密
-option(ENABLE_ENCRYPTION "Enable srt encryption" OFF)
 
 set(CMAKE_CXX_STANDARD 11)
-
-# 关闭 加密
-set(ENABLE_ENCRYPTION OFF)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg -g")
 
@@ -48,11 +43,9 @@ file(APPEND ${AUTO_HEAD} "#endif")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg -g")
 
-add_subdirectory(3rdparty/srt)
-include_directories(3rdparty/srt)
-
-include_directories(${PROJECT_SOURCE_DIR}/3rdparty/state-threads/)
+include_directories(${PROJECT_SOURCE_DIR}/3rdparty/state-threads/ ${PROJECT_SOURCE_DIR}/3rdparty/srt/)
 link_directories(3rdparty/state-threads/obj)
+link_directories(3rdparty/srt/)
 
 include_directories(${PROJECT_SOURCE_DIR}/src)
 
@@ -76,7 +69,6 @@ file (GLOB StNet_Headers     "${PROJECT_SOURCE_DIR}/src/co/st/*.h*")
 
 file (GLOB Kernel_Cpps       "${PROJECT_SOURCE_DIR}/src/kernel/*.cpp")
 file (GLOB Kernel_Headers    "${PROJECT_SOURCE_DIR}/src/kernel/*.h*")
-
 
 file(GLOB Utils_Cpps         "${PROJECT_SOURCE_DIR}/src/utils/*.cpp")
 file(GLOB Utils_Headers      "${PROJECT_SOURCE_DIR}/src/utils/*.hpp")
@@ -110,8 +102,8 @@ add_executable(sps
         )
 
 TARGET_LINK_LIBRARIES(sps
-        srt_static
-        st
+        srt
+        libst.a
         )
 
 if(ENABLE_UNITTESTS)

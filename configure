@@ -1,0 +1,13 @@
+#!/bin/bash
+
+WORK_DIR=`pwd`
+BUILD_DIR="${WORK_DIR}/build"
+SRT_BUILD=${BUILD_DIR}/srt
+ST_BUILD=${BUILD_DIR}/st
+
+mkdir -p ${BUILD_DIR}
+
+. auto/depends.sh
+
+cd ${BUILD_DIR} && cmake .. && make
+
