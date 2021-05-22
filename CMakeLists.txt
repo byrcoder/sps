@@ -35,7 +35,6 @@ message("git version ${GIT_VERSION} ${GIT_VERSION} ${GIT_BRANCH}")
 # auto header
 set(AUTO_HEAD ${PROJECT_SOURCE_DIR}/src/sps_auto_header.hpp)
 file(REMOVE ${AUTO_HEAD})
-file(TOUCH ${AUTO_HEAD})
 file(APPEND ${AUTO_HEAD}
 
         "#ifndef AUTO_HEADER
@@ -49,7 +48,11 @@ file(APPEND ${AUTO_HEAD} "#endif")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg -g")
 
+add_subdirectory(3rdparty/srt)
+include_directories(3rdparty/srt)
 
+include_directories(${PROJECT_SOURCE_DIR}/3rdparty/state-threads/)
+link_directories(3rdparty/state-threads/obj)
 
 include_directories(${PROJECT_SOURCE_DIR}/src)
 
@@ -77,12 +80,6 @@ file (GLOB Kernel_Headers    "${PROJECT_SOURCE_DIR}/src/kernel/*.h*")
 
 file(GLOB Utils_Cpps         "${PROJECT_SOURCE_DIR}/src/utils/*.cpp")
 file(GLOB Utils_Headers      "${PROJECT_SOURCE_DIR}/src/utils/*.hpp")
-
-add_subdirectory(3rdparty/srt)
-include_directories(${PROJECT_SOURCE_DIR}/3rdparty/srt/)
-
-include_directories(${PROJECT_SOURCE_DIR}/3rdparty/state-threads/)
-link_directories(3rdparty/state-threads/obj)
 
 add_executable(sps
         ${App_Cpps}
