@@ -3,8 +3,8 @@
 
 #include <stdio.h>
 
-#define sp_error(msg, ...) printf(msg, ##__VA_ARGS__)
-#define sp_trace(msg, ...) printf(msg, ##__VA_ARGS__)
-#define sp_info(msg, ...)  printf(msg, ##__VA_ARGS__)
+#define sp_error(msg , ...) printf(msg "\r\n", ##__VA_ARGS__)
+#define sp_trace(msg, ...)  printf(msg "\r\n", ##__VA_ARGS__)
+#define sp_info(msg, ...)   printf(msg "\r\n", ##__VA_ARGS__)
 
 #endif // SPS_LOGGER_HPP

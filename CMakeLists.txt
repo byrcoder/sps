@@ -45,93 +45,69 @@ file(APPEND ${AUTO_HEAD} "#endif")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg -g")
 
+
+
 include_directories(${PROJECT_SOURCE_DIR}/3rdparty/state-threads/
         ${PROJECT_SOURCE_DIR}/3rdparty/srt/
         ${PROJECT_SOURCE_DIR}/3rdparty/gtest/googletest/include/
+        ${PROJECT_SOURCE_DIR}/3rdparty/http-parser/
         )
-link_directories(3rdparty/state-threads/obj)
-link_directories(3rdparty/srt/)
-link_directories(3rdparty/gtest/lib)
+
+link_directories(3rdparty/state-threads/obj
+        3rdparty/srt/
+        3rdparty/gtest/googlemock/gtest/
+        3rdparty/http-parser/
+        )
 
 include_directories(${PROJECT_SOURCE_DIR}/src)
 
-file (GLOB_RECURSE App_Headers "${PROJECT_SOURCE_DIR}/src/app/*.hpp")
-file (GLOB_RECURSE App_Cpps    "${PROJECT_SOURCE_DIR}/src/app/*.cpp")
+file(GLOB SRC_LIST
+    "${PROJECT_SOURCE_DIR}/src/*.cpp"
+    "${PROJECT_SOURCE_DIR}/src/app/*.cpp"
+    "${PROJECT_SOURCE_DIR}/src/co/*.cpp"
+    "${PROJECT_SOURCE_DIR}/src/co/st/*.cpp"
+)
 
-file (GLOB Config_Headers    "${PROJECT_SOURCE_DIR}/src/config/*.hpp")
-file (GLOB Config_Cpps       "${PROJECT_SOURCE_DIR}/src/config/*.cpp")
+file(GLOB HEAD_LIST
+        "${PROJECT_SOURCE_DIR}/src/*.hpp"
+        "${PROJECT_SOURCE_DIR}/src/app/*.hpp"
+        "${PROJECT_SOURCE_DIR}/src/co/*.hpp"
+        "${PROJECT_SOURCE_DIR}/src/co/st/*.hpp"
+        )
 
-file (GLOB Utils_Headers     "${PROJECT_SOURCE_DIR}/src/utils/*.hpp")
-file (GLOB Utils_Cpps        "${PROJECT_SOURCE_DIR}/src/utils/*.cpp")
-
-file (GLOB Log_Cpps          "${PROJECT_SOURCE_DIR}/src/log/*.cpp")
-file (GLOB Log_Headers       "${PROJECT_SOURCE_DIR}/src/log/*.hpp")
-
-file (GLOB Coroutine_Cpps    "${PROJECT_SOURCE_DIR}/src/co/*.cpp")
-file (GLOB Coroutine_Headers "${PROJECT_SOURCE_DIR}/src/co/*.h*")
-
-file (GLOB StNet_Cpps        "${PROJECT_SOURCE_DIR}/src/co/st/*.cpp")
-file (GLOB StNet_Headers     "${PROJECT_SOURCE_DIR}/src/co/st/*.h*")
-
-file (GLOB Kernel_Cpps       "${PROJECT_SOURCE_DIR}/src/kernel/*.cpp")
-file (GLOB Kernel_Headers    "${PROJECT_SOURCE_DIR}/src/kernel/*.h*")
-
-file(GLOB Utils_Cpps         "${PROJECT_SOURCE_DIR}/src/utils/*.cpp")
-file(GLOB Utils_Headers      "${PROJECT_SOURCE_DIR}/src/utils/*.hpp")
+message("src: ${SRC_LIST}  header:${HEAD_LIST}")
 
 add_executable(sps
-        ${App_Cpps}
-        ${App_Headers}
-
-        ${Config_Headers}
-        ${Config_Cpps}
-
-        ${Log_Headers}
-        ${Log_Cpps}
-
-        ${Utils_Headers}
-        ${Utils_Cpps}
-
-        ${Coroutine_Cpps}
-        ${Coroutine_Headers}
-
-        ${Kernel_Cpps}
-        ${Kernel_Headers}
-
-        ${StNet_Cpps}
-        ${StNet_Headers}
-
-        ${Utils_Cpps}
-        ${Utils_Headers}
-
+        ${SRC_LIST}
+        ${HEAD_LIST}
         ${PROJECT_SOURCE_DIR}/src/main/sps.cpp
         )
 
 TARGET_LINK_LIBRARIES(sps
         srt
         libst.a
+        libhttp-parser.a
         )
 
 if(ENABLE_UNITTESTS)
 
-    add_executable(test_tcp
-            ${Log_Headers}
-            ${Log_Cpps}
+    add_executable(test_co
+            ${SRC_LIST}
+            ${HEAD_LIST}
+            ${PROJECT_SOURCE_DIR}/src/test/test_co.cpp)
 
-            ${Coroutine_Cpps}
-            ${Coroutine_Headers}
-
-            ${Kernel_Cpps}
-            ${Kernel_Headers}
-            ${StNet_Cpps}
-            ${StNet_Headers}
-            ${PROJECT_SOURCE_DIR}/test/test_tcp.cpp)
+    TARGET_LINK_LIBRARIES(test_co
+            libgtest.a
+            srt
+            libst.a
+            libhttp-parser.a
+            )
 
     add_test(
             NAME
-            test_tcp
+            test_co
             COMMAND
-            ${CMAKE_BINARY_DIR}/test_tcp
+            ${CMAKE_BINARY_DIR}/test_co
     )
 
     enable_testing()
