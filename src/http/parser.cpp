@@ -21,8 +21,10 @@ HttpParser::HttpParser(int max_header) {
     this->max_header = max_header;
     buf              = std::unique_ptr<char[]>(new char[max_header]);
     buf_read         = 0;
-    http.data        = this;
+    ctx              = std::shared_ptr<HttpParserContext>();
+    ctx->http.data    = this;
     http_type        = BOTH;
+
 }
 
 int HttpParser::parse_header(PIReader io, HttpType ht) {
@@ -62,14 +64,14 @@ int HttpParser::parse_header(PIReader io, HttpType ht) {
 
 int HttpParser::parse_header(const char *b, int len, HttpType ht) {
     this->http_type = ht;
-    http_parser_init(&http, (http_parser_type) ht);
+    http_parser_init(&ctx->http, (http_parser_type) ht);
 
-    size_t parsed = http_parser_execute(&http, &http_setting, b, len);
+    size_t parsed = http_parser_execute(&ctx->http, &http_setting, b, len);
     return parsed;
 }
 
-const HttpParserResult & HttpParser::get_result() {
-    return result;
+std::shared_ptr<HttpParserContext> HttpParser::get_ctx() {
+    return ctx;
 }
 
 int HttpParser::on_message_begin(http_parser* ) {
@@ -79,8 +81,8 @@ int HttpParser::on_message_begin(http_parser* ) {
 int HttpParser::on_url(http_parser* hp, const char *at, size_t length) {
     auto p = static_cast<HttpParser *>(hp->data);
 
-    p->result.url = std::string(at, length);
-    sp_trace("url: %s", p->result.url.c_str());
+    p->ctx->url = std::string(at, length);
+    sp_info("url: %s", p->ctx->url.c_str());
 
     return SUCCESS;
 }
@@ -88,8 +90,8 @@ int HttpParser::on_url(http_parser* hp, const char *at, size_t length) {
 int HttpParser::on_status(http_parser* hp, const char *at, size_t length) {
     auto p = static_cast<HttpParser *>(hp->data);
 
-    p->result.http_status = std::stoi(std::string(at, length));
-    sp_trace("status: %d", p->result.http_status);
+    sp_info("status: %s, %d", at, length);
+    p->ctx->http_status = atoi(std::string(at, length).c_str());
 
     return SUCCESS;
 }
@@ -98,7 +100,7 @@ int HttpParser::on_header_field(http_parser* hp, const char *at, size_t length) 
     auto p = static_cast<HttpParser *>(hp->data);
 
     p->head.key   = std::string(at, length);
-    sp_trace("key: %s", p->head.key.c_str());
+    sp_info("key: %s", p->head.key.c_str());
 
     return SUCCESS;
 }
@@ -107,9 +109,9 @@ int HttpParser::on_header_value(http_parser* hp, const char *at, size_t length) 
     auto p = static_cast<HttpParser *>(hp->data);
 
     p->head.value = std::string(at, length);
-    sp_trace("value: %s", p->head.value.c_str());
+    sp_info("value: %s", p->head.value.c_str());
 
-    p->result.headers.push_back(p->head);
+    p->ctx->headers.push_back(p->head);
 
     return SUCCESS;
 }
@@ -121,8 +123,8 @@ int HttpParser::on_headers_complete(http_parser* ) {
 int HttpParser::on_body(http_parser* hp, const char *at, size_t length) {
     auto p = static_cast<HttpParser *>(hp->data);
 
-    p->result.body = std::string(at, length);
-    sp_trace("body: %s", p->result.body.c_str());
+    p->ctx->body = std::string(at, length);
+    sp_info("body: %s", p->ctx->body.c_str());
 
     return SUCCESS;
 }

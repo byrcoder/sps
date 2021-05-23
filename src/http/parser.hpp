@@ -23,12 +23,13 @@ class HttpHeader {
     std::string value;
 };
 
-class HttpParserResult {
+class HttpParserContext {
  public:
     int http_status = -1;
     std::string url;
     std::string body;
     std::list<HttpHeader> headers;
+    http_parser http;
 };
 
 class HttpParser {
@@ -38,13 +39,11 @@ class HttpParser {
     int parse_header(const char* buf, int len, HttpType ht);
 
  public:
-    const HttpParserResult& get_result();
+    std::shared_ptr<HttpParserContext> get_ctx();
 
  private:
-    // PIReader io;
-    http_parser http;
     HttpType http_type;
-    HttpParserResult result;
+    std::shared_ptr<HttpParserContext> ctx;
     int max_header;
     std::unique_ptr<char[]> buf;
     int buf_read;
