@@ -45,8 +45,6 @@ file(APPEND ${AUTO_HEAD} "#endif")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg -g")
 
-
-
 include_directories(${PROJECT_SOURCE_DIR}/3rdparty/state-threads/
         ${PROJECT_SOURCE_DIR}/3rdparty/srt/
         ${PROJECT_SOURCE_DIR}/3rdparty/gtest/googletest/include/
@@ -62,10 +60,11 @@ link_directories(3rdparty/state-threads/obj
 include_directories(${PROJECT_SOURCE_DIR}/src)
 
 file(GLOB SRC_LIST
-    "${PROJECT_SOURCE_DIR}/src/*.cpp"
-    "${PROJECT_SOURCE_DIR}/src/app/*.cpp"
-    "${PROJECT_SOURCE_DIR}/src/co/*.cpp"
-    "${PROJECT_SOURCE_DIR}/src/co/st/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/app/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/co/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/co/st/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/http/*.cpp"
 )
 
 file(GLOB HEAD_LIST
@@ -73,6 +72,7 @@ file(GLOB HEAD_LIST
         "${PROJECT_SOURCE_DIR}/src/app/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/co/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/co/st/*.hpp"
+        "${PROJECT_SOURCE_DIR}/src/http/*.hpp"
         )
 
 message("src: ${SRC_LIST}  header:${HEAD_LIST}")
@@ -96,7 +96,19 @@ if(ENABLE_UNITTESTS)
             ${HEAD_LIST}
             ${PROJECT_SOURCE_DIR}/src/test/test_co.cpp)
 
+    add_executable(test_http
+            ${SRC_LIST}
+            ${HEAD_LIST}
+            ${PROJECT_SOURCE_DIR}/src/test/test_http.cpp)
+
     TARGET_LINK_LIBRARIES(test_co
+            libgtest.a
+            srt
+            libst.a
+            libhttp_parser.a
+            )
+
+    TARGET_LINK_LIBRARIES(test_http
             libgtest.a
             srt
             libst.a
@@ -108,6 +120,13 @@ if(ENABLE_UNITTESTS)
             test_co
             COMMAND
             ${CMAKE_BINARY_DIR}/test_co
+    )
+
+    add_test(
+            NAME
+            test_http
+            COMMAND
+            ${CMAKE_BINARY_DIR}/test_http
     )
 
     enable_testing()
