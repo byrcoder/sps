@@ -3,11 +3,12 @@ project(sps)
 
 set(CMAKE_CXX_STANDARD 11)
 
+option(SRT_DISABLED "disable srt" OFF)
 option(ENABLE_UNITTESTS "Enable unit tests" ON)
 
-set(CMAKE_CXX_STANDARD 11)
+# set(CMAKE_CXX_STANDARD 11)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg -g")
+# set(CMAKE_CXX_FLAGS " -g ")
 
 message("building sps...")
 
@@ -27,7 +28,7 @@ execute_process(
         OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-message("git version ${GIT_VERSION} ${GIT_VERSION} ${GIT_BRANCH}")
+message("git version ${GIT_VERSION} ${GIT_VERSION} ${GIT_BRANCH} disable_srt:${SRT_DISABLED}")
 
 # auto header
 set(AUTO_HEAD ${PROJECT_SOURCE_DIR}/src/sps_auto_header.hpp)
@@ -40,10 +41,14 @@ file(APPEND ${AUTO_HEAD}
 #define GIT_VERSION \"${GIT_VERSION}\"
 #define GIT_BRANCH  \"${GIT_BRANCH}\"
 ")
+
+if (SRT_DISABLED)
+    file(APPEND ${AUTO_HEAD} "#define SRT_DISABLED
+")
+endif()
+
 file(APPEND ${AUTO_HEAD} "#endif")
 #end auto header
-
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg -g")
 
 include_directories(${PROJECT_SOURCE_DIR}/3rdparty/state-threads/
         ${PROJECT_SOURCE_DIR}/3rdparty/srt/

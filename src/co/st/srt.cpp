@@ -1,11 +1,17 @@
+
+#include "co/st/srt.hpp"
+
+#ifndef SRT_DISABLED
+
 #include <string>
 #include <vector>
 #include <srtcore/udt.h>
 #include <sstream>
 
-#include "co/st/srt.hpp"
 #include "co/st/tcp.hpp"
 #include "log/logger.hpp"
+
+
 
 namespace sps {
 
@@ -703,3 +709,6 @@ SRTSOCKET StSrtSocket::get_fd() {
 }
 
 }
+
+#endif
+
