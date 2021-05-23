@@ -21,8 +21,8 @@ HttpParser::HttpParser(int max_header) {
     this->max_header = max_header;
     buf              = std::unique_ptr<char[]>(new char[max_header]);
     buf_read         = 0;
-    ctx              = std::shared_ptr<HttpParserContext>();
-    ctx->http.data    = this;
+    ctx              = std::make_shared<HttpParserContext>();
+    ctx->http.data   = this;
     http_type        = BOTH;
 
 }
