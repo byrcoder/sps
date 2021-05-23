@@ -1,10 +1,14 @@
 #ifndef SPS_CO_ST_SRT_HPP_
 #define SPS_CO_ST_SRT_HPP_
 
-#include <srtcore/srt.h>
+#include <sps_auto_header.hpp>
+
+#ifndef SRT_DISABLED
+
 extern "C" {
 #include <public.h>
 };
+#include <srtcore/srt.h>
 
 #include <map>
 #include <set>
@@ -152,5 +156,7 @@ class StSrtSocket : public IReaderWriter {
 };
 
 }
+
+#endif
 
 #endif  // SPS_CO_ST_SRT_HPP_
