@@ -1,6 +1,7 @@
 #ifndef SPS_NET_IO_HPP_
 #define SPS_NET_IO_HPP_
 
+#include <memory>
 #include "typedef.hpp"
 
 class IReader {

@@ -2,15 +2,18 @@
 
 WORK_DIR=`pwd`
 BUILD_DIR="${WORK_DIR}/build"
-SRT_BUILD=${BUILD_DIR}/srt
-ST_BUILD=${BUILD_DIR}/st
-GTEST_BUILD=${BUILD_DIR}/gtest
+BUILD_SRT=${BUILD_DIR}/srt
+BUILD_ST=${BUILD_DIR}/st
+BUILD_GTEST=${BUILD_DIR}/gtest
+BUILD_HTTP=${BUILD_DIR}/http-parser
 
 mkdir -p ${BUILD_DIR}
 
 . auto/depends.sh
 
-echo "====== build sps ${BUILD_DIR} ".
+echo "====== build sps ${BUILD_DIR}."
 
-cd ${BUILD_DIR} && cmake .. && make
+rm ${BUILD_DIR}/sps ${BUILD_DIR}/test_*
+
+cd ${BUILD_DIR} && cmake -D ENABLE_UNITTESTS=ON .. && make
 
