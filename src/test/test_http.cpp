@@ -19,7 +19,7 @@ GTEST_TEST(HTTP_RES, CREATE) {
 
 GTEST_TEST(HTTP_REQ, CREATE) {
     sps::HttpParser parser;
-    const char* buf = "GET /test/demo_form.php HTTP/1.1\n"
+    const char* buf = "GET /test/demo_form.php?xxx=a&yy=b&zz=c HTTP/1.1\n"
                       "Host: runoob.com:28\r\n"
                       "Content-Length: 20\r\n"
                       "\r\n"

@@ -3,9 +3,11 @@
 
 #include <http_parser.h>
 
-#include <memory>
 #include <list>
+#include <map>
+#include <memory>
 #include <string>
+#include <vector>
 
 #include "net/io.hpp"
 
@@ -30,6 +32,30 @@ class HttpParserContext {
     std::string body;
     std::list<HttpHeader> headers;
     http_parser http;
+
+    std::string schema;
+    std::string host;
+    std::string path;
+    std::string params;
+    std::map<std::string, std::string> pp;
+    int         port = 80;
+
+ public:
+    // http parse的结果
+    int content_length();
+
+    bool is_chunked();
+
+    int status_code();
+
+    const char* method();
+
+ public:
+    bool contains(const std::string& key, std::string* value);
+    bool contains(const std::string& key, std::vector<std::string>* vs);
+
+ public:
+    int parse_url();
 };
 
 class HttpParser {
