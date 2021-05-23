@@ -41,4 +41,7 @@ class IReaderWriter : virtual public IReader, virtual public IWriter {
     ~IReaderWriter() override = default;
 };
 
+typedef std::shared_ptr<IReader> PIReader;
+typedef std::shared_ptr<IReaderWriter> PIReaderWriter;
+
 #endif  // SPS_NET_IO_HPP_
