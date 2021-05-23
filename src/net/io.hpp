@@ -11,6 +11,7 @@ class IReader {
  public:
     virtual void    set_recv_timeout(utime_t tm) = 0;
     virtual utime_t get_recv_timeout() = 0;
+    virtual bool    seekable()  { return false; }
 
  public:
     /**
