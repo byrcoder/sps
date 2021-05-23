@@ -16,6 +16,8 @@ function makefile_project() {
     TMP_BUILD_DIR=$2
     TMP_ARGS=$3
 
+    echo "${TMP_TARGET_DIR} -> ${TMP_ARGS}  -> ${TMP_BUILD_DIR}"
+
     cd ${TMP_TARGET_DIR} && make ${TMP_ARGS} && cd -
     ret=$?;  if [[ $ret -ne 0 ]]; then echo "build ${TMP_TARGET_DIR} ${TMP_ARGS} ${TMP_BUILD_DIR} failed, ret=$ret "; exit $ret; fi
 
@@ -54,7 +56,7 @@ makefile_project ${ST_TARGET_DIR} ${BUILD_ST} "${_ST_MAKE} EXTRA_CFLAGS=${_ST_EX
 echo "======build state-threads, ${_ST_MAKE} ${_ST_EXTRA_CFLAGS} ${OSX} success====="
 
 echo "======building http-parser========"
-HTTP_TARGET_DIR==${WORK_DIR}/3rdparty/http-parser
+HTTP_TARGET_DIR=${WORK_DIR}/3rdparty/http-parser
 makefile_project ${HTTP_TARGET_DIR} ${BUILD_HTTP} "package"
 echo "======build http-parser success==="
 

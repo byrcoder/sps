@@ -54,9 +54,9 @@ include_directories(${PROJECT_SOURCE_DIR}/3rdparty/state-threads/
         )
 
 link_directories(3rdparty/state-threads/obj
-        3rdparty/srt/
-        3rdparty/gtest/googlemock/gtest/
-        3rdparty/http-parser/
+                 3rdparty/srt/
+                 3rdparty/gtest/lib
+                 3rdparty/http-parser
         )
 
 include_directories(${PROJECT_SOURCE_DIR}/src)
@@ -86,7 +86,7 @@ add_executable(sps
 TARGET_LINK_LIBRARIES(sps
         srt
         libst.a
-        libhttp-parser.a
+        libhttp_parser.a
         )
 
 if(ENABLE_UNITTESTS)
@@ -100,7 +100,7 @@ if(ENABLE_UNITTESTS)
             libgtest.a
             srt
             libst.a
-            libhttp-parser.a
+            libhttp_parser.a
             )
 
     add_test(

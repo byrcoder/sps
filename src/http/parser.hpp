@@ -1,13 +1,22 @@
-/* Copyright [2020] <Tencent, China>
- *
- * =====================================================================================
- *        Version:  1.0
- *        Created:  on 2021/5/23.
- *        Author:  weideng(邓伟).
- *
- * =====================================================================================
- */
 #ifndef SPS_PARSER_HPP
 #define SPS_PARSER_HPP
+
+#include <http_parser.h>
+
+#include <memory>
+
+#include "net/io.hpp"
+
+namespace sps {
+
+class HttpParser {
+ public:
+    HttpParser(PIReaderWriter io);
+
+ private:
+    PIReaderWriter io;
+};
+
+}
 
 #endif //SPS_PARSER_HPP
