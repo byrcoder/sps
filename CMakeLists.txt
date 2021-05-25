@@ -3,6 +3,9 @@ project(sps)
 
 set(CMAKE_CXX_STANDARD 11)
 
+set(CMAKE_CXX_COMPILER g++)
+set(CMAKE_C_COMPILER gcc)
+
 option(SRT_DISABLED "disable srt" OFF)
 option(ENABLE_UNITTESTS "Enable unit tests" ON)
 
@@ -70,6 +73,7 @@ file(GLOB SRC_LIST
         "${PROJECT_SOURCE_DIR}/src/co/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/co/st/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/http/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/net/*.cpp"
 )
 
 file(GLOB HEAD_LIST
@@ -78,6 +82,7 @@ file(GLOB HEAD_LIST
         "${PROJECT_SOURCE_DIR}/src/co/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/co/st/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/http/*.hpp"
+        "${PROJECT_SOURCE_DIR}/src/net/*.hpp"
         )
 
 message("src: ${SRC_LIST}  header:${HEAD_LIST}")

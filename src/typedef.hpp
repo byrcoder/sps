@@ -81,4 +81,6 @@ typedef unsigned long long utime_t;
 #define ERROR_NOT_SUPPORT_TCP_FAST_OPEN           1900
 #define ERROR_NOT_SUPPORT_SRT_FAST_OPEN           1901
 
+#define ERROR_MEM_IO_FAILED  2000
+
 #endif // SPS_TYPEDEF_HPP
