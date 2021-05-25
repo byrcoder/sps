@@ -1,5 +1,7 @@
 #include <http/parser.hpp>
 #include <gtest/gtest.h>
+#include <net/mem.hpp>
+#include <log/logger.hpp>
 extern "C" {
 #include <public.h>
 }
@@ -19,15 +21,21 @@ GTEST_TEST(HTTP_RES, CREATE) {
 
 GTEST_TEST(HTTP_REQ, CREATE) {
     sps::HttpParser parser;
-    const char* buf = "GET /test/demo_form.php?xxx=a&yy=b&zz=c HTTP/1.1\n"
+    const char* buf = "GET /test/demo_form.php?xxx=a&yy=b&zz=c HTTP/1.1\r\n"
                       "Host: runoob.com:28\r\n"
                       "Content-Length: 20\r\n"
                       "\r\n"
                       "--------------------------------------";
-    int len = strlen(buf);
-    auto x = parser.parse_header(buf, len, sps::BOTH);
 
-    EXPECT_TRUE(x == len);
+    int len = strlen(buf);
+    auto x = len; // parser.parse_header(buf, len, sps::BOTH);
+
+    auto m = std::make_shared<sps::MemReaderWriter>((char *) buf, strlen(buf));
+    auto y = parser.parse_header(m, sps::BOTH);
+
+    sp_info("%d, %d, %d", len, x, y);
+    // EXPECT_TRUE(x == len);
+    EXPECT_TRUE(y == len);
 }
 
 int main(int argc, char **argv) {

@@ -132,34 +132,33 @@ HttpParser::HttpParser(int max_header) {
 }
 
 int HttpParser::parse_header(PIReader io, HttpType ht) {
-    int state = 4;
+    int state = 4; // state 0 - 4 from x\r\n\r\n
+    error_t ret = SUCCESS;
 
     do {
         int left = max_header - buf_read;
+
         if (state > left) {
             return -1;
         }
 
-        if (io->read_fully(buf.get(), state, nullptr) != SUCCESS) {
+        if ((ret = io->read_fully(buf.get() + buf_read, state, nullptr)) != SUCCESS) {
             return -1;
         }
 
         buf_read += state;
 
-        if (buf[buf_read-1] != '\n' && buf[buf_read-1] != '\r') {
+        char *p = buf.get() + (buf_read-1);
+
+        if (*p != '\n' && *p != '\r') {
             state = 4;
-        } else if (buf[buf_read] == '\r') {
-            if (state == 2)  // \r\n\r
-                state = 1;
-            else // !\n\r
-                state = 3;
+        } else if (*p == '\r') {
+            if (*(p-1) == '\n' && *(p-2) == '\r') state = 1;
+            else state = 3;
         } else {
-            if (state == 1) // \r\n\r\n
-                break;
-            else if (state == 3)
-                state = 2;
-            else
-                state = 4;
+            if (*(p-1) != '\r') state = 4;
+            if (*(p-2) != '\n' && *(p-3) != '\r') state = 2;
+            else break;
         }
     } while(true);
 
