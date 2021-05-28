@@ -83,4 +83,9 @@ typedef unsigned long long utime_t;
 
 #define ERROR_MEM_IO_FAILED  2000
 
+
+
+#define ERROR_PROTOCOL_FLV  3000
+#define ERROR_PROTOCOL_FLV_BUFFER 3001
+
 #endif // SPS_TYPEDEF_HPP

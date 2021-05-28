@@ -143,7 +143,7 @@ int HttpParser::parse_header(PIReader io, HttpType ht) {
         }
 
         if ((ret = io->read_fully(buf.get() + buf_read, state, nullptr)) != SUCCESS) {
-            return -1;
+            return ret > 0 ? -ret : ret;
         }
 
         buf_read += state;
@@ -162,6 +162,7 @@ int HttpParser::parse_header(PIReader io, HttpType ht) {
         }
     } while(true);
 
+    sp_trace("http head: %s", buf.get());
     return parse_header(buf.get(), buf_read, ht);
 }
 
