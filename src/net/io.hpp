@@ -17,7 +17,7 @@ class IReader {
     /**
      * 读满数据
      */
-    virtual error_t read_fully(void* buf, size_t size, ssize_t* nread) = 0;
+    virtual error_t read_fully(void* buf, size_t size, ssize_t* nread = nullptr) = 0;
 
     /**
      * 尽量读数据

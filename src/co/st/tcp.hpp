@@ -44,7 +44,6 @@ error_t    st_tcp_writev(st_netfd_t stfd, const iovec *iov, int iov_size,
 error_t    st_tcp_fd_reuseaddr(int fd, int enable = 1);
 error_t    st_tcp_fd_reuseport(int fd);
 
-
 class StTcpSocket : public IReaderWriter {
  public:
     explicit StTcpSocket(st_netfd_t stfd);

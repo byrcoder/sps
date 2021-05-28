@@ -1,4 +1,5 @@
 #include <http/parser.hpp>
+#include <http/client.hpp>
 #include <gtest/gtest.h>
 #include <net/mem.hpp>
 #include <log/logger.hpp>
@@ -6,7 +7,7 @@ extern "C" {
 #include <public.h>
 }
 
-GTEST_TEST(HTTP_RES, CREATE) {
+GTEST_TEST(HTTP_RESPONSE, CREATE) {
     sps::HttpParser parser;
     const char* buf = "HTTP/1.1 200 OK\r\n"
                       "Date: Tue, 04 Aug 2009 07:59:32 GMT\r\n"
@@ -19,7 +20,7 @@ GTEST_TEST(HTTP_RES, CREATE) {
     EXPECT_TRUE(x == len);
 }
 
-GTEST_TEST(HTTP_REQ, CREATE) {
+GTEST_TEST(HTTP_REQUEST, CREATE) {
     sps::HttpParser parser;
     const char* buf = "GET /test/demo_form.php?xxx=a&yy=b&zz=c HTTP/1.1\r\n"
                       "Host: runoob.com:28\r\n"
@@ -36,6 +37,16 @@ GTEST_TEST(HTTP_REQ, CREATE) {
     sp_info("%d, %d, %d", len, x, y);
     // EXPECT_TRUE(x == len);
     EXPECT_TRUE(y == len);
+}
+
+GTEST_TEST(HTTP_CLIENT, GET) {
+    auto client = sps::HttpClient::create_http_create();
+
+    EXPECT_TRUE(client->init("www.baidu.com") == SUCCESS);
+
+    EXPECT_TRUE(client->get("/") == SUCCESS);
+
+    EXPECT_TRUE(client->status_code() == 200);
 }
 
 int main(int argc, char **argv) {
