@@ -11,7 +11,7 @@ option(ENABLE_UNITTESTS "Enable unit tests" ON)
 
 # set(CMAKE_CXX_STANDARD 11)
 
-# set(CMAKE_CXX_FLAGS " -g ")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
 message("building sps...")
 
@@ -74,6 +74,8 @@ file(GLOB SRC_LIST
         "${PROJECT_SOURCE_DIR}/src/co/st/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/http/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/net/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/protocol/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/server/*.cpp"
 )
 
 file(GLOB HEAD_LIST
@@ -83,6 +85,8 @@ file(GLOB HEAD_LIST
         "${PROJECT_SOURCE_DIR}/src/co/st/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/http/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/net/*.hpp"
+        "${PROJECT_SOURCE_DIR}/src/protocol/*.hpp"
+        "${PROJECT_SOURCE_DIR}/src/server/*.hpp"
         )
 
 message("src: ${SRC_LIST}  header:${HEAD_LIST}")
