@@ -4,6 +4,7 @@
 #include <list>
 #include <map>
 #include <memory>
+#include <string>
 
 #include <cache/buffer.hpp>
 #include <typedef.hpp>
