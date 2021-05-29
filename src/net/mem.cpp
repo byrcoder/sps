@@ -59,7 +59,7 @@ namespace sps {
     }
 
     utime_t MemReaderWriter::get_send_timeout() {
-
+        return 0;
     }
 
     error_t MemReaderWriter::write(void *buf, size_t size) {

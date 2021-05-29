@@ -66,16 +66,8 @@ error_t st_tcp_listen(const std::string& server, int port,
         return ret;
     }
 
-    addrinfo  hints{};
-    char      sport[8];
-    addrinfo* r       = nullptr;
-    int       fileno  = st_netfd_fileno(fd);
 
-    snprintf(sport, sizeof(sport), "%d", port);
-    memset(&hints, 0, sizeof(hints));
-    hints.ai_family   = AF_UNSPEC;
-    hints.ai_socktype = SOCK_STREAM;
-    hints.ai_flags    = AI_NUMERICHOST;
+    int       fileno  = st_netfd_fileno(fd);
 
     if ((ret = st_tcp_fd_reuseaddr(fileno)) != SUCCESS) {
         goto failed;
@@ -87,13 +79,12 @@ error_t st_tcp_listen(const std::string& server, int port,
         }
     }
 
-    if (getaddrinfo(server.c_str(), sport, (const addrinfo*)&hints, &r)) {
-        sp_error("get addr %s:%d", server.c_str(), port);
-        ret = ERROR_SOCKET_BIND;
-        goto failed;
-    }
+    struct sockaddr_in addr;
+    addr.sin_family        =   AF_INET;
+    addr.sin_addr.s_addr   =   htonl(INADDR_ANY);
+    addr.sin_port          =   htons(port);
 
-    if (::bind(fileno, r->ai_addr, r->ai_addrlen) == -1) {
+    if (::bind(fileno, (struct sockaddr*) &addr, sizeof(addr)) == -1) {
         sp_error("bind addr %s:%d failed, fileno:%d", server.c_str(), port, fileno);
         ret = ERROR_SOCKET_BIND;
         goto failed;
@@ -104,12 +95,10 @@ error_t st_tcp_listen(const std::string& server, int port,
         goto failed;
     }
 
-    free(r);
     return ret;
 
 failed:
     st_tcp_close(fd);
-    free(r);
     return ret;
 }
 
@@ -280,6 +269,51 @@ error_t StTcpSocket::write(void* buf, size_t size) {
     sbytes += nb_write;
 
     return ret;
+}
+
+StServerSocket::StServerSocket() {
+    port      = -1;
+    server_fd = nullptr;
+    backlog   = 1024;
+    reuseport = false;
+}
+
+StServerSocket::~StServerSocket()  {
+    if (server_fd) st_tcp_close(server_fd);
+}
+
+error_t StServerSocket::listen(std::string ip, int port, bool reuseport, int backlog) {
+    error_t ret = st_tcp_listen(ip, port, backlog, server_fd, reuseport);
+
+    if (ret != SUCCESS) {
+        sp_error("Failed Listen %s:%d, %d, %s", ip.c_str(), port, backlog, reuseport ? "true" : "false");
+        return ret;
+    }
+    sp_trace("Success Listen %s:%d, %d, %s", ip.c_str(), port, backlog, reuseport ? "true" : "false");
+
+    this->backlog   = backlog;
+    this->reuseport = reuseport;
+
+    return ret;
+}
+
+PClientSocket StServerSocket::accept() {
+    struct sockaddr_in addr;
+    int len  = sizeof(addr);
+
+    char buf[INET6_ADDRSTRLEN];
+    memset(buf, 0, sizeof(buf));
+    auto cfd = st_tcp_accept(server_fd, (struct sockaddr*) &addr, &len, ST_UTIME_NO_TIMEOUT);
+
+    if (inet_ntop(addr.sin_family, &addr.sin_addr, buf, sizeof(buf)) == NULL) {
+        buf[0] = '\0'; // 防止内存写乱
+    }
+
+    sp_trace("Accept client:%s, cfd:%d, from %s:%d", std::string(buf, INET6_ADDRSTRLEN).c_str(),
+             st_tcp_fd(cfd), ip.c_str(), port);
+
+    auto io = std::make_shared<StTcpSocket>(cfd);
+    return std::make_shared<ClientSocket>(io, std::string(buf), ntohs(addr.sin_port));
 }
 
 }

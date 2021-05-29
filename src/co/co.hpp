@@ -8,16 +8,6 @@
 
 namespace sps {
 
-class ICoHandler {
- public:
-    virtual ~ICoHandler() = default;
-    virtual error_t handler() = 0;
-
- public:
-    virtual void on_start() { };
-    virtual void on_stop()  { };
-};
-
 class ICo {
  public:
     ICo() = default;
@@ -26,16 +16,34 @@ class ICo {
  public:
     virtual error_t start() = 0;
 };
-
 typedef std::shared_ptr<ICo> PICo;
+
+
+class ICoHandler {
+ public:
+    friend class ICoFactory;
+
+ public:
+    virtual ~ICoHandler() = default;
+    virtual error_t handler() = 0;
+
+ public:
+    virtual void on_start() { };
+    virtual void on_stop()  { };
+
+ private:
+    PICo co;
+};
 typedef std::shared_ptr<ICoHandler> PICoHandler;
+typedef std::weak_ptr<ICoHandler>   PWICoHandler;
 
 class ICoFactory {
  public:
-    virtual PICo start(PICoHandler handler) const = 0;
+    virtual PICo _start(PICoHandler handler) const = 0;
+    error_t start(PICoHandler handler);
 
  public:
-    static const ICoFactory& get_instance();
+    static ICoFactory& get_instance();
 };
 
 };
