@@ -16,7 +16,7 @@ namespace sps {
 enum HttpType {
     REQUEST,
     RESPONSE,
-    BOTH
+    BOTH     // 这里只有测试使用
 };
 
 class HttpHeader {
@@ -24,6 +24,33 @@ class HttpHeader {
     std::string key;
     std::string value;
 };
+
+class HttpRequest {
+ public:
+    std::string url;
+    std::string body;
+    std::list<HttpHeader> headers;
+
+    std::string method;
+    std::string schme;
+    int         port = 80;
+    std::string host;
+    std::string path;
+    std::string params;
+    std::map<std::string, std::string> pp; // params key=value
+};
+
+typedef std::shared_ptr<HttpRequest> PHttpRequest;
+
+class HttpResponse {
+ public:
+    int   content_length = -1;
+    int   status_code    = -1;
+    bool  chunked        = false;
+    std::list<HttpHeader> headers;
+};
+
+typedef std::shared_ptr<HttpResponse> PHttpResponse;
 
 class HttpParserContext {
  public:
@@ -55,8 +82,11 @@ class HttpParserContext {
     bool contains(const std::string& key, std::vector<std::string>* vs);
 
  public:
-    int parse_url();
+    int parse_url(std::shared_ptr<HttpRequest> &req);
+    int dump(std::shared_ptr<HttpResponse>& res);
 };
+
+typedef std::shared_ptr<HttpParserContext> PHttpParserContext;
 
 class HttpParser {
  public:
@@ -65,15 +95,20 @@ class HttpParser {
     int parse_header(const char* buf, int len, HttpType ht);
 
  public:
-    std::shared_ptr<HttpParserContext> get_ctx();
+    PHttpParserContext get_ctx();
+    PHttpResponse      get_response();
+    PHttpRequest       get_request();
 
  private:
     HttpType http_type;
-    std::shared_ptr<HttpParserContext> ctx;
     int max_header;
     std::unique_ptr<char[]> buf;
     int buf_read;
     HttpHeader head;
+
+    PHttpParserContext ctx;
+    PHttpRequest       req;
+    PHttpResponse      res;
 
  public:
     static int on_message_begin(http_parser* hp);

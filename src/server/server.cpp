@@ -14,7 +14,7 @@ int SocketManager::add(PISocketHandler h) {
 }
 
 int SocketManager::remove(PISocketHandler h) {
-    sp_info("remove handler h:%p, %d", h.get(), sockets.size());
+    sp_info("remove handler h:%p, %lu", h.get(), sockets.size());
     sockets.erase(h);
     return SUCCESS;
 }

@@ -6,6 +6,7 @@
 #include <net/io.hpp>
 
 #define HTTP_STATUS_UNKNOWN -400
+#define CRCN "\r\n"
 
 namespace sps {
 

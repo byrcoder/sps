@@ -1,8 +1,10 @@
 #ifndef SPS_HTTP_SERVER_HPP
 #define SPS_HTTP_SERVER_HPP
 
-#include <server/server.hpp>
 #include <net/socket.hpp>
+
+#include <server/server.hpp>
+#include <http/filter.hpp>
 
 namespace sps {
 
