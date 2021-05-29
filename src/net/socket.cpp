@@ -10,7 +10,6 @@ namespace sps {
 
 HttpClientSocket::HttpClientSocket(PIReaderWriter io, const std::string &ip, int port) :
     ClientSocket(io, ip, port) {
-
 }
 
 error_t HttpClientSocket::init(int status_code, std::list<Header> *headers,
