@@ -36,7 +36,7 @@ GTEST_TEST(HTTP_REQUEST, CREATE) {
 
     sp_info("%d, %d, %d", len, x, y);
     // EXPECT_TRUE(x == len);
-    EXPECT_TRUE(y == len);
+    EXPECT_TRUE(y == (strstr(buf, "--") - buf));
 }
 
 GTEST_TEST(HTTP_CLIENT, GET) {

@@ -4,9 +4,6 @@
 #include <http/client.hpp>
 #include <log/logger.hpp>
 
-
-#define CRCN "\r\n"
-
 namespace sps {
 
 string http_request(const string& method, const string& url, const string& host,

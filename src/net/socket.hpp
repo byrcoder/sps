@@ -1,9 +1,12 @@
+#include <climits>
+
 #ifndef SPS_SOCKET_HPP
 #define SPS_SOCKET_HPP
 
 #include <string>
 
 #include <net/io.hpp>
+#include <list>
 
 namespace sps {
 
@@ -25,23 +28,47 @@ class ClientSocket : public IReaderWriter {
     }
 
  public:
-    error_t read_fully(void* buf, size_t size, ssize_t* nread = nullptr) { return io->read_fully(buf, size, nread); }
-    error_t read(void* buf, size_t size, size_t& nread)                  { return io->read(buf, size, nread);    }
+    error_t read_fully(void* buf, size_t size, ssize_t* nread = nullptr) override { return io->read_fully(buf, size, nread); }
+    error_t read(void* buf, size_t size, size_t& nread) override                  { return io->read(buf, size, nread);    }
 
-    void    set_recv_timeout(utime_t tm) {    io->set_send_timeout(tm);      }
-    utime_t get_recv_timeout()           {    return io->get_recv_timeout(); }
-    bool    seekable()                   {    return io->seekable();         }
+    void    set_recv_timeout(utime_t tm) override {    io->set_send_timeout(tm);      }
+    utime_t get_recv_timeout() override           {    return io->get_recv_timeout(); }
+    bool    seekable() override                   {    return io->seekable();         }
 
  public:
-    error_t write(void* buf, size_t size) { return io->write(buf, size);     }
-    void    set_send_timeout(utime_t tm)  { return io->set_send_timeout(tm); }
-    utime_t get_send_timeout()            { return io->get_send_timeout();   }
+    error_t write(void* buf, size_t size) override { return io->write(buf, size);     }
+    void    set_send_timeout(utime_t tm) override  { return io->set_send_timeout(tm); }
+    utime_t get_send_timeout() override            { return io->get_send_timeout();   }
 
- private:
+ public:
+    PIReaderWriter get_io()              { return io;    }
+    std::string    get_cip()             { return cip;   }
+    int            get_port()            {  return port; }
+
+ protected:
     PIReaderWriter io;
     std::string cip;
     int         port;
 };
+
+typedef std::pair<std::string, std::string> Header ;
+class HttpClientSocket : public ClientSocket {
+ public:
+    HttpClientSocket(PIReaderWriter io, const std::string& ip, int port);
+ public:
+    error_t init(int status_code, std::list<Header>* headers, int content_length, bool chunked);
+    error_t write_header();
+    error_t write(void* buf, size_t size) override;
+
+ private:
+    int  status_code    = 200;
+    bool sent_header    = false;
+    int  content_length = 0;
+    bool chunked        = false;
+    std::list<Header> headers;
+};
+
+typedef std::shared_ptr<HttpClientSocket> PHttpClientSocket;
 
 typedef std::shared_ptr<ClientSocket> PClientSocket;
 

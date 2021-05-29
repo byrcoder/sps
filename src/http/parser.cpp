@@ -3,109 +3,131 @@
 
 namespace sps {
 
-    // http parse的结果
-    int HttpParserContext::content_length() {
-        return http.content_length;
-    }
+// http parse的结果
+int HttpParserContext::content_length() {
+    return http.content_length;
+}
 
-    bool HttpParserContext::is_chunked() {
-        return contains("Transfer-Encoding", (std::string*) nullptr);
-    }
+bool HttpParserContext::is_chunked() {
+    return contains("Transfer-Encoding", (std::string*) nullptr);
+}
 
-    int HttpParserContext::status_code() {
-        return http.status_code;
-    }
+int HttpParserContext::status_code() {
+    return http.status_code;
+}
 
-    const char* HttpParserContext::method() {
-        return http_method_str(static_cast<http_method>(http.method));
-    }
+const char* HttpParserContext::method() {
+    return http_method_str(static_cast<http_method>(http.method));
+}
 
-    bool HttpParserContext::contains(const std::string& key, std::string* value) {
-        for (auto& h : headers) {
-            if (h.key == key) {
-                if (value) *value = h.value;
-                return true;
-            }
+bool HttpParserContext::contains(const std::string& key, std::string* value) {
+    for (auto& h : headers) {
+        if (h.key == key) {
+            if (value) *value = h.value;
+            return true;
         }
-        return false;
+    }
+    return false;
+}
+
+bool HttpParserContext::contains(const std::string& key, std::vector<std::string>* vs) {
+    if (!vs) return contains(key, (std::string*) nullptr);
+
+    for (auto& h : headers) {
+        if (h.key == key) {
+            (*vs).push_back(h.value);
+        }
+    }
+    return vs->empty();
+}
+
+int HttpParserContext::parse_url(std::shared_ptr<HttpRequest>& req) {
+    contains("Host", &host);
+
+    struct http_parser_url u;
+
+    if (url.empty()) return SUCCESS;
+
+    std::string url = this->url;
+
+    if (url[0] == '/' && !host.empty()) {
+        url = "http://" + host + url;
     }
 
-    bool HttpParserContext::contains(const std::string& key, std::vector<std::string>* vs) {
-        if (!vs) return contains(key, (std::string*) nullptr);
+    sp_info("=======parse url:%s", url.c_str());
 
-        for (auto& h : headers) {
-            if (h.key == key) {
-                (*vs).push_back(h.value);
-            }
-        }
-        return vs->empty();
+    if (http_parser_parse_url(url.c_str(), url.size(), 0, &u) != 0) {
+       sp_error("parser url failed:%s", url.c_str());
+       return -1;
     }
 
-    int HttpParserContext::parse_url() {
-        contains("Host", &host);
+    if (u.field_set & (1 << UF_SCHEMA))
+        schema = url.substr(u.field_data[UF_SCHEMA].off, u.field_data[UF_SCHEMA].len);
 
-        struct http_parser_url u;
+    if (u.field_set & (1 << UF_PORT)) port = u.port;
+    else                              port = 80;
 
-        if (url.empty()) return SUCCESS;
+    if (u.field_set & (1 << UF_HOST))
+        host = url.substr(u.field_data[UF_HOST].off, u.field_data[UF_HOST].len);
 
-        std::string url = this->url;
+    if (u.field_set & (1 << UF_PATH))
+        path = url.substr(u.field_data[UF_PATH].off, u.field_data[UF_PATH].len);
 
-        if (url[0] == '/' && !host.empty()) {
-            url = "http://" + host + url;
+    if (u.field_set & (1 << UF_QUERY))
+        params = url.substr(u.field_data[UF_QUERY].off, u.field_data[UF_QUERY].len);
+
+    auto off_pre = 0;
+
+    do {
+        auto off_key   = params.find_first_of('=', off_pre);
+        if (off_key == std::string::npos) break;
+
+        std::string key = params.substr(off_pre, off_key - off_pre), value;
+        off_pre         = off_key + 1;
+        auto off_value  = params.find_first_of('&', off_pre);
+
+        if (off_value == std::string::npos) {
+            value   =  params.substr(off_pre);
+            pp[key] = value;
+            sp_info("%lu, &:%u, [%s]=[%s], final:%u", off_key, -1, key.c_str(), value.c_str(), off_pre);
+            break;
         }
 
-        sp_info("=======parse url:%s", url.c_str());
+        value = params.substr(off_pre, off_value - off_pre);
+        off_pre = off_value + 1;
 
-        if (http_parser_parse_url(url.c_str(), url.size(), 0, &u) != 0) {
-           sp_error("parser url failed:%s", url.c_str());
-           return -1;
-        }
+        sp_info("%lu, &:%lu, [%s]=[%s], final:%u", off_key, off_value, key.c_str(), value.c_str(), off_pre);
 
-        if (u.field_set & (1 << UF_SCHEMA))
-            schema = url.substr(u.field_data[UF_SCHEMA].off, u.field_data[UF_SCHEMA].len);
+    } while(true);
 
-        if (u.field_set & (1 << UF_PORT)) port = u.port;
-        else                              port = 80;
+    req = std::make_shared<HttpRequest>();
+    req->method  = method();
+    req->schme   = schema;
+    req->host    = host;
+    req->port    = port;
+    req->path    = path;
+    req->url     = url;
+    req->params  = params;
+    req->pp      = pp;
+    req->headers = headers;
+    req->body    = body;
 
-        if (u.field_set & (1 << UF_HOST))
-            host = url.substr(u.field_data[UF_HOST].off, u.field_data[UF_HOST].len);
+    sp_info("[%s] [%s:%d] [%s] [%s]",
+            schema.c_str(), host.c_str(), port, path.c_str(), params.c_str());
 
-        if (u.field_set & (1 << UF_PATH))
-            path = url.substr(u.field_data[UF_PATH].off, u.field_data[UF_PATH].len);
+    return SUCCESS;
+}
 
-        if (u.field_set & (1 << UF_QUERY))
-            params = url.substr(u.field_data[UF_QUERY].off, u.field_data[UF_QUERY].len);
+int HttpParserContext::dump(std::shared_ptr<HttpResponse> &res) {
+    res = std::make_shared<HttpResponse>();
 
-        auto off_pre = 0;
+    res->status_code    = http.status_code;
+    res->content_length = http.content_length;
+    res->chunked        = http.uses_transfer_encoding;
+    res->headers        = headers;
 
-        do {
-            auto off_key   = params.find_first_of('=', off_pre);
-            if (off_key == std::string::npos) break;
-
-            std::string key = params.substr(off_pre, off_key - off_pre), value;
-            off_pre         = off_key + 1;
-            auto off_value  = params.find_first_of('&', off_pre);
-
-            if (off_value == std::string::npos) {
-                value   =  params.substr(off_pre);
-                pp[key] = value;
-                sp_info("=:%u, &:%u, [%s]=[%s], final:%u", off_key, -1, key.c_str(), value.c_str(), off_pre);
-                break;
-            }
-
-            value = params.substr(off_pre, off_value - off_pre);
-            off_pre = off_value + 1;
-
-            sp_info("=:%u, &:%u, [%s]=[%s], final:%u", off_key, off_value, key.c_str(), value.c_str(), off_pre);
-
-        } while(true);
-
-        sp_info("[%s] [%s:%d] [%s] [%s]",
-                schema.c_str(), host.c_str(), port, path.c_str(), params.c_str());
-
-        return SUCCESS;
-    }
-
+    return SUCCESS;
+}
 
 http_parser_settings HttpParser::http_setting = {
         .on_message_begin = HttpParser::on_message_begin,
@@ -172,15 +194,24 @@ int HttpParser::parse_header(const char *b, int len, HttpType ht) {
 
     size_t parsed = http_parser_execute(&ctx->http, &http_setting, b, len);
 
-    sp_info("parsed: %u, ht:%d", parsed, ht);
+    sp_info("parsed: %zu, ht:%u", parsed, ht);
 
-    if ((ht == HttpType::REQUEST || ht == HttpType::BOTH)  && parsed >= 0) ctx->parse_url();
+    if ((ht == HttpType::REQUEST || ht == HttpType::BOTH)  && parsed >= 0) ctx->parse_url(req);
+    else if ((ht == HttpType::RESPONSE || ht == HttpType::BOTH) && parsed >= 0) ctx->dump(res);
 
     return parsed;
 }
 
-std::shared_ptr<HttpParserContext> HttpParser::get_ctx() {
+PHttpParserContext HttpParser::get_ctx() {
     return ctx;
+}
+
+PHttpResponse HttpParser::get_response() {
+    return res;
+}
+
+PHttpRequest HttpParser::get_request() {
+    return req;
 }
 
 int HttpParser::on_message_begin(http_parser* ) {
@@ -199,8 +230,8 @@ int HttpParser::on_url(http_parser* hp, const char *at, size_t length) {
 int HttpParser::on_status(http_parser* hp, const char *at, size_t length) {
     auto p = static_cast<HttpParser *>(hp->data);
 
-    sp_info("status: %s,  %lu", at, length);
-    p->ctx->http_status = atoi(std::string(at, length).c_str());
+    sp_info("status: %lu, %s", length, at);
+    // p->ctx->http_status = atoi(std::string(at, length).c_str());  // 这里不是http status
 
     return SUCCESS;
 }
