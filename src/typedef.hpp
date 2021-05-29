@@ -10,6 +10,12 @@
 #ifndef SPS_TYPEDEF_HPP
 #define SPS_TYPEDEF_HPP
 
+#ifndef __unused
+
+#define __unused __attribute__((unused))
+
+#endif
+
 typedef int error_t;
 typedef unsigned long long utime_t;
 
