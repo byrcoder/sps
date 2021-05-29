@@ -51,7 +51,7 @@ namespace sps {
         std::string url = this->url;
 
         if (url[0] == '/' && !host.empty()) {
-            url = "http://" + host + "/" + url;
+            url = "http://" + host + url;
         }
 
         sp_info("=======parse url:%s", url.c_str());
@@ -162,7 +162,7 @@ int HttpParser::parse_header(PIReader io, HttpType ht) {
         }
     } while(true);
 
-    sp_trace("http head: %s", buf.get());
+    sp_info("http head: %s", buf.get());
     return parse_header(buf.get(), buf_read, ht);
 }
 

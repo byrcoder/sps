@@ -500,9 +500,7 @@ int SrtStDispatch::init() {
 
     srt_epoll_set(srt_eid, SRT_EPOLL_ENABLE_EMPTY);
 
-    co  = sps::ICoFactory::get_instance().start(std::shared_ptr<SrtStDispatch>(this));
-
-    return co ? SUCCESS : ERROR_CO_CREATE;
+    return sps::ICoFactory::get_instance().start(std::shared_ptr<SrtStDispatch>(this));
 }
 
 int SrtStDispatch::st_srt_epoll(SRTSOCKET fd, StSrtEvent event, utime_t timeout, std::string& err) {

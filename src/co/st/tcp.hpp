@@ -8,6 +8,7 @@ extern "C" {
 #include <string>
 
 #include <net/io.hpp>
+#include <net/socket.hpp>
 
 namespace sps {
 
@@ -71,6 +72,23 @@ class StTcpSocket : public IReaderWriter {
     int64_t sbytes;
     // The underlayer st fd.
     st_netfd_t stfd;
+};
+
+class StServerSocket : public IServerSocket {
+ public:
+    StServerSocket();
+    ~StServerSocket();
+
+ public:
+    error_t listen(std::string ip, int port, bool reuseport, int backlog);
+    PClientSocket accept();
+
+ private:
+    std::string ip;
+    int         port;
+    bool        reuseport;
+    int         backlog;
+    st_netfd_t  server_fd;
 };
 
 }
