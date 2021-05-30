@@ -70,23 +70,28 @@ include_directories(${PROJECT_SOURCE_DIR}/src)
 file(GLOB SRC_LIST
         "${PROJECT_SOURCE_DIR}/src/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/app/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/cache/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/co/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/co/st/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/http/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/net/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/protocol/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/server/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/sync/*.cpp"
+
 )
 
 file(GLOB HEAD_LIST
         "${PROJECT_SOURCE_DIR}/src/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/app/*.hpp"
+        "${PROJECT_SOURCE_DIR}/src/cache/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/co/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/co/st/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/http/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/net/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/protocol/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/server/*.hpp"
+        "${PROJECT_SOURCE_DIR}/src/sync/*.cpp"
         )
 
 message("src: ${SRC_LIST}  header:${HEAD_LIST}")
@@ -115,6 +120,11 @@ if(ENABLE_UNITTESTS)
             ${HEAD_LIST}
             ${PROJECT_SOURCE_DIR}/src/test/test_http.cpp)
 
+    add_executable(test_cache
+            ${SRC_LIST}
+            ${HEAD_LIST}
+            ${PROJECT_SOURCE_DIR}/src/test/test_cache.cpp)
+
     TARGET_LINK_LIBRARIES(test_co
             libgtest.a
             srt
@@ -123,6 +133,13 @@ if(ENABLE_UNITTESTS)
             )
 
     TARGET_LINK_LIBRARIES(test_http
+            libgtest.a
+            srt
+            libst.a
+            libhttp_parser.a
+            )
+
+    TARGET_LINK_LIBRARIES(test_cache
             libgtest.a
             srt
             libst.a
@@ -139,6 +156,13 @@ if(ENABLE_UNITTESTS)
     add_test(
             NAME
             test_http
+            COMMAND
+            ${CMAKE_BINARY_DIR}/test_http
+    )
+
+    add_test(
+            NAME
+            test_cache
             COMMAND
             ${CMAKE_BINARY_DIR}/test_http
     )
