@@ -31,11 +31,11 @@ typedef std::shared_ptr<CharBuffer> PCharBuffer;
 
 class CharBuffer : public IBuffer {
  public:
-    static PCharBuffer copy(char* buf, int len);
+    static PCharBuffer copy(const char* buf, int len);
     // static  __unused PCharBuffer nocopy(char* buf, int len);
 
  public:
-    CharBuffer(char* buf, int len);
+    CharBuffer(const char* buf, int len);
     ~CharBuffer();
 
  public:
