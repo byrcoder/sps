@@ -27,15 +27,20 @@ void ISocketHandler::on_stop() {
     SocketManager::get_manage().remove(shared_from_this());
 }
 
-IServer::IServer(PISocketHandlerFactory factory) {
-    this->factory = std::move(factory);
+Server::Server(PISocketHandlerFactory f, Transport transport) {
+    factory         = std::move(f);
+    tran            = transport;
 }
 
-error_t IServer::accept() {
-    while (true) {
-        auto io = do_accept();
+int Server::listen(std::string ip, int port, bool reuse_port, int backlog) {
+    server_socket = ServerSocketFactory::get_instance().create_ss(tran);
+    return server_socket->listen(ip, port, reuse_port, backlog);
+}
 
-        auto h = factory->create(io);
+error_t Server::accept() {
+    do {
+        auto io = server_socket->accept();
+        auto h  = factory->create(io);
 
         sp_info("Success accept new client");
 
@@ -45,11 +50,12 @@ error_t IServer::accept() {
         }
 
         SocketManager::get_manage().add(h);
-    }
+    } while(true);
+
     return SUCCESS;
 }
 
-error_t IServer::handler() {
+error_t Server::handler() {
     return accept();
 }
 

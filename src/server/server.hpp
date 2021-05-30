@@ -26,11 +26,10 @@ class SocketManager {
 
 class ISocketHandler: public ICoHandler, public std::enable_shared_from_this<ISocketHandler> {
  public:
-    ISocketHandler(PSocket io);
-    virtual ~ISocketHandler() = default;
+    explicit ISocketHandler(PSocket io);
 
  public:
-    void on_stop();
+    void on_stop() override;
 
  protected:
     PSocket io;
@@ -46,22 +45,25 @@ class ISocketHandlerFactory {
 };
 typedef std::shared_ptr<ISocketHandlerFactory> PISocketHandlerFactory;
 
-class IServer : public ICoHandler {
+/**
+ * 一个server必须实现listener, handler factory 和 handler
+ */
+class Server : public ICoHandler {
  public:
-    explicit IServer(PISocketHandlerFactory factory);
-    virtual ~IServer() = default;
+    explicit Server(PISocketHandlerFactory factory, Transport transport);
+    ~Server() override = default;
 
  public:
-    virtual int listen(const std::string& ip, int port) = 0;
-    virtual PSocket do_accept() = 0;
+    int listen(std::string ip, int port, bool reuse_port = true, int backlog = 1024);
 
  public:
     virtual error_t accept();
-
     error_t handler() override;
 
- private:
+ protected:
     PISocketHandlerFactory factory;
+    PIServerSocket         server_socket;
+    Transport              tran;
 };
 
 }
