@@ -81,7 +81,7 @@ class StServerSocket : public IServerSocket {
 
  public:
     error_t listen(std::string ip, int port, bool reuseport, int backlog);
-    PClientSocket accept();
+    PSocket accept();
 
  private:
     std::string ip;

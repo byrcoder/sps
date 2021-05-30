@@ -1,5 +1,5 @@
-#ifndef SPS_SERVER_HPP
-#define SPS_SERVER_HPP
+#ifndef SPS_SERVER_SERVER_HPP
+#define SPS_SERVER_SERVER_HPP
 
 #include <memory>
 #include <set>
@@ -26,14 +26,14 @@ class SocketManager {
 
 class ISocketHandler: public ICoHandler, public std::enable_shared_from_this<ISocketHandler> {
  public:
-    ISocketHandler(PClientSocket io);
+    ISocketHandler(PSocket io);
     virtual ~ISocketHandler() = default;
 
  public:
     void on_stop();
 
  protected:
-    PClientSocket io;
+    PSocket io;
 };
 typedef std::shared_ptr<ISocketHandler> PISocketHandler;
 
@@ -42,7 +42,7 @@ class ISocketHandlerFactory {
     ~ISocketHandlerFactory() = default;
 
  public:
-    virtual PISocketHandler create(std::shared_ptr<ClientSocket> io) = 0;
+    virtual PISocketHandler create(std::shared_ptr<Socket> io) = 0;
 };
 typedef std::shared_ptr<ISocketHandlerFactory> PISocketHandlerFactory;
 
@@ -53,7 +53,7 @@ class IServer : public ICoHandler {
 
  public:
     virtual int listen(const std::string& ip, int port) = 0;
-    virtual PClientSocket do_accept() = 0;
+    virtual PSocket do_accept() = 0;
 
  public:
     virtual error_t accept();
@@ -66,4 +66,4 @@ class IServer : public ICoHandler {
 
 }
 
-#endif //SPS_SERVER_HPP
+#endif  // SPS_SERVER_SERVER_HPP

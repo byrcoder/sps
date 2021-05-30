@@ -19,7 +19,7 @@ int SocketManager::remove(PISocketHandler h) {
     return SUCCESS;
 }
 
-ISocketHandler::ISocketHandler(PClientSocket io) {
+ISocketHandler::ISocketHandler(PSocket io) {
     this->io = std::move(io);
 }
 

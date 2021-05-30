@@ -1,4 +1,5 @@
-#include <http/filter.hpp>
+#include <protocol/http/filter.hpp>
+#include <protocol/http/socket.hpp>
 #include <log/logger.hpp>
 
 namespace sps {
@@ -8,8 +9,8 @@ Http404Filter& Http404Filter::get_instance() {
     return filter404;
 }
 
-error_t Http404Filter::filter(PHttpRequest req, PClientSocket socket) {
-    PHttpClientSocket http_socket = std::dynamic_pointer_cast<HttpClientSocket>(socket);
+error_t Http404Filter::filter(PRequestUrl req, PSocket socket) {
+    PHttpResponseSocket http_socket = std::dynamic_pointer_cast<HttpResponseSocket>(socket);
 
     if (!http_socket) {
         sp_error("Fatal not http socket");
@@ -26,7 +27,7 @@ HttpFilterLink& HttpFilterLink::get_instance() {
     return filter;
 }
 
-error_t HttpFilterLink::filter(PHttpRequest req, PClientSocket socket) {
+error_t HttpFilterLink::filter(PRequestUrl req, PSocket socket) {
     error_t ret = SUCCESS;
 
     if (filters.empty()) {

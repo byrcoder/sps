@@ -1,7 +1,7 @@
 #include <sstream>
 
 #include <co/st/tcp.hpp>
-#include <http/client.hpp>
+#include <protocol/http/client.hpp>
 #include <log/logger.hpp>
 
 namespace sps {

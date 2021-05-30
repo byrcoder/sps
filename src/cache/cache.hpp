@@ -1,5 +1,5 @@
-#ifndef SPS_CACHE_HPP
-#define SPS_CACHE_HPP
+#ifndef SPS_CACHE_CACHE_HPP
+#define SPS_CACHE_CACHE_HPP
 
 #include <list>
 #include <map>
@@ -27,17 +27,22 @@ class ICacheStream : public Subscriber<PIBuffer>, public Publisher<PIBuffer> {
 
  public:
     virtual error_t put(PIBuffer pb) = 0;
-    virtual int dump(std::list<PIBuffer>& vpb) = 0;
+    virtual int dump(std::list<PIBuffer>& vpb, bool remove = false) = 0;
     virtual int size() = 0;
+    virtual bool eof();
+    virtual void close();
 
  public:
     int do_event(PIBuffer& o) override  { return SUCCESS; }
+
+ private:
+    bool is_eof = false;
 };
 
 class CacheStream : public ICacheStream {
  public:
     error_t put(PIBuffer pb) override;
-    int dump(std::list<PIBuffer>& vpb) override;
+    int dump(std::list<PIBuffer>& vpb, bool remove = false) override;
     int size() override ;
 
  public:
@@ -69,4 +74,4 @@ class InfiniteCache : public ICache {
 
 }
 
-#endif  // SPS_CACHE_HPP
+#endif  // SPS_CACHE_CACHE_HPP

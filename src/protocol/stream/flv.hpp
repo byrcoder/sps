@@ -2,7 +2,7 @@
 #define SPS_FLV_HPP
 
 #include <net/io.hpp>
-#include <protocol//msg.hpp>
+#include <protocol/stream/msg.hpp>
 
 namespace sps {
 

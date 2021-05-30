@@ -33,16 +33,29 @@ GTEST_TEST(CACHE, CREATE) {
     cs1->put(sps::CharBuffer::copy(message1.c_str(), message1.size()));
 
     std::string message2 = "message22";
-    cs1->put(sps::CharBuffer::copy(message1.c_str(), message1.size()));
+    cs1->put(sps::CharBuffer::copy(message2.c_str(), message2.size()));
 
     std::list<sps::PIBuffer> dumps;
-    sub_cs2->dump(dumps);
+    sub_cs2->dump(dumps, false);
     EXPECT_TRUE(dumps.size() == 2);
-
-    sp_trace("char length: %d=%d=%d", cs1->size(), sub_cs2->size(), sub_cs3->size());
-
-
+    sp_trace("1. char length: %d=%d=%d", cs1->size(), sub_cs2->size(), sub_cs3->size());
     for (auto l : dumps) {
+        sp_trace("message: %s.", std::string(l->buffer(), l->size()).c_str());
+    }
+
+    std::list<sps::PIBuffer> dumps2;
+    sub_cs2->dump(dumps2, true);
+    EXPECT_TRUE(dumps2.size() == 2);
+    sp_trace("2. char length: %d=%d=%d", cs1->size(), sub_cs2->size(), sub_cs3->size());
+    for (auto l : dumps2) {
+        sp_trace("message: %s.", std::string(l->buffer(), l->size()).c_str());
+    }
+
+    std::list<sps::PIBuffer> dumps3;
+    sub_cs2->dump(dumps3, true);
+    EXPECT_TRUE(dumps3.size() == 0);
+    sp_trace("3. char length: %d=%d=%d", cs1->size(), sub_cs2->size(), sub_cs3->size());
+    for (auto l : dumps3) {
         sp_trace("message: %s.", std::string(l->buffer(), l->size()).c_str());
     }
 }
