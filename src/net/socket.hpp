@@ -64,42 +64,12 @@ typedef std::shared_ptr<Socket> PSocket;
 /**
 * tcp serversocket只能是监听数据，udp的可以发送数据，防止乱用，默认抛出错误
 */
-class IServerSocket : public IReaderWriter {
+class IServerSocket {
  public:
-    ~IServerSocket() override = default;
-
- public:
-    error_t read_fully(void* buf, size_t size, ssize_t* nread) override {
-        throw "not impl";
-    }
-
-    error_t read(void* buf, size_t size, size_t& nread) override {
-        throw "not impl";
-    }
-
-    void set_recv_timeout(utime_t tm) override {
-        throw "not impl";
-    }
-
-    utime_t get_recv_timeout() override {
-        throw "not impl";
-    }
+    virtual ~IServerSocket() = default;
 
  public:
-    error_t write(void* buf, size_t size) override {
-        throw "not impl";
-    }
-
-    void set_send_timeout(utime_t tm) override {
-        throw "not impl";
-    }
-
-    utime_t get_send_timeout() override {
-        throw "not impl";
-    }
-
- public:
-    virtual error_t listen(std::string ip, int port, bool reuseport = true, int backlog = 1024) = 0;
+    virtual error_t listen(std::string ip, int port, bool reuse_port = true, int backlog = 1024) = 0;
     virtual PSocket accept()  = 0;
 };
 

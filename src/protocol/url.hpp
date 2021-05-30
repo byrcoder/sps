@@ -9,8 +9,8 @@
 namespace sps {
 
 struct RequestHeader {
-    RequestHeader();
-    RequestHeader(const std::string& key, const std::string& value);
+    explicit RequestHeader();
+    explicit RequestHeader(const std::string& key, const std::string& value);
     std::string key;
     std::string value;
 };
