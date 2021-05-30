@@ -1,15 +1,14 @@
-#ifndef SPS_MEM_HPP
-#define SPS_MEM_HPP
+#ifndef SPS_NET_MEMIO_HPP
+#define SPS_NET_MEMIO_HPP
 
 #include "net/io.hpp"
 #include "typedef.hpp"
 
 namespace sps {
 
-class MemReaderWriter : public IReaderWriter {
-
+class MemoryReaderWriter : public IReaderWriter {
  public:
-    MemReaderWriter(char *buf = nullptr, int len = 0);
+    explicit MemoryReaderWriter(char *buf = nullptr, int len = 0);
 
  public:
     void init(char* buf, int len);
@@ -37,4 +36,4 @@ class MemReaderWriter : public IReaderWriter {
 
 }
 
-#endif // SPS_MEM_HPP
+#endif  // SPS_NET_MEMIO_HPP

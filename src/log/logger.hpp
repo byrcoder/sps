@@ -1,5 +1,5 @@
-#ifndef SPS_LOGGER_HPP
-#define SPS_LOGGER_HPP
+#ifndef SPS_LOG_LOGGER_HPP
+#define SPS_LOG_LOGGER_HPP
 
 #include <stdio.h>
 
@@ -9,4 +9,4 @@
 #define sp_trace(msg, ...)  printf("[%s:%d] " msg "\r\n", __FILENAME__, __LINE__,  ##__VA_ARGS__)
 #define sp_info(msg, ...)   printf("[%s:%d] " msg "\r\n", __FILENAME__, __LINE__,  ##__VA_ARGS__)
 
-#endif // SPS_LOGGER_HPP
+#endif // SPS_LOG_LOGGER_HPP

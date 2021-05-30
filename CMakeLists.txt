@@ -73,13 +73,15 @@ file(GLOB SRC_LIST
         "${PROJECT_SOURCE_DIR}/src/cache/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/co/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/co/st/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/http/*.cpp"
+        "src/protocol/http/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/net/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/protocol/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/protocol/stream/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/protocol/tran/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/server/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/sync/*.cpp"
-
-)
+        "${PROJECT_SOURCE_DIR}/src/upstream/*.cpp"
+        )
 
 file(GLOB HEAD_LIST
         "${PROJECT_SOURCE_DIR}/src/*.hpp"
@@ -87,11 +89,14 @@ file(GLOB HEAD_LIST
         "${PROJECT_SOURCE_DIR}/src/cache/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/co/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/co/st/*.hpp"
-        "${PROJECT_SOURCE_DIR}/src/http/*.hpp"
+        "src/protocol/http/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/net/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/protocol/*.hpp"
+        "${PROJECT_SOURCE_DIR}/src/protocol/stream/*.hpp"
+        "${PROJECT_SOURCE_DIR}/src/protocol/tran/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/server/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/sync/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/upstream/*.cpp"
         )
 
 message("src: ${SRC_LIST}  header:${HEAD_LIST}")

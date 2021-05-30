@@ -2,11 +2,8 @@
 #define SPS_CLIENT_HPP
 
 #include <string>
-#include <http/parser.hpp>
+#include <protocol/http/parser.hpp>
 #include <net/io.hpp>
-
-#define HTTP_STATUS_UNKNOWN -400
-#define CRCN "\r\n"
 
 namespace sps {
 

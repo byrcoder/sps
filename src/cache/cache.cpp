@@ -2,14 +2,25 @@
 
 namespace sps {
 
+bool ICacheStream::eof() {
+    return is_eof;
+}
+
+void ICacheStream::close() {
+    is_eof = true;
+}
+
 error_t CacheStream::put(PIBuffer pb) {
     this->pbs.push_back(pb);
     this->publish(pb);
     return SUCCESS;
 }
 
-int CacheStream::dump(std::list<PIBuffer> &vpb) {
+int CacheStream::dump(std::list<PIBuffer> &vpb, bool remove) {
     vpb = pbs;
+    if (remove) {
+        pbs.clear();
+    }
     return (int) pbs.size();
 }
 

@@ -1,5 +1,5 @@
-#ifndef SPS_SYNC_HPP
-#define SPS_SYNC_HPP
+#ifndef SPS_SYNC_SYNC_HPP
+#define SPS_SYNC_SYNC_HPP
 
 #include <memory>
 #include <set>
@@ -92,4 +92,4 @@ class Publisher {
 }
 
 
-#endif //SPS_SYNC_HPP
+#endif  // SPS_SYNC_SYNC_HPP

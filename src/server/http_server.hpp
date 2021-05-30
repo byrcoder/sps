@@ -1,16 +1,16 @@
-#ifndef SPS_HTTP_SERVER_HPP
-#define SPS_HTTP_SERVER_HPP
+#ifndef SPS_SERVER_HTTP_SERVER_HPP
+#define SPS_SERVER_HTTP_SERVER_HPP
 
 #include <net/socket.hpp>
 
 #include <server/server.hpp>
-#include <http/filter.hpp>
+#include <protocol/http/filter.hpp>
 
 namespace sps {
 
 class HttpHandler : public ISocketHandler {
  public:
-    HttpHandler(PClientSocket io);
+    HttpHandler(PSocket io);
     ~HttpHandler();
 
  public:
@@ -19,7 +19,7 @@ class HttpHandler : public ISocketHandler {
 
 class HttpHandlerFactory : public ISocketHandlerFactory {
  public:
-    PISocketHandler create(PClientSocket io);
+    PISocketHandler create(PSocket io);
 };
 
 class HttpServer : public IServer {
@@ -28,7 +28,7 @@ class HttpServer : public IServer {
 
  public:
     int listen(const std::string& ip, int port) override;
-    virtual PClientSocket do_accept() override;
+    virtual PSocket do_accept() override;
 
  private:
     Transport transport;
@@ -37,4 +37,4 @@ class HttpServer : public IServer {
 
 }
 
-#endif  // SPS_HTTP_SERVER_HPP
+#endif  // SPS_SERVER_HTTP_SERVER_HPP
