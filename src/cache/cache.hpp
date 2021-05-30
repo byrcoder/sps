@@ -7,11 +7,21 @@
 #include <string>
 
 #include <cache/buffer.hpp>
+#include <sync/sync.hpp>
 #include <typedef.hpp>
 
 namespace sps {
 
-class ICacheStream {
+class ICacheStream;
+typedef std::shared_ptr<ICacheStream> PICacheStream;
+/*
+ * recv-upstream cache_stream (publisher)----> visitor cache_stream (subscriber) --> wakeup -> send
+ *                                       \---> visitor cache_stream (subscriber) --> wakeup -> send
+ *
+ */
+
+// 流媒体缓存器，包含flv/rtmp 的gop cache，以及文件类型的cache
+class ICacheStream : public Subscriber<PIBuffer>, public Publisher<PIBuffer> {
  public:
     virtual ~ICacheStream() = default;
 
@@ -19,15 +29,19 @@ class ICacheStream {
     virtual error_t put(PIBuffer pb) = 0;
     virtual int dump(std::list<PIBuffer>& vpb) = 0;
     virtual int size() = 0;
-};
 
-typedef std::shared_ptr<ICacheStream> PICacheStream;
+ public:
+    int do_event(PIBuffer& o) override  { return SUCCESS; }
+};
 
 class CacheStream : public ICacheStream {
  public:
     error_t put(PIBuffer pb) override;
     int dump(std::list<PIBuffer>& vpb) override;
     int size() override ;
+
+ public:
+    int do_event(PIBuffer& o) override;
 
  private:
     std::list<PIBuffer> pbs;
@@ -41,6 +55,8 @@ class ICache {
     virtual PICacheStream get(const std::string& name) = 0;
     virtual error_t       put(const std::string& name, PICacheStream cs) = 0;
 };
+
+typedef std::shared_ptr<ICache> PICache;
 
 class InfiniteCache : public ICache {
  public:

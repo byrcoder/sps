@@ -3,7 +3,8 @@
 namespace sps {
 
 error_t CacheStream::put(PIBuffer pb) {
-    this->pbs.push_back(std::move(pb));
+    this->pbs.push_back(pb);
+    this->publish(pb);
     return SUCCESS;
 }
 
@@ -22,9 +23,13 @@ int CacheStream::size() {
     return sz;
 }
 
+int CacheStream::do_event(PIBuffer& o) {
+    return put(o);
+}
+
 PICacheStream InfiniteCache::get(const std::string &name) {
     auto it = css.find(name);
-    return (it == css.end()) ? it->second : nullptr;
+    return (it == css.end()) ? nullptr : it->second;
 }
 
 error_t InfiniteCache::put(const std::string &name, PICacheStream cs) {
