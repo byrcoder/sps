@@ -1,15 +1,19 @@
 #include <server/http_server.hpp>
-#include <http/parser.hpp>
-#include <http/filter.hpp>
+
+#include <protocol/http/filter.hpp>
+#include <protocol/http/parser.hpp>
+#include <protocol/http/socket.hpp>
+
 #include <log/logger.hpp>
 
 namespace sps {
 
-HttpHandler::HttpHandler(PClientSocket io) : ISocketHandler(io) {
+HttpHandler::HttpHandler(PSocket io) : ISocketHandler(io) {
 
 }
 
 HttpHandler::~HttpHandler() {
+
 }
 
 error_t HttpHandler::handler() {
@@ -36,8 +40,8 @@ error_t HttpHandler::handler() {
     return SUCCESS;
 }
 
-PISocketHandler HttpHandlerFactory::create(PClientSocket io) {
-    PHttpClientSocket http_socket = std::make_shared<HttpClientSocket>(io, io->get_cip(), io->get_port());
+PISocketHandler HttpHandlerFactory::create(PSocket io) {
+    PSocket http_socket = std::make_shared<HttpResponseSocket>(io, io->get_cip(), io->get_port());
     return std::make_shared<HttpHandler>(http_socket);
 }
 
@@ -46,14 +50,14 @@ HttpServer::HttpServer(Transport transport) : IServer(std::make_shared<HttpHandl
 }
 
 int HttpServer::listen(const std::string &ip, int port) {
-    ssocket = IServerSocketFactory::get_instance().create_ss(Transport::TCP);
+    ssocket = ServerSocketFactory::get_instance().create_ss(Transport::TCP);
 
     if (!ssocket) return ERROR_ST_OPEN_SOCKET;
 
     return ssocket->listen(ip, port);
 }
 
-PClientSocket HttpServer::do_accept() {
+PSocket HttpServer::do_accept() {
     return ssocket->accept();
 }
 

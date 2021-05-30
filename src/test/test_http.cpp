@@ -1,7 +1,7 @@
-#include <http/parser.hpp>
-#include <http/client.hpp>
+#include <protocol/http/parser.hpp>
+#include <protocol/http/client.hpp>
 #include <gtest/gtest.h>
-#include <net/mem.hpp>
+#include <net/memio.hpp>
 #include <log/logger.hpp>
 extern "C" {
 #include <public.h>
@@ -31,7 +31,7 @@ GTEST_TEST(HTTP_REQUEST, CREATE) {
     int len = strlen(buf);
     auto x = len; // parser.parse_header(buf, len, sps::BOTH);
 
-    auto m = std::make_shared<sps::MemReaderWriter>((char *) buf, strlen(buf));
+    auto m = std::make_shared<sps::MemoryReaderWriter>((char *) buf, strlen(buf));
     auto y = parser.parse_header(m, sps::BOTH);
 
     sp_info("%d, %d, %d", len, x, y);

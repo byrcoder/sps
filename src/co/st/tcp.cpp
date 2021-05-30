@@ -297,7 +297,7 @@ error_t StServerSocket::listen(std::string ip, int port, bool reuseport, int bac
     return ret;
 }
 
-PClientSocket StServerSocket::accept() {
+PSocket StServerSocket::accept() {
     struct sockaddr_in addr;
     int len  = sizeof(addr);
 
@@ -313,7 +313,7 @@ PClientSocket StServerSocket::accept() {
              st_tcp_fd(cfd), ip.c_str(), port);
 
     auto io = std::make_shared<StTcpSocket>(cfd);
-    return std::make_shared<ClientSocket>(io, std::string(buf), ntohs(addr.sin_port));
+    return std::make_shared<Socket>(io, std::string(buf), ntohs(addr.sin_port));
 }
 
 }

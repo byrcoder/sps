@@ -1,14 +1,5 @@
-/* Copyright [2020] <Tencent, China>
- *
- * =====================================================================================
- *        Version:  1.0
- *        Created:  on 2021/5/30.
- *        Author:  weideng(邓伟).
- *
- * =====================================================================================
- */
-#ifndef SPS_BUFFER_HPP
-#define SPS_BUFFER_HPP
+#ifndef SPS_CACHE_BUFFER_HPP
+#define SPS_CACHE_BUFFER_HPP
 
 #include <memory>
 
@@ -49,4 +40,4 @@ class CharBuffer : public IBuffer {
 
 }
 
-#endif //SPS_BUFFER_HPP
+#endif  // SPS_CACHE_BUFFER_HPP

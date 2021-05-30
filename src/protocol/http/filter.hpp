@@ -1,7 +1,7 @@
 #ifndef SPS_FILTER_HPP
 #define SPS_FILTER_HPP
 
-#include <http/parser.hpp>
+#include <protocol/http/parser.hpp>
 #include <net/socket.hpp>
 
 namespace sps {
@@ -14,7 +14,7 @@ class IHttpFilter {
     virtual ~IHttpFilter() = default;
 
  public:
-    virtual error_t filter(PHttpRequest req, PClientSocket socket) = 0;
+    virtual error_t filter(PRequestUrl req, PSocket socket) = 0;
 };
 
 class Http404Filter : public IHttpFilter {
@@ -23,7 +23,7 @@ class Http404Filter : public IHttpFilter {
     static Http404Filter& get_instance();
 
  public:
-    virtual error_t filter(PHttpRequest req, PClientSocket socket);
+    virtual error_t filter(PRequestUrl req, PSocket socket);
 };
 
 typedef std::shared_ptr<IHttpFilter> PIHttpFilter;
@@ -33,7 +33,7 @@ class HttpFilterLink {
     static HttpFilterLink& get_instance();
 
  public:
-    error_t filter(PHttpRequest req, PClientSocket socket);
+    error_t filter(PRequestUrl req, PSocket socket);
 
  public:
     std::list<PIHttpFilter> filters;

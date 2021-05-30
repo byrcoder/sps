@@ -9,7 +9,11 @@
 #include <string>
 #include <vector>
 
-#include "net/io.hpp"
+#include <net/io.hpp>
+#include <protocol/url.hpp>
+
+#define HTTP_STATUS_UNKNOWN -400
+#define CRCN "\r\n"
 
 namespace sps {
 
@@ -19,62 +23,33 @@ enum HttpType {
     BOTH     // 这里只有测试使用
 };
 
-class HttpHeader {
- public:
-    std::string key;
-    std::string value;
-};
-
-class HttpRequest {
- public:
-    std::string url;
-    std::string body;
-    std::list<HttpHeader> headers;
-
-    std::string method;
-    std::string schme;
-    int         port = 80;
-    std::string host;
-    std::string path;
-    std::string params;
-    std::map<std::string, std::string> pp; // params key=value
-};
-
-typedef std::shared_ptr<HttpRequest> PHttpRequest;
-
 class HttpResponse {
  public:
     int   content_length = -1;
     int   status_code    = -1;
     bool  chunked        = false;
-    std::list<HttpHeader> headers;
+    std::list<RequestHeader> headers;
 };
 
 typedef std::shared_ptr<HttpResponse> PHttpResponse;
 
 class HttpParserContext {
  public:
-    int http_status = -1;
-    std::string url;
-    std::string body;
-    std::list<HttpHeader> headers;
-    http_parser http;
+    PRequestUrl        req;
+    PHttpResponse      res;
 
-    std::string schema;
-    std::string host;
-    std::string path;
-    std::string params;
-    std::map<std::string, std::string> pp;
-    int         port = 80;
+ public:
+    http_parser              http;
+
+    std::list<RequestHeader> headers;
+    std::string              url;
+    std::string              body;
 
  public:
     // http parse的结果
     int content_length();
-
     bool is_chunked();
-
     int status_code();
-
     const char* method();
 
  public:
@@ -82,8 +57,8 @@ class HttpParserContext {
     bool contains(const std::string& key, std::vector<std::string>* vs);
 
  public:
-    int parse_url(std::shared_ptr<HttpRequest> &req);
-    int dump(std::shared_ptr<HttpResponse>& res);
+    int parse_request();
+    int parse_response();
 };
 
 typedef std::shared_ptr<HttpParserContext> PHttpParserContext;
@@ -91,24 +66,21 @@ typedef std::shared_ptr<HttpParserContext> PHttpParserContext;
 class HttpParser {
  public:
     HttpParser(int max_header = 1024);
-    int parse_header(PIReader io, HttpType ht);
-    int parse_header(const char* buf, int len, HttpType ht);
+    int parse_header(PIReader io, HttpType ht = BOTH);
+    int parse_header(const char* buf, int len, HttpType ht = BOTH);
 
  public:
     PHttpParserContext get_ctx();
     PHttpResponse      get_response();
-    PHttpRequest       get_request();
+    PRequestUrl        get_request();
 
  private:
-    HttpType http_type;
     int max_header;
     std::unique_ptr<char[]> buf;
     int buf_read;
-    HttpHeader head;
 
+    RequestHeader      head;
     PHttpParserContext ctx;
-    PHttpRequest       req;
-    PHttpResponse      res;
 
  public:
     static int on_message_begin(http_parser* hp);
