@@ -272,27 +272,27 @@ error_t StTcpSocket::write(void* buf, size_t size) {
 }
 
 StServerSocket::StServerSocket() {
-    port      = -1;
-    server_fd = nullptr;
-    backlog   = 1024;
-    reuseport = false;
+    port       = -1;
+    server_fd  = nullptr;
+    backlog    = 1024;
+    reuse_port = false;
 }
 
 StServerSocket::~StServerSocket()  {
     if (server_fd) st_tcp_close(server_fd);
 }
 
-error_t StServerSocket::listen(std::string ip, int port, bool reuseport, int backlog) {
-    error_t ret = st_tcp_listen(ip, port, backlog, server_fd, reuseport);
+error_t StServerSocket::listen(std::string sip, int sport, bool reuse_sport, int back_log) {
+    error_t ret = st_tcp_listen(sip, sport, back_log, server_fd, reuse_sport);
 
     if (ret != SUCCESS) {
-        sp_error("Failed Listen %s:%d, %d, %s", ip.c_str(), port, backlog, reuseport ? "true" : "false");
+        sp_error("Failed Listen %s:%d, %d, %s", sip.c_str(), sport, back_log, reuse_sport ? "true" : "false");
         return ret;
     }
-    sp_trace("Success Listen %s:%d, %d, %s", ip.c_str(), port, backlog, reuseport ? "true" : "false");
+    sp_trace("Success Listen %s:%d, %d, %s", sip.c_str(), sport, back_log, reuse_sport ? "true" : "false");
 
-    this->backlog   = backlog;
-    this->reuseport = reuseport;
+    this->backlog    = back_log;
+    this->reuse_port = reuse_sport;
 
     return ret;
 }

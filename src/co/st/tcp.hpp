@@ -80,13 +80,13 @@ class StServerSocket : public IServerSocket {
     ~StServerSocket();
 
  public:
-    error_t listen(std::string ip, int port, bool reuseport, int backlog);
+    error_t listen(std::string sip, int sport, bool reuse_sport, int back_log);
     PSocket accept();
 
  private:
     std::string ip;
     int         port;
-    bool        reuseport;
+    bool        reuse_port;
     int         backlog;
     st_netfd_t  server_fd;
 };

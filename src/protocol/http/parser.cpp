@@ -49,12 +49,14 @@ int HttpParserContext::parse_request() {
     std::string full_url;
 
     if (!host.empty()) {
-        full_url = "http://" + req->host + url;
+        full_url = "http://" + host + url;
     } else {
         full_url = "http:/" + url;
     }
 
     sp_info("=======parse url:%s=======", full_url.c_str());
+
+    req->headers = headers;
     return req->parse_url(full_url);
 }
 
