@@ -1,5 +1,5 @@
-#ifndef SPS_URL_HPP
-#define SPS_URL_HPP
+#ifndef SPS_PROTOCOL_URL_HPP
+#define SPS_PROTOCOL_URL_HPP
 
 #include <list>
 #include <memory>
@@ -54,4 +54,4 @@ typedef std::shared_ptr<RequestUrl> PRequestUrl;
 
 }
 
-#endif //SPS_URL_HPP
+#endif  // SPS_PROTOCOL_URL_HPP

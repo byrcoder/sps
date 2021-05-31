@@ -11,6 +11,8 @@ void ICacheStream::close() {
 }
 
 error_t CacheStream::put(PIBuffer pb) {
+    if (!pb)  return SUCCESS;
+
     this->pbs.push_back(pb);
     this->publish(pb);
     return SUCCESS;
