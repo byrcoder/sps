@@ -9,14 +9,10 @@ namespace sps {
 
 class HttpUpstream : public IUpstream {
  public:
-    HttpUpstream(PICacheStream cs);
+    explicit HttpUpstream(PICacheStream cs);
 
  public:
-    error_t init(PRequestUrl req) override;
-    error_t up() override;
-
- private:
-    // ClientSocket
+    error_t open_url(PRequestUrl req) override;
 };
 
 }
