@@ -1,5 +1,5 @@
 #include <protocol/stream/flv.hpp>
-
+#include <protocol/stream/msg.hpp>
 namespace sps {
 
 FLV::FLV(PIReader rd) {
@@ -55,12 +55,41 @@ error_t FLV::read_tag(char* buf, int len, int& nread) {
     }
     pos += 3;
 
+    if (data_len + 15 > len) {
+        return ERROR_MEM_OVERFLOW;
+    }
+
     if ((ret = rd->read_fully(pos, data_len)) != SUCCESS) {  // flv tag 读取
         return ret;
     }
 
     nread = 15 + data_len;
     return ret;
+}
+
+FlvProtocol::FlvProtocol(PIReader rd) : buf(max_len, 0)  {
+    flv = std::make_shared<FLV>(rd);
+}
+
+error_t FlvProtocol::read_header(PIBuffer &buffer) {
+    auto ret = flv->read_header(&buf[0]);
+    if (ret != SUCCESS) return ret;
+    buffer = std::make_shared<SpsPacket>(StreamProtocol::STREAM_FLV,
+            PacketType::PACKET_HEAD, FrameType::FRAME_UNKN, &buf[0], 9);
+    return ret;
+}
+
+error_t FlvProtocol::read_message(PIBuffer& buffer) {
+    int nread = 0;
+    auto ret = flv->read_tag(&buf[0], max_len, nread);
+    if (ret != SUCCESS) return ret;
+    buffer = std::make_shared<SpsPacket>(StreamProtocol::STREAM_FLV,
+                                         PacketType::PACKET_BODY, FrameType::FRAME_UNKN, &buf[0], nread);
+    return ret;
+}
+
+error_t FlvProtocol::read_tail(PIBuffer& buffer) {
+    return SUCCESS;
 }
 
 }

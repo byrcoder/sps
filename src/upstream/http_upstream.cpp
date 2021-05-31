@@ -2,16 +2,12 @@
 
 namespace sps {
 
-HttpUpstream::HttpUpstream(PICacheStream cs) : IUpstream(cs) {
+HttpUpstream::HttpUpstream(PICacheStream cs) : IUpstream(std::move(cs)) {
 
 }
 
-error_t HttpUpstream::init(PRequestUrl req) {
-
-}
-
-error_t HttpUpstream::up() {
-
+error_t HttpUpstream::open_url(PRequestUrl req) {
+    return SUCCESS;
 }
 
 }
