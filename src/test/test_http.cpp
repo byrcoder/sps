@@ -1,5 +1,5 @@
-#include <protocol/http/parser.hpp>
-#include <protocol/http/client.hpp>
+#include <app/http/parser.hpp>
+#include <app/http/client.hpp>
 #include <gtest/gtest.h>
 #include <net/memio.hpp>
 #include <log/logger.hpp>

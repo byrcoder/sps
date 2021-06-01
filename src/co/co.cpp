@@ -1,9 +1,7 @@
 #include <co/co.hpp>
-#include <co/st/co.hpp>
+#include <st/co/co.hpp>
 
 namespace sps {
-
-static ICoFactory* factory = new STCoFactory();
 
 error_t ICoFactory::start(PICoHandler handler) {
     if (handler == nullptr) { return ERROR_CO_CREATE; }
@@ -16,7 +14,8 @@ error_t ICoFactory::start(PICoHandler handler) {
 }
 
 ICoFactory& ICoFactory::get_instance() {
-    return *factory;
+    static STCoFactory f;
+    return f;
 }
 
 }
