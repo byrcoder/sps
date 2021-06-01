@@ -1,6 +1,6 @@
 #include <app/http/server.hpp>
 
-#include <app/http/filter.hpp>
+#include <app/http/phase_handler.hpp>
 #include <app/http/parser.hpp>
 #include <app/http/socket.hpp>
 
@@ -26,7 +26,8 @@ error_t HttpSocketHandler::handler() {
 
         http_parser.reset(); // release memory
 
-        if ((ret = HttpFilterLink::get_instance().filter(req, io)) != SUCCESS) {
+        HttpPhCtx ctx(req, io);
+        if ((ret = HttpPhaseHandler::get_instance().handler(ctx)) != SUCCESS) {
             return ret;
         }
     } while(true);

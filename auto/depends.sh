@@ -24,10 +24,13 @@ function makefile_project() {
     ln -s ${TMP_TARGET_DIR} ${TMP_BUILD_DIR}
 }
 
-echo "======building srt====="
-SRT_TARGET_DIR=${WORK_DIR}/3rdparty/srt
-cmake_project ${SRT_TARGET_DIR} ${BUILD_SRT}
-echo "======build srt success ${BUILD_SRT} ${SRT_TARGET_DIR}====="
+if [ ${SRT_DISABLED} = "OFF" ]
+then
+  echo "======building srt====="
+  SRT_TARGET_DIR=${WORK_DIR}/3rdparty/srt
+  cmake_project ${SRT_TARGET_DIR} ${BUILD_SRT}
+  echo "======build srt success ${BUILD_SRT} ${SRT_TARGET_DIR}====="
+fi
 
 echo "======building gtest====="
 GTEST_TARGET_DIR=${WORK_DIR}/3rdparty/gtest

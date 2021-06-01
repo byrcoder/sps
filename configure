@@ -9,11 +9,12 @@ BUILD_HTTP=${BUILD_DIR}/http-parser
 
 mkdir -p ${BUILD_DIR}
 
+. auto/opt.sh
 . auto/depends.sh
 
 echo "====== build sps ${BUILD_DIR}."
 
 rm ${BUILD_DIR}/sps ${BUILD_DIR}/test_*
 
-cd ${BUILD_DIR} && cmake -D ENABLE_UNITTESTS=ON .. && make
+cd ${BUILD_DIR} && cmake -D ENABLE_UNITTESTS=ON -D SRT_DISABLED=${SRT_DISABLED} .. && make
 
