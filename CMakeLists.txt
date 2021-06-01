@@ -69,34 +69,59 @@ include_directories(${PROJECT_SOURCE_DIR}/src)
 
 file(GLOB SRC_LIST
         "${PROJECT_SOURCE_DIR}/src/*.cpp"
+
         "${PROJECT_SOURCE_DIR}/src/app/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/app/http/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/app/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/app/stream/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/app/tran/*.cpp"
+
         "${PROJECT_SOURCE_DIR}/src/cache/*.cpp"
+
         "${PROJECT_SOURCE_DIR}/src/co/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/co/st/*.cpp"
-        "src/protocol/http/*.cpp"
+
+        "${PROJECT_SOURCE_DIR}/src/log/*.cpp"
+
         "${PROJECT_SOURCE_DIR}/src/net/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/protocol/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/protocol/stream/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/protocol/tran/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/server/*.cpp"
+
+        "src/app/server/*.cpp"
+
+        "${PROJECT_SOURCE_DIR}/src/st/co/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/st/net/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/st/sync/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/st/*.cpp"
+
         "${PROJECT_SOURCE_DIR}/src/sync/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/upstream/*.cpp"
+
+        "src/app/upstream/*.cpp"
         )
 
 file(GLOB HEAD_LIST
         "${PROJECT_SOURCE_DIR}/src/*.hpp"
+
+        "${PROJECT_SOURCE_DIR}/src/app/http/*.hpp"
+        "${PROJECT_SOURCE_DIR}/src/app/stream/*.hpp"
+        "${PROJECT_SOURCE_DIR}/src/app/tran/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/app/*.hpp"
+
         "${PROJECT_SOURCE_DIR}/src/cache/*.hpp"
+
         "${PROJECT_SOURCE_DIR}/src/co/*.hpp"
-        "${PROJECT_SOURCE_DIR}/src/co/st/*.hpp"
-        "src/protocol/http/*.hpp"
+
+        "${PROJECT_SOURCE_DIR}/src/log/*.hpp"
+
         "${PROJECT_SOURCE_DIR}/src/net/*.hpp"
-        "${PROJECT_SOURCE_DIR}/src/protocol/*.hpp"
-        "${PROJECT_SOURCE_DIR}/src/protocol/stream/*.hpp"
-        "${PROJECT_SOURCE_DIR}/src/protocol/tran/*.hpp"
-        "${PROJECT_SOURCE_DIR}/src/server/*.hpp"
+
+        "src/app/server/*.hpp"
+
+        "${PROJECT_SOURCE_DIR}/src/st/co/*.hpp"
+        "${PROJECT_SOURCE_DIR}/src/st/net/*.hpp"
+        "${PROJECT_SOURCE_DIR}/src/st/sync/*.hpp"
+        "${PROJECT_SOURCE_DIR}/src/st/*.hpp"
+
         "${PROJECT_SOURCE_DIR}/src/sync/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/upstream/*.cpp"
+
+        "src/app/upstream/*.cpp"
         )
 
 message("src: ${SRC_LIST}  header:${HEAD_LIST}")

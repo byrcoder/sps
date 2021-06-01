@@ -1,6 +1,6 @@
 #include <co/co.hpp>
 #include <public.h>
-#include <protocol/http/server.hpp>
+#include <app/http/server.hpp>
 #include <log/logger.hpp>
 
 int main(int argc, char* argv[]) {
