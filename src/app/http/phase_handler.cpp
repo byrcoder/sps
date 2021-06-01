@@ -5,8 +5,8 @@
 namespace sps {
 
 HttpPhCtx::HttpPhCtx(PRequestUrl r, PSocket s) {
-    req = std::move(r);
-    s   = std::move(s);
+    req      = std::move(r);
+    socket   = std::move(s);
 }
 
 Http404PhaseHandler& Http404PhaseHandler::get_instance() {
@@ -15,10 +15,11 @@ Http404PhaseHandler& Http404PhaseHandler::get_instance() {
 }
 
 error_t Http404PhaseHandler::handler(HttpPhCtx& ctx) {
-    PHttpResponseSocket http_socket = std::dynamic_pointer_cast<HttpResponseSocket>(ctx.socket);
+    auto socket = ctx.socket;
+    PHttpResponseSocket http_socket = std::dynamic_pointer_cast<HttpResponseSocket>(socket);
 
     if (!http_socket) {
-        sp_error("Fatal not http socket");
+        sp_error("Fatal not http socket type(socket):%s", typeid(ctx.socket.get()).name());
         return ERROR_SOCKET_CLOSED;
     }
 
