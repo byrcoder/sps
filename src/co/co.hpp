@@ -39,6 +39,9 @@ typedef std::weak_ptr<ICoHandler>   PWICoHandler;
 
 class ICoFactory {
  public:
+    ICoFactory() = default;
+
+ public:
     virtual PICo _start(PICoHandler handler) const = 0;
     error_t start(PICoHandler handler);
 

@@ -1,8 +1,8 @@
 #ifndef SPS_NET_MEMIO_HPP
 #define SPS_NET_MEMIO_HPP
 
-#include "net/io.hpp"
-#include "typedef.hpp"
+#include <net/io.hpp>
+#include <typedef.hpp>
 
 namespace sps {
 

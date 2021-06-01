@@ -19,25 +19,24 @@ class ICondition {
     virtual int signal() = 0;
 };
 
-typedef std::shared_ptr<ICondition> PConditon;
+typedef std::shared_ptr<ICondition> PCondition;
 
-class StCondition : public ICondition {
+class IConditionFactory {
  public:
-    StCondition()             {         cond = st_cond_new();   }
-    ~StCondition() override   {         st_cond_destroy(cond);  }
+    static IConditionFactory& get_instance();
 
- private:
-    int wait(utime_t timeout) override {   return st_cond_timedwait(cond, timeout);   }
-    int signal() override              {   return st_cond_broadcast(cond);            }
+ public:
+    virtual PCondition create_condition() = 0;
 
- private:
-    st_cond_t cond;
+ public:
+    IConditionFactory() = default;
+    virtual ~IConditionFactory() = default;
 };
 
 template <class T>
 class Subscriber {
  public:
-    Subscriber()     {  cond = std::make_shared<StCondition>(); }
+    Subscriber()     {  cond = IConditionFactory::get_instance().create_condition(); }
 
  public:
     int wait(utime_t timeout)      {  return cond->wait(timeout); }
@@ -45,7 +44,7 @@ class Subscriber {
     virtual int do_event(T& obj)   {  return SUCCESS;        }
 
  protected:
-    PConditon cond;
+    PCondition cond;
 };
 
 template <class T>
