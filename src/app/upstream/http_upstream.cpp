@@ -10,4 +10,8 @@ error_t HttpUpstream::open_url(PRequestUrl req) {
     return SUCCESS;
 }
 
+void HttpUpstream::abort_request() {
+
+}
+
 }
