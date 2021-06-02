@@ -9,6 +9,26 @@ HttpPhCtx::HttpPhCtx(PRequestUrl r, PSocket s) {
     socket   = std::move(s);
 }
 
+error_t HttpParsePhaseHandler::handler(HttpPhCtx &ctx) {
+    auto http_parser = std::make_shared<HttpParser>();
+    error_t ret = SUCCESS;
+
+    sp_trace("Request Http Parse");
+
+    if ((ret = http_parser->parse_header(ctx.socket, HttpType::REQUEST)) <= SUCCESS) {
+        return ret;
+    }
+
+    ctx.req = http_parser->get_request();
+    sp_trace("Request %s, %s, %s", ctx.req->host.c_str(), ctx.req->url.c_str(), ctx.req->params.c_str());
+
+    return SUCCESS;
+}
+
+const char * HttpParsePhaseHandler::get_name() {
+    return "http-parser-handler";
+}
+
 Http404PhaseHandler& Http404PhaseHandler::get_instance() {
     static Http404PhaseHandler filter404;
     return filter404;
@@ -25,7 +45,14 @@ error_t Http404PhaseHandler::handler(HttpPhCtx& ctx) {
 
     http_socket->init(404, nullptr, 0, false);
 
-    return http_socket->write_header();
+    auto ret =  http_socket->write_header();
+
+    sp_trace("Response http 404 %d", ret);
+    return ret;
+}
+
+const char* Http404PhaseHandler::get_name() {
+    return "http-404-handler";
 }
 
 HttpPhaseHandler& HttpPhaseHandler::get_instance() {
@@ -42,11 +69,18 @@ error_t HttpPhaseHandler::handler(HttpPhCtx& ctx) {
 
     for (auto& f : filters) {
         if ((ret = f->handler(ctx)) != SUCCESS) {
+            sp_error("Failed %s handler ret:%d", f->get_name(), ret);
             return ret;
         }
+        sp_trace("Success %s handler", f->get_name());
     }
 
     return ret;
+}
+
+HttpPhaseHandler::HttpPhaseHandler() {
+    filters.push_back(std::make_shared<HttpParsePhaseHandler>());
+    filters.push_back(std::make_shared<Http404PhaseHandler>());
 }
 
 }
