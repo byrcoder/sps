@@ -184,7 +184,7 @@ int HttpParser::on_header_field(http_parser* hp, const char *at, size_t length) 
     auto p = static_cast<HttpParser *>(hp->data);
 
     p->head.key   = std::string(at, length);
-    sp_info("key: %s", p->head.key.c_str());
+    // sp_info("key: %s", p->head.key.c_str());
 
     return SUCCESS;
 }
@@ -193,7 +193,7 @@ int HttpParser::on_header_value(http_parser* hp, const char *at, size_t length) 
     auto p = static_cast<HttpParser *>(hp->data);
 
     p->head.value = std::string(at, length);
-    sp_info("value: %s", p->head.value.c_str());
+    // sp_info("value: %s", p->head.value.c_str());
 
     p->ctx->headers.push_back(p->head);
 
