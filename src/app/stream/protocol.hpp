@@ -2,11 +2,23 @@
 #define SPS_PROTOCOL_PROTOCOL_HPP
 
 #include <cache/buffer.hpp>
+
+#include <net/io.hpp>
+
 #include <typedef.hpp>
 
 #define PROTOCOL_EOF 2000
 
 namespace sps {
+
+enum Protocol {
+    PFLV,
+    PRTMP,
+    PTS,
+
+
+    DETECTING = 10000,
+};
 
 class IProtocol {
  public:
@@ -19,6 +31,11 @@ class IProtocol {
 };
 
 typedef std::shared_ptr<IProtocol> PIProtocol;
+
+class ProtocolFactory {
+ public:
+    PIProtocol create_protocol(Protocol, PIReaderWriter io);
+};
 
 }
 

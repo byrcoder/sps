@@ -2,11 +2,11 @@
 #include <app/stream/msg.hpp>
 namespace sps {
 
-FLV::FLV(PIReader rd) {
+Flv::Flv(PIReader rd) {
     this->rd = std::move(rd);
 }
 
-error_t FLV::read_header(char* buf) {
+error_t Flv::read_header(char* buf) {
     auto ret = rd->read_fully(buf, 9, nullptr);
     if (ret != SUCCESS) {
         return ret;
@@ -19,7 +19,7 @@ error_t FLV::read_header(char* buf) {
     return ret;
 }
 
-error_t FLV::read_tag(char* buf, int len, int& nread) {
+error_t Flv::read_tag(char* buf, int len, int& nread) {
     error_t ret = SUCCESS;
 
     if (len < 15) {
@@ -68,7 +68,7 @@ error_t FLV::read_tag(char* buf, int len, int& nread) {
 }
 
 FlvProtocol::FlvProtocol(PIReader rd) : buf(max_len, 0)  {
-    flv = std::make_shared<FLV>(rd);
+    flv = std::make_shared<Flv>(rd);
 }
 
 error_t FlvProtocol::read_header(PIBuffer &buffer) {

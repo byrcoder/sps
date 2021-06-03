@@ -61,6 +61,11 @@ class Socket : public IReaderWriter {
 
 typedef std::shared_ptr<Socket> PSocket;
 
+class ClientSocketFactory {
+ public:
+    PSocket create_ss(Transport transport, const std::string& ip, int port, utime_t tm);
+};
+
 /**
 * tcp serversocket只能是监听数据，udp的可以发送数据，防止乱用，默认抛出错误
 */
@@ -76,9 +81,6 @@ class IServerSocket {
 typedef std::shared_ptr<IServerSocket> PIServerSocket;
 
 class ServerSocketFactory {
- public:
-    static ServerSocketFactory& get_instance();
-
  public:
     PIServerSocket create_ss(Transport transport);
 };

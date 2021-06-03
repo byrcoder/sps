@@ -31,6 +31,7 @@ class RequestUrl {
     virtual const char* get_schema();
     virtual const char* get_url();
     virtual const char* get_host();
+    virtual int         get_port();
     virtual const char* get_path();
     virtual const char* get_params();
     virtual const char* get_method();

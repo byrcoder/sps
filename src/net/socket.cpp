@@ -4,9 +4,20 @@
 
 namespace sps {
 
-ServerSocketFactory& ServerSocketFactory::get_instance() {
-    static ServerSocketFactory fc;
-    return fc;
+PSocket ClientSocketFactory::create_ss(Transport transport, const std::string &ip, int port, utime_t tm) {
+    error_t ret = SUCCESS;
+    switch (transport) {
+        case Transport::TCP: {
+            st_netfd_t fd;
+            if ((ret = st_tcp_connect(ip, port, tm, &fd)) != SUCCESS) {
+                return nullptr;
+            }
+
+            return std::make_shared<Socket>(std::make_shared<StTcpSocket>(fd), ip, port);
+        }
+        default:
+            return nullptr;
+    }
 }
 
 PIServerSocket ServerSocketFactory::create_ss(Transport transport) {

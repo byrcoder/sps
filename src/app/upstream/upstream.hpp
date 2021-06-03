@@ -35,17 +35,17 @@ class IUpstream : public ICoHandler, public std::enable_shared_from_this<IUpstre
     friend class IUpstreamContainer;
 
  public:
-    explicit IUpstream(PICacheStream cs);
+    explicit IUpstream(PICacheStream cs, Protocol p);
     ~IUpstream() override;
 
  public:
     // TODO: fix request
-    virtual error_t open_url(PRequestUrl req) = 0; // work as reinit_request
+    virtual error_t open_url(PRequestUrl req, utime_t tm) = 0; // work as reinit_request
     // virtual error_t process() = 0; // process work in handler
     virtual void abort_request();
 
  public:
-    error_t open_url(const std::string& url);
+    error_t open_url(const std::string& url, utime_t tm);
 
  public:
     error_t handler() override;
@@ -59,6 +59,7 @@ public:
     PICacheStream       cs;
     PIProtocol          protocol;
     PIUpstreamContainer container;
+    Protocol            p;
 };
 
 class IUpStreamFactory {
