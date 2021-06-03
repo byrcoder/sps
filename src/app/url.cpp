@@ -79,6 +79,10 @@ const char* RequestUrl::get_host() {
     return host.c_str();
 }
 
+int RequestUrl::get_port() {
+    return port;
+}
+
 const char* RequestUrl::get_path() {
     return path.c_str();
 }

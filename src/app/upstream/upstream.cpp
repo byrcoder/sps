@@ -4,8 +4,9 @@
 
 namespace sps {
 
-IUpstream::IUpstream(PICacheStream cs) {
+IUpstream::IUpstream(PICacheStream cs, Protocol p) {
     this->cs = cs;
+    this->p  = p;
 }
 
 IUpstream::~IUpstream() {
@@ -17,7 +18,7 @@ void IUpstream::abort_request() {
     cs->close();
 }
 
-error_t IUpstream::open_url(const std::string &url) {
+error_t IUpstream::open_url(const std::string &url, utime_t tm) {
     auto    req = std::make_shared<RequestUrl>();
     error_t ret = req->parse_url(url);
 
@@ -25,7 +26,7 @@ error_t IUpstream::open_url(const std::string &url) {
         return ret;
     }
 
-    return open_url(req);
+    return open_url(req, tm);
 }
 
 error_t IUpstream::handler() {
@@ -70,7 +71,7 @@ PICacheStream IUpstream::get_cs() {
 
 PIUpstream UpstreamFactory::create_upstream(PICacheStream cs, PRequestUrl url) {
     if (url->schema == "http") {
-        return std::make_shared<HttpUpstream>(cs);
+        return std::make_shared<HttpUpstream>(cs, Protocol::DETECTING);
     }
     return nullptr;
 }

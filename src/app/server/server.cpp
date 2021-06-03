@@ -33,7 +33,7 @@ Server::Server(PISocketHandlerFactory f, Transport transport) {
 }
 
 int Server::listen(std::string ip, int port, bool reuse_port, int backlog) {
-    server_socket = ServerSocketFactory::get_instance().create_ss(tran);
+    server_socket = SingleInstance<ServerSocketFactory>::get_instance().create_ss(tran);
     return server_socket->listen(ip, port, reuse_port, backlog);
 }
 

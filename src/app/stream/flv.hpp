@@ -8,9 +8,9 @@
 
 namespace sps {
 
-class FLV {
+class Flv {
  public:
-    FLV(PIReader rd);
+    Flv(PIReader rd);
 
  public:
     error_t read_header(char buf[9]);
@@ -20,7 +20,7 @@ class FLV {
     PIReader rd;
 };
 
-typedef std::shared_ptr<FLV> PFLV;
+typedef std::shared_ptr<Flv> PFlv;
 
 class FlvProtocol : public IProtocol {
  public:
@@ -32,7 +32,7 @@ class FlvProtocol : public IProtocol {
     error_t read_tail(PIBuffer& buffer)    override;
 
  private:
-    PFLV flv;
+    PFlv flv;
     std::vector<char> buf;
 
  public:

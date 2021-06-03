@@ -36,10 +36,6 @@ class HttpParsePhaseHandler : public IHttpPhaseHandler {
 };
 
 class Http404PhaseHandler : public IHttpPhaseHandler {
-
- public:
-    static Http404PhaseHandler& get_instance();
-
  public:
     error_t handler(HttpPhCtx& ctx) override;
 
@@ -51,15 +47,12 @@ class Http404PhaseHandler : public IHttpPhaseHandler {
  */
 class HttpPhaseHandler {
  public:
-    static HttpPhaseHandler& get_instance();
-
- public:
     error_t handler(HttpPhCtx& ctx);
 
  public:
     std::list<PIHttpPhaseHandler> filters;
 
- private:
+ public:
     HttpPhaseHandler();
 };
 
