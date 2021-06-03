@@ -83,6 +83,8 @@ typedef unsigned long long utime_t;
 #define ERROR_PROXY_PROTOCOL_HEADER_OVERFLOW      1800
 #define ERROR_PROXY_PROTOCOL_HEADER_PARSE_FAILED  1801
 
+#define ERROR_PROTOCOL_NOT_DEFINE                 1820
+
 // FAST OPEN 不支持错误吗
 #define ERROR_NOT_SUPPORT_TCP_FAST_OPEN           1900
 #define ERROR_NOT_SUPPORT_SRT_FAST_OPEN           1901
@@ -93,5 +95,15 @@ typedef unsigned long long utime_t;
 
 #define ERROR_PROTOCOL_FLV  3000
 #define ERROR_PROTOCOL_FLV_BUFFER 3001
+
+
+template<class T>
+class SingleInstance {
+ public:
+    static T& get_instance() {
+        static T obj;
+        return obj;
+    }
+};
 
 #endif // SPS_TYPEDEF_HPP

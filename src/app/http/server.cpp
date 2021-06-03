@@ -14,7 +14,7 @@ error_t HttpSocketHandler::handler() {
     do {
         auto ret = SUCCESS;
         HttpPhCtx ctx(nullptr, io);
-        if ((ret = HttpPhaseHandler::get_instance().handler(ctx)) != SUCCESS) {
+        if ((ret = SingleInstance<HttpPhaseHandler>::get_instance().handler(ctx)) != SUCCESS) {
             return ret;
         }
     } while(true);

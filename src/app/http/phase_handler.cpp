@@ -29,11 +29,6 @@ const char * HttpParsePhaseHandler::get_name() {
     return "http-parser-handler";
 }
 
-Http404PhaseHandler& Http404PhaseHandler::get_instance() {
-    static Http404PhaseHandler filter404;
-    return filter404;
-}
-
 error_t Http404PhaseHandler::handler(HttpPhCtx& ctx) {
     auto socket = ctx.socket;
     PHttpResponseSocket http_socket = std::dynamic_pointer_cast<HttpResponseSocket>(socket);
@@ -55,16 +50,11 @@ const char* Http404PhaseHandler::get_name() {
     return "http-404-handler";
 }
 
-HttpPhaseHandler& HttpPhaseHandler::get_instance() {
-    static HttpPhaseHandler filter;
-    return filter;
-}
-
 error_t HttpPhaseHandler::handler(HttpPhCtx& ctx) {
     error_t ret = SUCCESS;
 
     if (filters.empty()) {
-        return Http404PhaseHandler::get_instance().handler(ctx);
+        return SingleInstance<Http404PhaseHandler>::get_instance().handler(ctx);
     }
 
     for (auto& f : filters) {
