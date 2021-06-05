@@ -6,8 +6,8 @@
 #include <cache/cache.hpp>
 #include <co/co.hpp>
 #include <net/socket.hpp>
-#include <app/url.hpp>
-#include <app/stream/protocol.hpp>
+#include <app/url/url.hpp>
+#include <app/stream/dec.hpp>
 
 /**
  * nginx upstream:
@@ -20,32 +20,25 @@
  */
 namespace sps {
 
-class IUpstream;
-typedef std::shared_ptr<IUpstream> PIUpstream;
+class Upstream;
+typedef std::shared_ptr<Upstream> PIUpstream;
 
-class IUpstreamContainer {
- public:
-    virtual void register_upstream(PIUpstream u) = 0;
-    virtual void delete_upstream(PIUpstream u);
+class UpstreamContainer : public Registers<UpstreamContainer, PIUpstream> {
+
 };
 
-typedef std::shared_ptr<IUpstreamContainer> PIUpstreamContainer;;
+typedef std::shared_ptr<UpstreamContainer> PIUpstreamContainer;;
 
-class IUpstream : public ICoHandler, public std::enable_shared_from_this<IUpstream> {
-    friend class IUpstreamContainer;
-
- public:
-    explicit IUpstream(PICacheStream cs, Protocol p);
-    ~IUpstream() override;
+class Upstream : public ICoHandler, public std::enable_shared_from_this<Upstream> {
+    friend class UpstreamContainer;
 
  public:
-    // TODO: fix request
-    virtual error_t open_url(PRequestUrl req, utime_t tm) = 0; // work as reinit_request
+    explicit Upstream(PICacheStream cs, PIAvDemuxer dec, PRequestUrl url);
+    ~Upstream() override;
+
+ public:
     // virtual error_t process() = 0; // process work in handler
     virtual void abort_request();
-
- public:
-    error_t open_url(const std::string& url, utime_t tm);
 
  public:
     error_t handler() override;
@@ -57,19 +50,13 @@ public:
 
  protected:
     PICacheStream       cs;
-    PIProtocol          protocol;
-    PIUpstreamContainer container;
-    Protocol            p;
+    PRequestUrl         url;
+    PIAvDemuxer         decoder;
 };
 
-class IUpStreamFactory {
+class UpstreamFactory : public Single<UpstreamFactory> {
  public:
-    virtual PIUpstream create_upstream(PICacheStream cs, PRequestUrl url) = 0;  // work as create_request
-};
-
-class UpstreamFactory : public IUpStreamFactory {
- public:
-    PIUpstream create_upstream(PICacheStream cs, PRequestUrl url) override;
+    PIUpstream create_upstream(PICacheStream cs, PRequestUrl url); // // work as reinit_request
 };
 
 }

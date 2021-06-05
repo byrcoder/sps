@@ -15,6 +15,9 @@ enum Transport {
     SRT = 2,
 #endif
     QUIC = 3,
+
+
+    DEFAULT = 0xFF
 };
 
 // 适配器io， 统一的类型
@@ -61,7 +64,7 @@ class Socket : public IReaderWriter {
 
 typedef std::shared_ptr<Socket> PSocket;
 
-class ClientSocketFactory {
+class ClientSocketFactory : public Single<ClientSocketFactory> {
  public:
     PSocket create_ss(Transport transport, const std::string& ip, int port, utime_t tm);
 };
@@ -80,7 +83,7 @@ class IServerSocket {
 
 typedef std::shared_ptr<IServerSocket> PIServerSocket;
 
-class ServerSocketFactory {
+class ServerSocketFactory : public Single<ServerSocketFactory> {
  public:
     PIServerSocket create_ss(Transport transport);
 };

@@ -1,7 +1,7 @@
 #ifndef SPS_PHASE_HANDLER_HPP
 #define SPS_PHASE_HANDLER_HPP
 
-#include <app/url.hpp>
+#include <app/url/url.hpp>
 #include <app/http/parser.hpp>
 #include <net/socket.hpp>
 
@@ -35,7 +35,7 @@ class HttpParsePhaseHandler : public IHttpPhaseHandler {
     const char* get_name() override;
 };
 
-class Http404PhaseHandler : public IHttpPhaseHandler {
+class Http404PhaseHandler : public IHttpPhaseHandler, public Single<Http404PhaseHandler> {
  public:
     error_t handler(HttpPhCtx& ctx) override;
 
@@ -45,7 +45,7 @@ class Http404PhaseHandler : public IHttpPhaseHandler {
 /**
  * work as nginx
  */
-class HttpPhaseHandler {
+class HttpPhaseHandler : public Single<HttpPhaseHandler> {
  public:
     error_t handler(HttpPhCtx& ctx);
 

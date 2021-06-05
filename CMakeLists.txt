@@ -72,9 +72,10 @@ file(GLOB SRC_LIST
 
         "${PROJECT_SOURCE_DIR}/src/app/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/app/http/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/app/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/app/stream/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/app/tran/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/app/upstream/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/app/url/*.cpp"
 
         "${PROJECT_SOURCE_DIR}/src/cache/*.cpp"
 
@@ -92,17 +93,17 @@ file(GLOB SRC_LIST
         "${PROJECT_SOURCE_DIR}/src/st/*.cpp"
 
         "${PROJECT_SOURCE_DIR}/src/sync/*.cpp"
-
-        "src/app/upstream/*.cpp"
         )
 
 file(GLOB HEAD_LIST
         "${PROJECT_SOURCE_DIR}/src/*.hpp"
 
+        "${PROJECT_SOURCE_DIR}/src/app/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/app/http/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/app/stream/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/app/tran/*.hpp"
-        "${PROJECT_SOURCE_DIR}/src/app/*.hpp"
+        "${PROJECT_SOURCE_DIR}/src/app/upstream/*.hpp"
+        "${PROJECT_SOURCE_DIR}/src/app/url/*.hpp"
 
         "${PROJECT_SOURCE_DIR}/src/cache/*.hpp"
 
@@ -155,6 +156,11 @@ if(ENABLE_UNITTESTS)
             ${HEAD_LIST}
             ${PROJECT_SOURCE_DIR}/src/test/test_cache.cpp)
 
+    add_executable(test_url
+            ${SRC_LIST}
+            ${HEAD_LIST}
+            ${PROJECT_SOURCE_DIR}/src/test/test_url.cpp)
+
     TARGET_LINK_LIBRARIES(test_co
             libgtest.a
             srt
@@ -170,6 +176,13 @@ if(ENABLE_UNITTESTS)
             )
 
     TARGET_LINK_LIBRARIES(test_cache
+            libgtest.a
+            srt
+            libst.a
+            libhttp_parser.a
+            )
+
+    TARGET_LINK_LIBRARIES(test_url
             libgtest.a
             srt
             libst.a

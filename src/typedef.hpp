@@ -1,14 +1,7 @@
-/*
- *
- * =====================================================================================
- *        Version:  1.0
- *        Created:  on 2021/5/22.
- *        Author:  weideng(邓伟).
- *
- * =====================================================================================
- */
 #ifndef SPS_TYPEDEF_HPP
 #define SPS_TYPEDEF_HPP
+
+#include <set>
 
 #ifndef __unused
 
@@ -104,6 +97,33 @@ class SingleInstance {
         static T obj;
         return obj;
     }
+};
+
+template<class T>
+class Single {
+ public:
+    friend class SingleInstance<T>;
+ protected:
+    ~Single() = default;
+};
+
+template<class T, class S>
+class Registers : public Single<T> {
+ public:
+    void reg(const S& obj) {
+        objs.insert(obj);
+    }
+
+    void cancel(const S& obj) {
+        objs.erase(obj);
+    }
+
+    std::set<S>& refs() {
+        return objs;
+    }
+
+ protected:
+    std::set<S> objs;
 };
 
 #endif // SPS_TYPEDEF_HPP
