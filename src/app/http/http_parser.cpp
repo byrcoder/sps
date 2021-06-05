@@ -1,5 +1,5 @@
-#include <app/http/parser.hpp>
-#include <log/logger.hpp>
+#include <app/http/http_parser.hpp>
+#include <log/log_logger.hpp>
 
 namespace sps {
 
@@ -68,6 +68,9 @@ int HttpParserContext::parse_response() {
     res->chunked        = http.uses_transfer_encoding;
     res->headers        = headers;
 
+    sp_info("header size:%lu, status_code:%d, cl:%llu", headers.size(), http.status_code,
+            http.content_length);
+
     return SUCCESS;
 }
 
@@ -105,9 +108,9 @@ int HttpParser::parse_header(PIReader io, HttpType ht) {
         }
 
         if ((ret = io->read_fully(buf.get() + buf_read, state, nullptr)) != SUCCESS) {
+            sp_error("Failed read ret:%d", ret);
             return ret > 0 ? -ret : ret;
         }
-        sp_info("read ret:%d", ret);
 
         buf_read += state;
 
@@ -175,7 +178,7 @@ int HttpParser::on_url(http_parser* hp, const char *at, size_t length) {
 int HttpParser::on_status(http_parser* hp, const char *at, size_t length) {
     auto p = static_cast<HttpParser *>(hp->data);
 
-    sp_info("status: %lu, %s", length, at);
+    // sp_info("status: %lu, %s", length, at);
     // p->ctx->http_status = atoi(std::string(at, length).c_str());  // 这里不是http status
 
     return SUCCESS;
@@ -194,7 +197,7 @@ int HttpParser::on_header_value(http_parser* hp, const char *at, size_t length) 
     auto p = static_cast<HttpParser *>(hp->data);
 
     p->head.value = std::string(at, length);
-    // sp_info("value: %s", p->head.value.c_str());
+    sp_info("header %s->%s", p->head.key.c_str(), p->head.value.c_str());
 
     p->ctx->headers.push_back(p->head);
 

@@ -3,7 +3,7 @@
 
 #include <app/url/url.hpp>
 
-#include <net/socket.hpp>
+#include <net/net_socket.hpp>
 
 namespace sps {
 
@@ -12,8 +12,11 @@ class IURLProtocol : public Socket {
     IURLProtocol() = default;
 
  public:
-    virtual error_t open(PRequestUrl url, Transport p) = 0;
+    virtual error_t open(PRequestUrl url, Transport p = DEFAULT) = 0;
     error_t open(const std::string url, Transport p);
+
+ public:
+    virtual PResponse response() = 0;
 };
 typedef std::shared_ptr<IURLProtocol> PIURLProtocol;
 

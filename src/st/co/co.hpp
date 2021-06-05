@@ -12,9 +12,9 @@ namespace sps {
 class STCo : public ICo {
  public:
     STCo(PWICoHandler h);
-
     error_t start() override;
 
+ public:
     static void* main_co(void* st_co);
 
  private:
@@ -24,6 +24,8 @@ class STCo : public ICo {
 
 class STCoFactory : public ICoFactory {
  public:
+    error_t init() override;
+
     PICo _start(PICoHandler handler) const override;
 };
 

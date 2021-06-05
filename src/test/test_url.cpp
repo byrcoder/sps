@@ -1,12 +1,12 @@
 #include <app/url/url.hpp>
-#include <app/url/protocol.hpp>
-#include <app/url/http.hpp>
+#include <app/url/url_protocol.hpp>
+#include <app/url/url_http.hpp>
 
 #include <typedef.hpp>
 
 #include <gtest/gtest.h>
-#include <net/memio.hpp>
-#include <log/logger.hpp>
+#include <net/net_memio.hpp>
+#include <log/log_logger.hpp>
 extern "C" {
 #include <public.h>
 }

@@ -5,7 +5,7 @@
 
 #include <cache/cache.hpp>
 #include <co/co.hpp>
-#include <net/socket.hpp>
+#include <net/net_socket.hpp>
 #include <app/url/url.hpp>
 #include <app/stream/dec.hpp>
 

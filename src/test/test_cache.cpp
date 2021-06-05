@@ -1,7 +1,7 @@
 #include <cache/cache.hpp>
 #include <cache/buffer.hpp>
 #include <sync/sync.hpp>
-#include <log/logger.hpp>
+#include <log/log_logger.hpp>
 
 #include <string>
 #include <list>

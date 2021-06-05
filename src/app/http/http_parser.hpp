@@ -1,5 +1,5 @@
-#ifndef SPS_PARSER_HPP
-#define SPS_PARSER_HPP
+#ifndef SPS_HTTP_PARSER_HPP
+#define SPS_HTTP_PARSER_HPP
 
 #include <http_parser.h>
 
@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-#include <net/io.hpp>
+#include <net/net_io.hpp>
 #include <app/url/url.hpp>
 
 #define HTTP_STATUS_UNKNOWN -400
@@ -23,7 +23,7 @@ enum HttpType {
     BOTH     // 这里只有测试使用
 };
 
-class HttpResponse {
+class HttpResponse : public Response {
  public:
     int   content_length = -1;
     int   status_code    = -1;
@@ -99,4 +99,4 @@ class HttpParser {
 
 }
 
-#endif //SPS_PARSER_HPP
+#endif //SPS_HTTP_PARSER_HPP

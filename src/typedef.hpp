@@ -1,6 +1,7 @@
 #ifndef SPS_TYPEDEF_HPP
 #define SPS_TYPEDEF_HPP
 
+#include <list>
 #include <set>
 
 #ifndef __unused
@@ -85,9 +86,11 @@ typedef unsigned long long utime_t;
 #define ERROR_MEM_IO_FAILED  2000
 
 
-
 #define ERROR_PROTOCOL_FLV  3000
 #define ERROR_PROTOCOL_FLV_BUFFER 3001
+
+#define ERROR_URL_RSP_NOT_INVALID 10000
+#define ERROR_URL_PROTOCOL_EOF    10001
 
 
 template<class T>
@@ -104,7 +107,10 @@ class Single {
  public:
     friend class SingleInstance<T>;
  protected:
-    ~Single() = default;
+    virtual ~Single() = default;
+    Single() = default;
+ private:
+    Single(Single& ) = default;
 };
 
 template<class T, class S>
@@ -112,6 +118,7 @@ class Registers : public Single<T> {
  public:
     void reg(const S& obj) {
         objs.insert(obj);
+
     }
 
     void cancel(const S& obj) {
@@ -121,9 +128,29 @@ class Registers : public Single<T> {
     std::set<S>& refs() {
         return objs;
     }
-
  protected:
     std::set<S> objs;
+};
+
+template<class T, class S>
+class FifoRegisters : public Single<T> {
+ public:
+    void reg(const S& obj) {
+        objs.push_back(obj);
+    }
+
+    void cancel(const S& obj) {
+        auto it = std::find(objs.begin(), objs.end(), obj);
+        if (it != objs.end()) {
+            objs.erase(it);
+        }
+    }
+
+    std::list<S>& refs() {
+        return objs;
+    }
+ protected:
+    std::list<S> objs;
 };
 
 #endif // SPS_TYPEDEF_HPP
