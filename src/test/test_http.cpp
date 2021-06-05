@@ -1,8 +1,7 @@
-#include <app/http/parser.hpp>
-#include <app/http/client.hpp>
+#include <app/http/http_parser.hpp>
 #include <gtest/gtest.h>
-#include <net/memio.hpp>
-#include <log/logger.hpp>
+#include <net/net_memio.hpp>
+#include <log/log_logger.hpp>
 extern "C" {
 #include <public.h>
 }
@@ -37,16 +36,6 @@ GTEST_TEST(HTTP_REQUEST, CREATE) {
     sp_info("%d, %d, %d", len, x, y);
     // EXPECT_TRUE(x == len);
     EXPECT_TRUE(y == (strstr(buf, "--") - buf));
-}
-
-GTEST_TEST(HTTP_CLIENT, GET) {
-    auto client = sps::HttpClient::create_http_create();
-
-    EXPECT_TRUE(client->init("www.baidu.com") == SUCCESS);
-
-    EXPECT_TRUE(client->get("/") == SUCCESS);
-
-    EXPECT_TRUE(client->status_code() == 200);
 }
 
 int main(int argc, char **argv) {

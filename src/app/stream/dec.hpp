@@ -4,11 +4,11 @@
 #include <app/url/url.hpp>
 #include <cache/buffer.hpp>
 
-#include <net/io.hpp>
+#include <net/net_io.hpp>
 
 #include <typedef.hpp>
 #include <list>
-#include <app/url/protocol.hpp>
+#include <app/url/url_protocol.hpp>
 
 #define PROTOCOL_EOF 2000
 

@@ -7,8 +7,8 @@ extern "C" {
 
 #include <string>
 
-#include <net/io.hpp>
-#include <net/socket.hpp>
+#include <net/net_io.hpp>
+#include <net/net_socket.hpp>
 
 namespace sps {
 

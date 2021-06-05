@@ -1,5 +1,5 @@
-#include <app/url/protocol.hpp>
-#include <log/logger.hpp>
+#include <app/url/url_protocol.hpp>
+#include <log/log_logger.hpp>
 
 namespace sps {
 
@@ -26,7 +26,7 @@ PIURLProtocol UrlProtocol::create(PRequestUrl url) {
     auto& ps = refs();
     for (auto& p : ps) {
         if (p->match(url)) {
-            sp_info("create by :%s", p->schema);
+            sp_info("create by %s", p->schema);
             return p->create(url);
         }
     }

@@ -1,6 +1,6 @@
 #include <app/upstream/upstream.hpp>
 
-#include <app/url/protocol.hpp>
+#include <app/url/url_protocol.hpp>
 
 namespace sps {
 

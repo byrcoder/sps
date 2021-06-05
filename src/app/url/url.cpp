@@ -2,7 +2,7 @@
 
 #include <http_parser.h>
 
-#include <log/logger.hpp>
+#include <log/log_logger.hpp>
 
 namespace sps {
 
@@ -77,8 +77,8 @@ error_t RequestUrl::parse_url(const std::string& url) {
 
     this->url = path + (params.empty() ? "" : "?" + params);
 
-    sp_info("[%s] [%s:%d] [%s] [.%s] [%s]",
-            schema.c_str(), host.c_str(), port, path.c_str(), ext.c_str(), params.c_str());
+    sp_info("url:%s -> [%s] [%s:%d] [%s] [.%s] [%s]",
+            url.c_str(), schema.c_str(), host.c_str(), port, path.c_str(), ext.c_str(), params.c_str());
 
 
     return SUCCESS;
@@ -116,11 +116,21 @@ const char * RequestUrl::get_ext() {
     return ext.c_str();
 }
 
+
 std::string RequestUrl::get_header(const std::string& key) {
     for (auto& h : headers) {
         if (h.key == key) return h.value;
     }
     return "";
+}
+
+void RequestUrl::erase_header(const std::string &key) {
+    for (auto it = headers.begin(); it != headers.end(); ++it) {
+        if (it->key == key) {
+            headers.erase(it);
+            return;
+        }
+    }
 }
 
 std::string RequestUrl::get_param(const std::string& key) {

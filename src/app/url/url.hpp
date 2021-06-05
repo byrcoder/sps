@@ -40,6 +40,7 @@ class RequestUrl {
     virtual const char* get_method();
     virtual const char* get_ext();
 
+    virtual void erase_header(const std::string& key);
     std::string get_header(const std::string& key);
     std::string get_param(const std::string& key);
 
@@ -65,6 +66,13 @@ class RequestUrl {
 };
 
 typedef std::shared_ptr<RequestUrl> PRequestUrl;
+
+class Response {
+ public:
+    virtual ~Response() = default;
+};
+
+typedef std::shared_ptr<Response> PResponse;
 
 }
 

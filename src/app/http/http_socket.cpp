@@ -1,11 +1,11 @@
-#include <app/http/socket.hpp>
+#include <app/http/http_socket.hpp>
 
 #include <http_parser.h>
 
 #include <sstream>
 
-#include <app/http/parser.hpp>
-#include <log/logger.hpp>
+#include <app/http/http_parser.hpp>
+#include <log/log_logger.hpp>
 
 namespace sps {
 
@@ -39,14 +39,13 @@ error_t HttpResponseSocket::write_header() {
     for (auto& h : headers) {
         ss << h.key << ": " << h.value << CRCN;
     }
-
-    if (content_length == 0) {
-        ss << CRCN;
-    }
+    ss << CRCN;
 
     std::string http_header = ss.str();
 
     sent_header = true;
+
+    sp_info ("Http Rsp %s.", http_header.c_str());
 
     return Socket::write((void*) http_header.c_str(), http_header.size());
 }
@@ -65,6 +64,5 @@ error_t HttpResponseSocket::write(void *buf, size_t size) {
     }
     return ret;
 }
-
 
 }

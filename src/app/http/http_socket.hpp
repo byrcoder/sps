@@ -2,7 +2,7 @@
 #define SPS_PROTOCOL_HTTP_SOCKET_HPP
 
 #include <app/url/url.hpp>
-#include <net/socket.hpp>
+#include <net/net_socket.hpp>
 
 namespace sps {
 
@@ -11,7 +11,7 @@ class HttpResponseSocket : public Socket {
     HttpResponseSocket(PIReaderWriter rw, const std::string& ip, int port);
 
  public:
-    error_t init(int s_code, std::list<RequestHeader>* hd, int cl, bool ch);
+    error_t init(int s_code, std::list<RequestHeader>* hd, int content_len, bool chunked);
     error_t write_header();
     error_t write(void* buf, size_t size) override;
 

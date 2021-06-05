@@ -28,6 +28,10 @@ void* STCo::main_co(void* co) {
     return p;
 }
 
+error_t STCoFactory::init() {
+    return st_init();
+}
+
 PICo STCoFactory::_start(PICoHandler handler) const {
     auto co = std::make_shared<STCo>(handler);
     if (co->start() != SUCCESS) {

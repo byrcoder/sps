@@ -1,9 +1,9 @@
-#include <app/url/http.hpp>
+#include <app/url/url_http.hpp>
 
-#include <app/http/parser.hpp>
+#include <app/http/http_parser.hpp>
 
-#include <net/socket.hpp>
-#include <log/logger.hpp>
+#include <net/net_socket.hpp>
+#include <log/log_logger.hpp>
 #include <string>
 #include <sstream>
 
@@ -16,7 +16,9 @@ std::string http_request(const std::string& method, const std::string& url, cons
         << "Host: " << host << CRCN;
 
     if (headers) {
-        for (auto& h : *headers)  ss << h.key << ": " << h.value << CRCN;
+        for (auto& h : *headers)
+            if (h.key != "Host")
+                ss << h.key << ": " << h.value << CRCN;
     }
 
     ss << "Accept: */" << CRCN;
@@ -52,20 +54,42 @@ error_t HttpProtocol::open(PRequestUrl url, Transport tp) {
 
     HttpParser parser;
     if ((ret = parser.parse_header(socket, HttpType::RESPONSE)) <= 0) {
-        sp_error("Failed parser: %s, %d", req.c_str(), ret);
+        sp_error("Failed parser: %d", ret);
         return ret;
     }
 
-    auto resp = parser.get_response();
+    PHttpResponse http_rsp = rsp = parser.get_response();
 
-    if (resp->status_code != HTTP_STATUS_OK) {
-        sp_error("Failed get status_code:%s, %d", req.c_str(), resp->status_code);
-        return ERROR_ST_OPEN_SOCKET;
+    if (http_rsp->status_code != HTTP_STATUS_OK) {
+        sp_error("Failed Request %d, %s", http_rsp->status_code, req.c_str());
+        ret = ERROR_URL_RSP_NOT_INVALID;
+    } else {
+        ret = SUCCESS;
     }
 
     init(socket, ip, url->get_port());
 
-    return SUCCESS;
+    return ret;
+}
+
+error_t HttpProtocol::read(void *buf, size_t size, size_t& nr) {
+    if (eof()) {
+        return ERROR_URL_PROTOCOL_EOF;
+    }
+
+    nr = 0;
+    error_t ret = get_io()->read(buf, size, nr);
+    nread += nr;
+
+    return ret;
+}
+
+bool HttpProtocol::eof() {
+    return rsp->content_length <= nread;
+}
+
+PResponse HttpProtocol::response() {
+    return rsp;
 }
 
 HttpProtocolFactory::HttpProtocolFactory() : IUrlProtocolFactory("http", DEFAULT) {

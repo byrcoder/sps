@@ -1,8 +1,8 @@
-#include <net/memio.hpp>
+#include <net/net_memio.hpp>
 
 #include <string.h>
 #include <algorithm>
-#include <log/logger.hpp>
+#include <log/log_logger.hpp>
 
 namespace sps {
 

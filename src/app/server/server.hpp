@@ -5,7 +5,7 @@
 #include <set>
 
 #include <co/co.hpp>
-#include <net/socket.hpp>
+#include <net/net_socket.hpp>
 
 namespace sps {
 
@@ -57,6 +57,7 @@ class Server : public ICoHandler {
     PIServerSocket         server_socket;
     Transport              tran;
 };
+typedef std::shared_ptr<Server> PServer;
 
 }
 

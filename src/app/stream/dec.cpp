@@ -1,7 +1,7 @@
 #include <app/stream/dec.hpp>
 
 #include <app/stream/flvdec.hpp>
-#include <log/logger.hpp>
+#include <log/log_logger.hpp>
 
 namespace sps {
 

@@ -3,7 +3,7 @@
 
 #include <app/stream/msg.hpp>
 #include <app/stream/dec.hpp>
-#include <net/io.hpp>
+#include <net/net_io.hpp>
 #include <vector>
 
 namespace sps {

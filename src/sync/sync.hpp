@@ -6,9 +6,17 @@
 
 #include <public.h> // st
 #include <typedef.hpp>
-#include <log/logger.hpp>
+#include <log/log_logger.hpp>
+
+#define SLEEP_FOREVER -1
 
 namespace sps {
+
+class Sleep : public SingleInstance<Sleep> {
+ public:
+    int sleep(int seconds);
+    int usleep(utime_t tm);
+};
 
 class ICondition {
  public:
