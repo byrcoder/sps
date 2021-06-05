@@ -2,7 +2,7 @@
 #include <app/stream/msg.hpp>
 #include <app/url/url.hpp>
 
-#include <net/socket.hpp>
+#include <net/net_socket.hpp>
 
 namespace sps {
 

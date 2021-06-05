@@ -42,6 +42,9 @@ class ICoFactory {
     ICoFactory() = default;
 
  public:
+    virtual error_t init() = 0;
+
+ public:
     virtual PICo _start(PICoHandler handler) const = 0;
     error_t start(PICoHandler handler);
 

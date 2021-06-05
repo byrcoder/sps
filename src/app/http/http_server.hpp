@@ -2,7 +2,7 @@
 #define SPS_PROTOCOL_HTTP_SERVER_HPP
 
 #include <app/server/server.hpp>
-#include <net/socket.hpp>
+#include <net/net_socket.hpp>
 
 namespace sps {
 
