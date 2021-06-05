@@ -1,7 +1,6 @@
 #include <app/http/http_server.hpp>
 
 #include <app/http/http_phase_handler.hpp>
-#include <app/http/http_parser.hpp>
 #include <app/http/http_socket.hpp>
 
 #include <log/log_logger.hpp>
@@ -25,11 +24,11 @@ error_t HttpSocketHandler::handler() {
 }
 
 PISocketHandler HttpHandlerFactory::create(PSocket io) {
-    // PSocket http_socket = std::make_shared<HttpResponseSocket>(io, io->get_cip(), io->get_port());
     return std::make_shared<HttpSocketHandler>(io);
 }
 
-HttpServer::HttpServer(Transport transport) : Server(std::make_shared<HttpHandlerFactory>(), transport) {
+HttpServer::HttpServer(Transport transport) : Server(std::make_shared<HttpHandlerFactory>(),
+        transport) {
 }
 
 }
