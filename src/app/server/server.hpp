@@ -12,16 +12,8 @@ namespace sps {
 class ISocketHandler;
 typedef std::shared_ptr<ISocketHandler> PISocketHandler;
 
-class SocketManager {
- public:
-    static SocketManager& get_manage();
+class SocketManager : public Registers<SocketManager, PISocketHandler> {
 
- public:
-    int add(PISocketHandler h);
-    int remove(PISocketHandler h);
-
- private:
-    std::set<PISocketHandler> sockets;
 };
 
 class ISocketHandler: public ICoHandler, public std::enable_shared_from_this<ISocketHandler> {

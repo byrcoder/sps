@@ -2,11 +2,10 @@
 
 namespace sps {
 
-SpsPacket::SpsPacket(StreamProtocol protocol, PacketType packet,
-                     FrameType frame, const char* buf, int len) : CharBuffer(buf, len) {
-    this->protocol = protocol;
-    this->packet   = packet;
-    this->frame    = frame;
+SpsPacket::SpsPacket(const IAVInputFormat* fmt, PacketType pkt,
+        const char* buf, int len) : CharBuffer(buf, len) {
+    this->fmt = fmt;
+    this->pkt = pkt;
 }
 
 }

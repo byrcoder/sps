@@ -1,4 +1,4 @@
-#include <app/url.hpp>
+#include <app/url/url.hpp>
 
 #include <http_parser.h>
 
@@ -11,6 +11,11 @@ RequestHeader::RequestHeader() {}
 RequestHeader::RequestHeader(const std::string &key, const std::string &value) {
     this->key   = key;
     this->value = value;
+}
+
+error_t RequestUrl::from(const std::string &url, std::shared_ptr<RequestUrl> &req) {
+    req = std::make_shared<RequestUrl>();
+    return req->parse_url(url);
 }
 
 error_t RequestUrl::parse_url(const std::string& url) {
@@ -61,8 +66,20 @@ error_t RequestUrl::parse_url(const std::string& url) {
 
     } while(true);
 
-    sp_info("[%s] [%s:%d] [%s] [%s]",
-            schema.c_str(), host.c_str(), port, path.c_str(), params.c_str());
+    auto n = path.rfind(".");
+    if (n != std::string::npos) {
+        ext = path.substr(n+1);
+    }
+
+    if (method.empty()) {
+        method = "GET";
+    }
+
+    this->url = path + (params.empty() ? "" : "?" + params);
+
+    sp_info("[%s] [%s:%d] [%s] [.%s] [%s]",
+            schema.c_str(), host.c_str(), port, path.c_str(), ext.c_str(), params.c_str());
+
 
     return SUCCESS;
 }
@@ -95,6 +112,10 @@ const char* RequestUrl::get_method() {
     return method.c_str();
 }
 
+const char * RequestUrl::get_ext() {
+    return ext.c_str();
+}
+
 std::string RequestUrl::get_header(const std::string& key) {
     for (auto& h : headers) {
         if (h.key == key) return h.value;
@@ -107,6 +128,14 @@ std::string RequestUrl::get_param(const std::string& key) {
         if (h.key == key) return h.value;
     }
     return "";
+}
+
+utime_t RequestUrl::get_timeout() {
+    return tm;
+}
+
+std::string RequestUrl::get_ip() {
+    return ip;
 }
 
 }

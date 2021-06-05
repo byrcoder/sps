@@ -1,6 +1,7 @@
 #include <net/socket.hpp>
 
 #include <st/net/tcp.hpp>
+#include <log/logger.hpp>
 
 namespace sps {
 
@@ -10,6 +11,7 @@ PSocket ClientSocketFactory::create_ss(Transport transport, const std::string &i
         case Transport::TCP: {
             st_netfd_t fd;
             if ((ret = st_tcp_connect(ip, port, tm, &fd)) != SUCCESS) {
+                sp_error("Failed connect %s:%d, tm:%llu, ret:%d", ip.c_str(), port, tm, ret);
                 return nullptr;
             }
 
