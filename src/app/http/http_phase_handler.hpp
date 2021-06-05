@@ -29,35 +29,41 @@ struct HttpPhCtx {
  */
 class IHttpPhaseHandler {
  public:
-    virtual ~IHttpPhaseHandler() = default;
-
-    virtual const char* get_name() = 0;
+    explicit IHttpPhaseHandler(const char* name) : name(name) { }
+    virtual const char* get_name() { return name; }
 
  public:
     virtual error_t handler(HttpPhCtx& ctx) = 0;
+
+ private:
+    const char* name;
 };
 
 typedef std::shared_ptr<IHttpPhaseHandler> PIHttpPhaseHandler;
 
 class HttpParsePhaseHandler : public IHttpPhaseHandler {
  public:
-    error_t handler(HttpPhCtx& ctx) override;
+    HttpParsePhaseHandler();
 
-    const char* get_name() override;
+ public:
+    error_t handler(HttpPhCtx& ctx) override;
 };
 
 class HttpProxyPhaseHandler : public IHttpPhaseHandler {
  public:
+    HttpProxyPhaseHandler();
+
+ public:
     error_t handler(HttpPhCtx& ctx) override;
 
-    const char* get_name() override;
 };
 
 class Http404PhaseHandler : public IHttpPhaseHandler, public Single<Http404PhaseHandler> {
  public:
-    error_t handler(HttpPhCtx& ctx) override;
+    Http404PhaseHandler();
 
-    const char* get_name() override;
+ public:
+    error_t handler(HttpPhCtx& ctx) override;
 };
 
 /**
