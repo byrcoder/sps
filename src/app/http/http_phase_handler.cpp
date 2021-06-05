@@ -11,6 +11,9 @@ HttpPhCtx::HttpPhCtx(PRequestUrl r, PSocket s) {
     socket   = std::move(s);
 }
 
+HttpParsePhaseHandler::HttpParsePhaseHandler() : IHttpPhaseHandler("http-parser-handler") {
+}
+
 error_t HttpParsePhaseHandler::handler(HttpPhCtx &ctx) {
     auto http_parser = std::make_shared<HttpParser>();
     error_t ret = SUCCESS;
@@ -27,8 +30,8 @@ error_t HttpParsePhaseHandler::handler(HttpPhCtx &ctx) {
     return SPS_HTTP_PHASE_CONTINUE;
 }
 
-const char * HttpParsePhaseHandler::get_name() {
-    return "http-parser-handler";
+HttpProxyPhaseHandler::HttpProxyPhaseHandler() : IHttpPhaseHandler("http-phase-proxy") {
+
 }
 
 error_t HttpProxyPhaseHandler::handler(HttpPhCtx &ctx) {
@@ -101,8 +104,8 @@ error_t HttpProxyPhaseHandler::handler(HttpPhCtx &ctx) {
     return (ret == ERROR_URL_PROTOCOL_EOF || ret == SUCCESS) ? SPS_HTTP_PHASE_SUCCESS_NO_CONTINUE : ret;
 }
 
-const char * HttpProxyPhaseHandler::get_name() {
-    return "http-phase-proxy";
+Http404PhaseHandler::Http404PhaseHandler() : IHttpPhaseHandler("http-404-handler") {
+
 }
 
 error_t Http404PhaseHandler::handler(HttpPhCtx& ctx) {
@@ -123,10 +126,6 @@ error_t Http404PhaseHandler::handler(HttpPhCtx& ctx) {
     return SPS_HTTP_PHASE_SUCCESS_NO_CONTINUE;
 }
 
-const char* Http404PhaseHandler::get_name() {
-    return "http-404-handler";
-}
-
 error_t HttpPhaseHandler::handler(HttpPhCtx& ctx) {
     error_t ret = SUCCESS;
 
@@ -140,7 +139,6 @@ error_t HttpPhaseHandler::handler(HttpPhCtx& ctx) {
         ret = f->handler(ctx);
         if (ret == SPS_HTTP_PHASE_SUCCESS_NO_CONTINUE) {
             sp_trace("Success %s handler", f->get_name());
-
             return ret;
         } else if (ret == SPS_HTTP_PHASE_CONTINUE) {
             continue;

@@ -1,5 +1,5 @@
-#ifndef SPS_PROTOCOL_HTTP_SOCKET_HPP
-#define SPS_PROTOCOL_HTTP_SOCKET_HPP
+#ifndef SPS_HTTP_SOCKET_HPP
+#define SPS_HTTP_SOCKET_HPP
 
 #include <app/url/url.hpp>
 #include <net/net_socket.hpp>
@@ -26,4 +26,4 @@ typedef std::shared_ptr<HttpResponseSocket> PHttpResponseSocket;
 
 }
 
-#endif  // SPS_PROTOCOL_HTTP_SOCKET_HPP
+#endif  // SPS_HTTP_SOCKET_HPP
