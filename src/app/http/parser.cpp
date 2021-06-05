@@ -107,6 +107,7 @@ int HttpParser::parse_header(PIReader io, HttpType ht) {
         if ((ret = io->read_fully(buf.get() + buf_read, state, nullptr)) != SUCCESS) {
             return ret > 0 ? -ret : ret;
         }
+        sp_info("read ret:%d", ret);
 
         buf_read += state;
 

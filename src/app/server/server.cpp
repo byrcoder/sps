@@ -3,28 +3,12 @@
 
 namespace sps {
 
-SocketManager& SocketManager::get_manage() {
-    static SocketManager manager;
-    return manager;
-}
-
-int SocketManager::add(PISocketHandler h) {
-    this->sockets.insert(h);
-    return SUCCESS;
-}
-
-int SocketManager::remove(PISocketHandler h) {
-    sp_info("remove handler h:%p, %lu", h.get(), sockets.size());
-    sockets.erase(h);
-    return SUCCESS;
-}
-
 ISocketHandler::ISocketHandler(PSocket io) {
     this->io = std::move(io);
 }
 
 void ISocketHandler::on_stop() {
-    SocketManager::get_manage().remove(shared_from_this());
+    SingleInstance<SocketManager>::get_instance().cancel(shared_from_this());
 }
 
 Server::Server(PISocketHandlerFactory f, Transport transport) {
@@ -49,7 +33,7 @@ error_t Server::accept() {
             continue;
         }
 
-        SocketManager::get_manage().add(h);
+        SingleInstance<SocketManager>::get_instance().reg(h);
     } while(true);
 
     return SUCCESS;

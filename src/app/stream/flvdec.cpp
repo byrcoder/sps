@@ -1,13 +1,17 @@
-#include <app/stream/flv.hpp>
+#include <app/stream/flvdec.hpp>
 #include <app/stream/msg.hpp>
+#include <app/url/url.hpp>
+
+#include <net/socket.hpp>
+
 namespace sps {
 
-Flv::Flv(PIReader rd) {
+FlvDecoder::FlvDecoder(PIReader rd) : buf(max_len, 0)  {
     this->rd = std::move(rd);
 }
 
-error_t Flv::read_header(char* buf) {
-    auto ret = rd->read_fully(buf, 9, nullptr);
+error_t FlvDecoder::read_header(PIBuffer &buffer) {
+    auto ret = rd->read_fully(&buf[0], 9, nullptr);
     if (ret != SUCCESS) {
         return ret;
     }
@@ -16,17 +20,23 @@ error_t Flv::read_header(char* buf) {
         return ERROR_PROTOCOL_FLV;
     }
 
+    buffer = std::make_shared<SpsPacket>(fmt,
+            PacketType::HEADER, &buf[0], 9);
     return ret;
 }
 
-error_t Flv::read_tag(char* buf, int len, int& nread) {
-    error_t ret = SUCCESS;
+error_t FlvDecoder::read_message(PIBuffer& buffer) {
+    const int flv_head_len = 15;
 
-    if (len < 15) {
+    error_t ret = SUCCESS;
+    int nread = 0;
+    int len = max_len;
+
+    if (len < flv_head_len) {
         return ERROR_PROTOCOL_FLV_BUFFER;
     }
 
-    char *pos = buf;
+    char *pos = &buf[0];
     // 4 + 1 + 3 + 3 + 1 + 3 = 15
     if ((ret = rd->read_fully(pos, 4)) != SUCCESS) {  // previous size
         return ret;
@@ -63,33 +73,34 @@ error_t Flv::read_tag(char* buf, int len, int& nread) {
         return ret;
     }
 
-    nread = 15 + data_len;
+    nread = flv_head_len + data_len;
+
+    buffer = std::make_shared<SpsPacket>(fmt,
+                                         PacketType::HEADER,
+                                         &buf[0], nread);
     return ret;
 }
 
-FlvProtocol::FlvProtocol(PIReader rd) : buf(max_len, 0)  {
-    flv = std::make_shared<Flv>(rd);
-}
-
-error_t FlvProtocol::read_header(PIBuffer &buffer) {
-    auto ret = flv->read_header(&buf[0]);
-    if (ret != SUCCESS) return ret;
-    buffer = std::make_shared<SpsPacket>(StreamProtocol::STREAM_FLV,
-            PacketType::PACKET_HEAD, FrameType::FRAME_UNKN, &buf[0], 9);
-    return ret;
-}
-
-error_t FlvProtocol::read_message(PIBuffer& buffer) {
-    int nread = 0;
-    auto ret = flv->read_tag(&buf[0], max_len, nread);
-    if (ret != SUCCESS) return ret;
-    buffer = std::make_shared<SpsPacket>(StreamProtocol::STREAM_FLV,
-                                         PacketType::PACKET_BODY, FrameType::FRAME_UNKN, &buf[0], nread);
-    return ret;
-}
-
-error_t FlvProtocol::read_tail(PIBuffer& buffer) {
+error_t FlvDecoder::read_tail(PIBuffer& buffer) {
     return SUCCESS;
+}
+
+error_t FlvDecoder::probe(PIBuffer &buffer) {
+    auto buf = buffer->buffer();
+    int  len = buffer->size();
+
+    if (len < 3 || buf[0] != 'F' || buf[1] != 'L' || buf[2] != 'V') {
+        return ERROR_PROTOCOL_FLV;
+    }
+    return SUCCESS;
+}
+
+FlvInputFormat::FlvInputFormat() :
+    IAVInputFormat("flv", "flv") {
+}
+
+PIAvDemuxer FlvInputFormat::create(PIURLProtocol p) {
+    return std::make_shared<FlvDecoder>(p);
 }
 
 }

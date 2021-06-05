@@ -1,37 +1,28 @@
 #include <app/upstream/upstream.hpp>
 
-#include <app/upstream/http_upstream.hpp>
+#include <app/url/protocol.hpp>
 
 namespace sps {
 
-IUpstream::IUpstream(PICacheStream cs, Protocol p) {
-    this->cs = cs;
-    this->p  = p;
+Upstream::Upstream(PICacheStream cs, PIAvDemuxer dec, PRequestUrl url) {
+    this->cs        = std::move(cs);
+    this->decoder   = std::move(dec);
+    this->url       = std::move(url);
+    SingleInstance<UpstreamContainer>::get_instance().reg(shared_from_this());
 }
 
-IUpstream::~IUpstream() {
+Upstream::~Upstream() {
+    on_stop();
     abort_request();
-    container->delete_upstream(shared_from_this());
 }
 
-void IUpstream::abort_request() {
+void Upstream::abort_request() {
     cs->close();
 }
 
-error_t IUpstream::open_url(const std::string &url, utime_t tm) {
-    auto    req = std::make_shared<RequestUrl>();
-    error_t ret = req->parse_url(url);
-
-    if (ret != SUCCESS) {
-        return ret;
-    }
-
-    return open_url(req, tm);
-}
-
-error_t IUpstream::handler() {
+error_t Upstream::handler() {
     PIBuffer header;
-    error_t ret = protocol->read_header(header);
+    error_t ret = decoder->read_header(header);
     if (ret != SUCCESS) {
         sp_error("Failed read head:%d", ret);
         return ret;
@@ -40,7 +31,7 @@ error_t IUpstream::handler() {
     cs->put(header);
     do {
         PIBuffer body;
-        if ((ret = protocol->read_message(body)) != SUCCESS) {
+        if ((ret = decoder->read_message(body)) != SUCCESS) {
             break;
         }
         cs->put(body);
@@ -52,7 +43,7 @@ error_t IUpstream::handler() {
     }
 
     PIBuffer tail;
-    if ((ret = protocol->read_tail(tail)) != SUCCESS) {
+    if ((ret = decoder->read_tail(tail)) != SUCCESS) {
         sp_error("Failed read tail:%d", ret);
         return ret;
     }
@@ -61,19 +52,29 @@ error_t IUpstream::handler() {
     return ret;
 }
 
-void IUpstream::on_stop() {
-
+void Upstream::on_stop() {
+    SingleInstance<UpstreamContainer>::get_instance().cancel(shared_from_this());
 }
 
-PICacheStream IUpstream::get_cs() {
+PICacheStream Upstream::get_cs() {
     return cs;
 }
 
 PIUpstream UpstreamFactory::create_upstream(PICacheStream cs, PRequestUrl url) {
-    if (url->schema == "http") {
-        return std::make_shared<HttpUpstream>(cs, Protocol::DETECTING);
+    auto p = SingleInstance<UrlProtocol>::get_instance().create(url);
+    if (!p) {
+        return nullptr;
     }
-    return nullptr;
+
+    if (p->open(url, DEFAULT) != SUCCESS) {
+        return nullptr;
+    }
+
+    auto decoder = SingleInstance<AvDemuxerFactory>::get_instance().create(p, url);
+    if (!decoder) {
+        return nullptr;
+    }
+    return std::make_shared<Upstream>(cs, decoder, url);
 }
 
 }

@@ -1,7 +1,7 @@
 #ifndef SPS_PROTOCOL_HTTP_SOCKET_HPP
 #define SPS_PROTOCOL_HTTP_SOCKET_HPP
 
-#include <app/url.hpp>
+#include <app/url/url.hpp>
 #include <net/socket.hpp>
 
 namespace sps {

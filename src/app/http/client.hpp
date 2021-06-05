@@ -9,7 +9,8 @@ namespace sps {
 
 using namespace std;
 
-class HttpClient {
+// 使用url protocol 替换
+__deprecated class HttpClient {
  public:
     virtual ~HttpClient() = default;
 
@@ -39,7 +40,7 @@ class HttpClient {
     static std::shared_ptr<HttpClient> create_http_create();
 };
 
-class StHttpClient : public HttpClient {
+__deprecated class StHttpClient : public HttpClient {
  public:
     error_t init_io() override;
 };
