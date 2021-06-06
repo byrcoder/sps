@@ -1,6 +1,10 @@
 #ifndef SPS_ERROR_HPP
 #define SPS_ERROR_HPP
 
+#define ERROR_CONFIG_OPT_SET              100
+#define ERROR_CONFIG_OPT_TYPE             101
+#define ERROR_CONFIG_FACTORY_DUP          102
+
 // tcp socket 操作错误吗 1000～1200 tcp错误
 #define ERROR_SOCKET_CREATE                 1000
 #define ERROR_SOCKET_SETREUSE               1001

@@ -54,6 +54,9 @@ class HttpProxyPhaseHandler : public IHttpPhaseHandler {
  public:
     error_t handler(HttpPhCtx& ctx) override;
 
+ private:
+    error_t create_proxy_request(HttpPhCtx& ctx, PRequestUrl& proxy_req);
+
 };
 
 class Http404PhaseHandler : public IHttpPhaseHandler, public Single<Http404PhaseHandler> {
