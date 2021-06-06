@@ -12,7 +12,6 @@
 #include <net/net_io.hpp>
 #include <app/url/url.hpp>
 
-#define HTTP_STATUS_UNKNOWN -400
 #define CRCN "\r\n"
 
 namespace sps {

@@ -40,9 +40,9 @@ error_t HttpProxyPhaseHandler::handler(HttpPhCtx &ctx) {
     auto    up    = upf.create(ctx.req);
 
     if (!up) {
-        sp_error("Failed create url protocol %s, %s.",
+        sp_error("Fatal create url protocol %s, %s.",
                 ctx.req->get_schema(), ctx.req->url.c_str());
-        return SPS_HTTP_PHASE_ERROR;
+        return ERROR_HTTP_UPSTREAM_NOT_FOUND;
     }
 
     HttpResponseSocket rsp(ctx.socket, ctx.ip, ctx.port);
@@ -58,7 +58,7 @@ error_t HttpProxyPhaseHandler::handler(HttpPhCtx &ctx) {
 
         if (nh == std::string::npos) {
             sp_error("Failed open url protocol %s.", proxy_req->url.c_str());
-            return ERROR_PROXY_PROTOCOL_HEADER_PARSE_FAILED;
+            return ERROR_HTTP_HEADER_PARSE;
         } else {
             proxy_req->host = path.substr(1, nh - 1);
             proxy_req->url =
@@ -74,7 +74,7 @@ error_t HttpProxyPhaseHandler::handler(HttpPhCtx &ctx) {
         proxy_req->url = path + (ctx.req->params.empty() ? "" : "?" + ctx.req->params);
     }
 
-    if ((ret = up->open(proxy_req)) != SUCCESS && ret != ERROR_URL_RSP_NOT_INVALID) {
+    if ((ret = up->open(proxy_req)) != SUCCESS && ret != ERROR_HTTP_RSP_NOT_OK) {
         sp_error("Failed open url protocol %s.", proxy_req->url.c_str());
         return ret;
     }
@@ -99,9 +99,9 @@ error_t HttpProxyPhaseHandler::handler(HttpPhCtx &ctx) {
         }
     }
 
-    sp_trace("Final response code:%d, ret:%d, eof:%d", http_rsp->status_code, ret, ret == ERROR_URL_PROTOCOL_EOF);
+    sp_trace("Final response code:%d, ret:%d, eof:%d", http_rsp->status_code, ret, ret == ERROR_HTTP_RES_EOF);
 
-    return (ret == ERROR_URL_PROTOCOL_EOF || ret == SUCCESS) ? SPS_HTTP_PHASE_SUCCESS_NO_CONTINUE : ret;
+    return (ret == ERROR_HTTP_RES_EOF || ret == SUCCESS) ? SPS_HTTP_PHASE_SUCCESS_NO_CONTINUE : ret;
 }
 
 Http404PhaseHandler::Http404PhaseHandler() : IHttpPhaseHandler("http-404-handler") {
@@ -115,7 +115,7 @@ error_t Http404PhaseHandler::handler(HttpPhCtx& ctx) {
 
     if (!http_socket) {
         sp_error("Fatal not http socket type(socket):%s", typeid(ctx.socket.get()).name());
-        return ERROR_SOCKET_CLOSED;
+        return ERROR_HTTP_SOCKET_CREATE;
     }
 
     http_socket->init(404, nullptr, 0, false);

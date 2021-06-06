@@ -31,7 +31,7 @@ bool MemoryReaderWriter::seekable() {
 error_t MemoryReaderWriter::read(void *buf, size_t size, size_t &nread) {
     nread = std::min ((int) size, (int) (len - pos));
     if (nread <= 0) {
-        return ERROR_MEM_IO_FAILED;
+        return ERROR_MEM_SOCKET_READ;
     }
 
     memcpy((char*) buf, this->buf + pos, nread);
@@ -43,7 +43,7 @@ error_t MemoryReaderWriter::read(void *buf, size_t size, size_t &nread) {
 error_t MemoryReaderWriter::read_fully(void *buf, size_t size, ssize_t *nread) {
     auto n = std::min ((int) size, (int) (len - pos));
     if (n < size || n == 0) {
-        return ERROR_MEM_IO_FAILED;
+        return ERROR_MEM_SOCKET_READ;
     }
 
     sp_info ("%s", buf);
@@ -66,7 +66,7 @@ utime_t MemoryReaderWriter::get_send_timeout() {
 error_t MemoryReaderWriter::write(void *buf, size_t size) {
     auto left = len - pos;
     if (left < size) {
-        return ERROR_MEM_IO_FAILED;
+        return ERROR_MEM_SOCKET_WRITE;
     }
 
     memcpy(this->buf + pos, buf, size);

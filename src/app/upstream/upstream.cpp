@@ -37,7 +37,7 @@ error_t Upstream::handler() {
         cs->put(body);
     } while(true);
 
-    if (ret != PROTOCOL_EOF) {
+    if (ret != ERROR_STREAM_EOF) {
         sp_error("Failed read body:%d", ret);
         return ret;
     }
