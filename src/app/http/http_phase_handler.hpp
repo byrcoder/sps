@@ -9,8 +9,6 @@
 #define SPS_HTTP_PHASE_CONTINUE 0
 #define SPS_HTTP_PHASE_SUCCESS_NO_CONTINUE 1
 
-#define SPS_HTTP_PHASE_ERROR  10
-
 namespace sps {
 
 struct HttpPhCtx {
