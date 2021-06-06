@@ -1,6 +1,7 @@
 #ifndef SPS_CONF_HPP
 #define SPS_CONF_HPP
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -37,12 +38,15 @@ class Config {
     Config() = default;
 
  public:
+    PConfigItem get_item(const char* name);
+
+ public:
     std::string              name;       // 树节点的名字，根目录为空，其他的如http server tls
     std::vector<PConfigItem> items;      // 树和子节点的名字
     std::vector<PConfig>     submodules; // submodule 可以继承上层items的特性
 };
 
-enum ConfOptionType {
+enum ConfigOptionType {
     CONF_OPT_TYPE_INT,
     CONF_OPT_TYPE_INT64,
     CONF_OPT_TYPE_DOUBLE,
@@ -51,11 +55,8 @@ enum ConfOptionType {
     CONF_OPT_TYPE_CSTRING, // c string
     CONF_OPT_TYPE_STRING,  // c++ string
     CONF_OPT_TYPE_UINT64,
-    CONF_OPT_TYPE_CONST,
     CONF_OPT_TYPE_BOOL,
 
-    CONF_OPT_TYPE_STRING_ARRAY, // vector
-    CONF_OPT_TYPE_STRING_DICT,  // map
     CONF_OPT_TYPE_SUBMODULE     // submodules
 };
 
@@ -72,7 +73,7 @@ struct ConfigOption {
      * value offset the object
      */
     int offset;
-    enum ConfOptionType type;
+    enum ConfigOptionType type;
 
     /**
      * the default value for scalar options
@@ -83,9 +84,32 @@ struct ConfigOption {
         const char *str;
     } default_val;
 
-    const char *unit;
+    error_t opt_set(void* obj, const char* val) const;
+};
 
-    error_t opt_set(void* obj, const char* val);
+// 实例化
+class IConfigInstant {
+ public:
+    virtual error_t set_opts(const ConfigOption* opts, PConfig value);
+};
+
+typedef std::shared_ptr<IConfigInstant> PConfInstant ;
+
+class IConfigInstantFactory {
+ public:
+    virtual ~IConfigInstantFactory() = default;
+    virtual PConfInstant create() = 0;
+};
+
+typedef std::shared_ptr<IConfigInstantFactory> PConfigFactory ;
+
+class ConfigFactoryRegister {
+ public:
+    error_t reg(const std::string& name, PConfigFactory factory);
+    PConfInstant create(const std::string& name);
+
+ private:
+    std::map<std::string, PConfigFactory> factories;
 };
 
 }

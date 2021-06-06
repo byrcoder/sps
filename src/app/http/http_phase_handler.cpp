@@ -35,23 +35,60 @@ HttpProxyPhaseHandler::HttpProxyPhaseHandler() : IHttpPhaseHandler("http-phase-p
 }
 
 error_t HttpProxyPhaseHandler::handler(HttpPhCtx &ctx) {
-    error_t ret   = SUCCESS;
-    auto&   upf   = SingleInstance<UrlProtocol>::get_instance();
-    auto    up    = upf.create(ctx.req);
+    error_t ret      = SUCCESS;
+    auto&   prot_f   = SingleInstance<UrlProtocol>::get_instance();
+    auto    prot     = prot_f.create(ctx.req);
+    HttpResponseSocket rsp(ctx.socket, ctx.ip, ctx.port);
+    PRequestUrl        proxy_req;
+    PHttpResponse      http_rsp = std::dynamic_pointer_cast<HttpResponse>(prot->response());
 
-    if (!up) {
+    rsp.set_send_timeout(10 * 1000 * 1000);
+    rsp.set_recv_timeout(10 * 1000 * 1000);
+
+    if ((ret = create_proxy_request(ctx, proxy_req)) != SUCCESS) {
+        return ret;
+    }
+
+    if (!prot) {
         sp_error("Fatal create url protocol %s, %s.",
                 ctx.req->get_schema(), ctx.req->url.c_str());
         return ERROR_HTTP_UPSTREAM_NOT_FOUND;
     }
 
-    HttpResponseSocket rsp(ctx.socket, ctx.ip, ctx.port);
+    if ((ret = prot->open(proxy_req)) != SUCCESS && ret != ERROR_HTTP_RSP_NOT_OK) {
+        sp_error("Failed open url protocol %s.", proxy_req->url.c_str());
+        return ret;
+    }
 
-    auto proxy_req  = std::make_shared<RequestUrl>();
-    *proxy_req      = *ctx.req;
+    rsp.init(http_rsp->status_code, &http_rsp->headers,
+             http_rsp->content_length, http_rsp->chunked);
+
+    sp_info("status: %d, %lu, %d.", http_rsp->status_code,
+             http_rsp->headers.size(), http_rsp->content_length);
+
+    char   buf[1024];
+    int    len  = sizeof(buf);
+    size_t nr   = 0;
+
+    while ((ret = prot->read(buf, len, nr)) == SUCCESS) {
+        ret = rsp.write(buf, nr);
+
+        if (ret != SUCCESS) {
+            sp_error("Failed write url protocol %d.", ret);
+            return ret;
+        }
+    }
+
+    sp_trace("Final response code:%d, ret:%d, eof:%d", http_rsp->status_code,
+              ret, ret == ERROR_HTTP_RES_EOF);
+
+    return (ret == ERROR_HTTP_RES_EOF || ret == SUCCESS) ? SPS_HTTP_PHASE_SUCCESS_NO_CONTINUE : ret;
+}
+
+error_t HttpProxyPhaseHandler::create_proxy_request(HttpPhCtx &ctx, PRequestUrl &proxy_req) {
+    proxy_req       = std::make_shared<RequestUrl>();
     auto path       = proxy_req->path;
-
-    proxy_req->erase_header("Referer");
+    *proxy_req      = *ctx.req; // copy req
 
     if (ctx.session_host.empty()) {
         auto nh = path.find_first_of('/', 1);
@@ -71,37 +108,9 @@ error_t HttpProxyPhaseHandler::handler(HttpPhCtx &ctx) {
         }
     } else {
         proxy_req->host = ctx.session_host;
-        proxy_req->url = path + (ctx.req->params.empty() ? "" : "?" + ctx.req->params);
+        proxy_req->url  = path + (ctx.req->params.empty() ? "" : "?" + ctx.req->params);
     }
-
-    if ((ret = up->open(proxy_req)) != SUCCESS && ret != ERROR_HTTP_RSP_NOT_OK) {
-        sp_error("Failed open url protocol %s.", proxy_req->url.c_str());
-        return ret;
-    }
-
-    PHttpResponse http_rsp = std::dynamic_pointer_cast<HttpResponse>(up->response());
-
-    rsp.init(http_rsp->status_code, &http_rsp->headers, http_rsp->content_length, http_rsp->chunked);
-    sp_info("status: %d, %lu, %d.", http_rsp->status_code, http_rsp->headers.size(), http_rsp->content_length);
-
-    char   buf[1024];
-    int    len  = sizeof(buf);
-    size_t nr   = 0;
-    rsp.set_send_timeout(10 * 1000 * 1000);
-    rsp.set_recv_timeout(10 * 1000 * 1000);
-
-    while ((ret = up->read(buf, len, nr)) == SUCCESS) {
-        ret = rsp.write(buf, nr);
-
-        if (ret != SUCCESS) {
-            sp_error("Failed write url protocol %d.", ret);
-            return ret;
-        }
-    }
-
-    sp_trace("Final response code:%d, ret:%d, eof:%d", http_rsp->status_code, ret, ret == ERROR_HTTP_RES_EOF);
-
-    return (ret == ERROR_HTTP_RES_EOF || ret == SUCCESS) ? SPS_HTTP_PHASE_SUCCESS_NO_CONTINUE : ret;
+    return SUCCESS;
 }
 
 Http404PhaseHandler::Http404PhaseHandler() : IHttpPhaseHandler("http-404-handler") {
