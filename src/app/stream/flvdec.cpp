@@ -17,7 +17,7 @@ error_t FlvDecoder::read_header(PIBuffer &buffer) {
     }
 
     if (buf[0] != 'F' || buf[1] != 'L' || buf[2] != 'V') {
-        return ERROR_PROTOCOL_FLV;
+        return ERROR_FLV_PROBE;
     }
 
     buffer = std::make_shared<SpsPacket>(fmt,
@@ -33,7 +33,7 @@ error_t FlvDecoder::read_message(PIBuffer& buffer) {
     int len = max_len;
 
     if (len < flv_head_len) {
-        return ERROR_PROTOCOL_FLV_BUFFER;
+        return ERROR_FLV_BUFFER_OVERFLOW;
     }
 
     char *pos = &buf[0];
@@ -90,7 +90,7 @@ error_t FlvDecoder::probe(PIBuffer &buffer) {
     int  len = buffer->size();
 
     if (len < 3 || buf[0] != 'F' || buf[1] != 'L' || buf[2] != 'V') {
-        return ERROR_PROTOCOL_FLV;
+        return ERROR_FLV_PROBE;
     }
     return SUCCESS;
 }

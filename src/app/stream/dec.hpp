@@ -10,8 +10,6 @@
 #include <list>
 #include <app/url/url_protocol.hpp>
 
-#define PROTOCOL_EOF 2000
-
 namespace sps {
 
 class IAVInputFormat;

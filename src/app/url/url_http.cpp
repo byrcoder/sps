@@ -40,7 +40,7 @@ error_t HttpProtocol::open(PRequestUrl url, Transport tp) {
     if (!socket) {
         sp_error("Failed connect %s:%d, %d",
                  url->get_ip().c_str(), url->get_port(), p);
-        return ERROR_ST_OPEN_SOCKET;
+        return ERROR_HTTP_SOCKET_CONNECT;
     }
 
     auto req = http_request(url->method, url->url, url->host, "", &url->headers);
@@ -62,7 +62,7 @@ error_t HttpProtocol::open(PRequestUrl url, Transport tp) {
 
     if (http_rsp->status_code != HTTP_STATUS_OK) {
         sp_error("Failed Request %d, %s", http_rsp->status_code, req.c_str());
-        ret = ERROR_URL_RSP_NOT_INVALID;
+        ret = ERROR_HTTP_RSP_NOT_OK;
     } else {
         ret = SUCCESS;
     }
@@ -74,7 +74,7 @@ error_t HttpProtocol::open(PRequestUrl url, Transport tp) {
 
 error_t HttpProtocol::read(void *buf, size_t size, size_t& nr) {
     if (eof()) {
-        return ERROR_URL_PROTOCOL_EOF;
+        return ERROR_HTTP_RES_EOF;
     }
 
     nr = 0;
