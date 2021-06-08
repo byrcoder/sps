@@ -23,8 +23,10 @@ GTEST_TEST(URL_REQUEST, CREATE) {
 
     char buf[1024] = { 0 };
     size_t nread = 0;
-    EXPECT_TRUE(p->read(buf, 1023, nread) == SUCCESS);
+    auto ret = p->read(buf, 1023, nread);
+    EXPECT_TRUE(ret == SUCCESS);
 
+    if (ret != SUCCESS) return;
     sp_info("%s.", buf);
 }
 

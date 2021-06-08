@@ -60,8 +60,8 @@ GTEST_TEST(CACHE, CREATE) {
     }
 }
 
-int main(int argc, char **argv) {
-    testing::InitGoogleTest(&argc, argv);
-    st_init();
-    return RUN_ALL_TESTS();
-}
+//int main(int argc, char **argv) {
+//    testing::InitGoogleTest(&argc, argv);
+//    st_init();
+//    return RUN_ALL_TESTS();
+//}
