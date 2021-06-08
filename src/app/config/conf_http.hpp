@@ -24,15 +24,23 @@ const ConfigOption[] upstream_options = {
 };
 #undef OFFSET(x)
 
-#ifndef OFFSET(x)
-class ConfLocation {
+class ConfLocation : public IConfigInstant {
  public:
-
+    string pattern;    // 匹配模式或者路径
+    string proxy_pass; // 代理路径
 };
+
+#define OFFSET(x) offsetof(ConfLocation, x)
+const ConfigOption[] location_options = {
+        {"pattern",        "location name",    OFFSET(pattern),    CONF_OPT_TYPE_STRING, { .str = "/" }, },
+        {"proxy_pass",     "proxy pass",       OFFSET(proxy_pass),  CONF_OPT_TYPE_STRING, { .str = "" }, },
+        {nullptr }
+};
+#undef OFFSET(x)
 
 class ConfServer {
  public:
-    int       listen_port;
+    int       listen_port;   //
     string    server_name;   // host
 };
 
