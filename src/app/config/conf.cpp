@@ -4,15 +4,8 @@
 
 namespace sps {
 
-ConfigItem::ConfigItem(std::string name, std::string args):
-    name(std::move(name)), args(std::move(args)) {
-}
-
-PConfigItem Config::get_item(const char *name) {
-    for (auto& item : items) {
-        if (item->name == name) return item;
-    }
-    return nullptr;
+error_t FileReader::read_line(const std::string &name, const std::string arg, LineType &type) {
+    return SUCCESS;
 }
 
 error_t ConfigOption::opt_set(void *obj, const char *val) const {
@@ -50,6 +43,7 @@ error_t ConfigOption::opt_set(void *obj, const char *val) const {
             memcpy(dst, val, sizeof(bool));
             break;
         case CONF_OPT_TYPE_SUBMODULE:
+
         default:
             return ERROR_CONFIG_OPT_TYPE;
     }
@@ -57,15 +51,17 @@ error_t ConfigOption::opt_set(void *obj, const char *val) const {
     return SUCCESS;
 }
 
-error_t IConfigInstant::set_opts(const ConfigOption *opts,  PConfig value) {
+IConfigInstant::IConfigInstant(bool is_root) {
+    this->is_root = is_root;
+}
+
+error_t IConfigInstant::set_default(const ConfigOption* opts) {
     error_t ret = SUCCESS;
     void*   obj = (void*) this;
 
     for (int i = 0;  (opts[i].name); ++i) {
-        auto  opt        = opts+i;
-        auto  conf       = value->get_item(opt->name);
-        const char* val  = conf ? conf->args.c_str() : opt->default_val.str;
-
+        auto  opt        =  opts+i;
+        const char* val  =  opt->default_val.str;
         if ((ret = opt->opt_set(obj, val)) != SUCCESS) {
             sp_error("failed set opt ret:%d", ret);
             return ret;
@@ -75,13 +71,72 @@ error_t IConfigInstant::set_opts(const ConfigOption *opts,  PConfig value) {
     return ret;
 }
 
+error_t IConfigInstant::set_opts(const ConfigOption *opts,  PFileReader rd, int &line) {
+    error_t ret = SUCCESS;
+    void*   obj = (void*) this;
+
+    std::string name;
+    std::string arg;
+    LineType    line_type = is_root ? ROOT_START : SUBMODULE_START; // 模块刚启动
+
+    if ((ret = set_default(opts)) != SUCCESS) {
+        return ret;
+    }
+
+    while ((ret = rd->read_line(name, arg, line_type)) == SUCCESS) {
+        ++line;
+        int i = 0;
+
+        if (line_type == SUBMODULE_END || line_type == ROOT_END) {
+            break;
+        }
+
+        while (opts[i].name && name != opts[i].name) ++i;
+
+        if (!opts[i].name) {
+            sp_error("skip line:%d, %s %s", line, name.c_str(), arg.c_str());
+            continue;
+        }
+        switch (line_type) {
+            case ITEM:
+                if (opts[i].type == CONF_OPT_TYPE_SUBMODULE) {
+                    sp_error("item expect line:%d, %s %s", line, name.c_str(), arg.c_str());
+                    return ERROR_CONFIG_PARSE_INVALID;
+                }
+            case SUBMODULE_START:
+                if (opts[i].type != CONF_OPT_TYPE_SUBMODULE) {
+                    sp_error("submodule expect line:%d, %s %s", line, name.c_str(), arg.c_str());
+                    return ERROR_CONFIG_PARSE_INVALID;
+                }
+            default:
+                sp_error("submodule expect line:%d, %s %s", line, name.c_str(), arg.c_str());
+                exit(-1); // illegal be here
+        }
+    }
+
+    if (ret != SUCCESS) {
+        return ret;
+    }
+
+    if ((is_root && line_type == ROOT_END) || (!is_root && line_type == SUBMODULE_END)) {
+        return SUCCESS;
+    }
+
+    sp_error("unexpected end line:%d, %s %s", line, name.c_str(), arg.c_str());
+    return ERROR_CONFIG_PARSE_INVALID;
+}
+
+PConfInstant IConfigInstant::create_submodule(const std::string &name) {
+    return nullptr;
+}
+
 error_t ConfigFactoryRegister::reg(const std::string &name, PConfigFactory factory) {
     if (factories.count(name)) {
         sp_error("dup factory name:%s", name.c_str());
         return ERROR_CONFIG_FACTORY_DUP;
     }
 
-    factories[name] = factory;
+    factories[name] = std::move(factory);
     return SUCCESS;
 }
 
