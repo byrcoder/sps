@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(sps)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 
 set(CMAKE_CXX_COMPILER g++)
 set(CMAKE_C_COMPILER gcc)
@@ -144,73 +144,28 @@ TARGET_LINK_LIBRARIES(sps
 
 if(ENABLE_UNITTESTS)
 
-    add_executable(test_co
+    add_executable(test_all
             ${SRC_LIST}
             ${HEAD_LIST}
-            ${PROJECT_SOURCE_DIR}/src/test/test_co.cpp)
-
-    add_executable(test_http
-            ${SRC_LIST}
-            ${HEAD_LIST}
-            ${PROJECT_SOURCE_DIR}/src/test/test_http.cpp)
-
-    add_executable(test_cache
-            ${SRC_LIST}
-            ${HEAD_LIST}
-            ${PROJECT_SOURCE_DIR}/src/test/test_cache.cpp)
-
-    add_executable(test_url
-            ${SRC_LIST}
-            ${HEAD_LIST}
+            ${PROJECT_SOURCE_DIR}/src/test/test_cache.cpp
+            ${PROJECT_SOURCE_DIR}/src/test/test_co.cpp
+            ${PROJECT_SOURCE_DIR}/src/test/test_http.cpp
             ${PROJECT_SOURCE_DIR}/src/test/test_url.cpp)
 
-    TARGET_LINK_LIBRARIES(test_co
+
+    TARGET_LINK_LIBRARIES(test_all
             libgtest.a
             srt
             libst.a
             libhttp_parser.a
             )
 
-    TARGET_LINK_LIBRARIES(test_http
-            libgtest.a
-            srt
-            libst.a
-            libhttp_parser.a
-            )
-
-    TARGET_LINK_LIBRARIES(test_cache
-            libgtest.a
-            srt
-            libst.a
-            libhttp_parser.a
-            )
-
-    TARGET_LINK_LIBRARIES(test_url
-            libgtest.a
-            srt
-            libst.a
-            libhttp_parser.a
-            )
-
-    add_test(
-            NAME
-            test_co
-            COMMAND
-            ${CMAKE_BINARY_DIR}/test_co
-    )
-
-    add_test(
-            NAME
-            test_http
-            COMMAND
-            ${CMAKE_BINARY_DIR}/test_http
-    )
 
     add_test(
             NAME
             test_cache
             COMMAND
-            ${CMAKE_BINARY_DIR}/test_http
+            ${CMAKE_BINARY_DIR}/test_all
     )
 
     enable_testing()
