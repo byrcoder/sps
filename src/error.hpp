@@ -4,7 +4,7 @@
 #define ERROR_CONFIG_EOF                  90
 #define ERROR_CONFIG_ITEM                 91
 #define ERROR_CONFIG_SUBMODULE            92
-#define ERROR_CONFIG_PARSE_INVALID    93
+#define ERROR_CONFIG_PARSE_INVALID        93
 
 #define ERROR_CONFIG_OPT_SET              100
 #define ERROR_CONFIG_OPT_TYPE             101
@@ -37,7 +37,11 @@
 #define ERROR_SRT_SOCKET_BIND               1310
 #define ERROR_SRT_SOCKET_LISTEN             1311
 #define ERROR_SRT_SOCKET_UNKNOWN            1320
-#define ERROR_NOT_SUPPORT_SRT_FAST_OPEN     1321
+#define ERROR_SRT_NOT_SUPPORT_FAST_OPEN     1321
+
+#define ERROR_FILE_OPEN                     1350
+#define ERROR_IO_EOF                        1351
+#define ERROR_FILE_READ                     1352
 
 // DNS 等解析错误
 #define ERROR_SYSTEM_IP_INVALID             1500

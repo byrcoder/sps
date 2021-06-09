@@ -51,7 +51,7 @@ enum ConfigOptionType {
     CONF_OPT_TYPE_SUBMODULE     // submodules
 };
 
-class IConfigInstant;
+class ConfigInstant;
 // work as AVOption
 struct ConfigOption {
     const char *name;
@@ -79,19 +79,31 @@ struct ConfigOption {
     error_t opt_set(void* obj, const char* val) const;
 };
 
-class IConfigInstant;
-typedef std::shared_ptr<IConfigInstant> PConfInstant;
-// 实例化
-class IConfigInstant {
- public:
-    IConfigInstant(bool is_root = false);
- public:
-    virtual error_t set_opts(const ConfigOption* opts, PFileReader rd, int &line);
-    virtual error_t set_default(const ConfigOption* opts);
-    virtual PConfInstant create_submodule(const std::string& name);
+class ConfigInstant;
+typedef std::shared_ptr<ConfigInstant> PConfInstant;
 
- private:
-    bool is_root;
+struct ConfigObject {
+};
+
+typedef std::unique_ptr<ConfigObject> PConfigObject;
+
+// 实例化
+class ConfigInstant {
+ public:
+    ConfigInstant(PConfigObject obj,
+                  const ConfigOption opts[],
+                  bool is_root = false);
+
+ public:
+    virtual error_t set_default();
+    virtual error_t set_opts(PIReader rd, int &line);
+    virtual error_t parse(const std::string& line, std::string& name, std::string& arg, LineType& lt);
+
+ public:
+    PConfigObject       obj;
+    const ConfigOption* opts;
+    bool                is_root;
+
 };
 
 class IConfigInstantFactory {

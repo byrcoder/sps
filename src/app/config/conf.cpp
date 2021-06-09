@@ -51,18 +51,19 @@ error_t ConfigOption::opt_set(void *obj, const char *val) const {
     return SUCCESS;
 }
 
-IConfigInstant::IConfigInstant(bool is_root) {
+ConfigInstant::ConfigInstant(PConfigObject obj, const ConfigOption* opts, bool is_root) {
     this->is_root = is_root;
+    this->opts    = opts;
+    this->obj     = std::move(obj);
 }
 
-error_t IConfigInstant::set_default(const ConfigOption* opts) {
+error_t ConfigInstant::set_default() {
     error_t ret = SUCCESS;
-    void*   obj = (void*) this;
 
     for (int i = 0;  (opts[i].name); ++i) {
         auto  opt        =  opts+i;
         const char* val  =  opt->default_val.str;
-        if ((ret = opt->opt_set(obj, val)) != SUCCESS) {
+        if ((ret = opt->opt_set(obj.get(), val)) != SUCCESS) {
             sp_error("failed set opt ret:%d", ret);
             return ret;
         }
@@ -71,19 +72,19 @@ error_t IConfigInstant::set_default(const ConfigOption* opts) {
     return ret;
 }
 
-error_t IConfigInstant::set_opts(const ConfigOption *opts,  PFileReader rd, int &line) {
+error_t ConfigInstant::set_opts(PIReader rd, int &line) {
     error_t ret = SUCCESS;
-    void*   obj = (void*) this;
 
+    std::string strline;
     std::string name;
     std::string arg;
     LineType    line_type = is_root ? ROOT_START : SUBMODULE_START; // 模块刚启动
 
-    if ((ret = set_default(opts)) != SUCCESS) {
+    if ((ret = set_default()) != SUCCESS) {
         return ret;
     }
 
-    while ((ret = rd->read_line(name, arg, line_type)) == SUCCESS) {
+    while ((ret = rd->read_line(strline)) == SUCCESS && (ret = parse(strline, name, arg, line_type)) == SUCCESS) {
         ++line;
         int i = 0;
 
@@ -103,16 +104,20 @@ error_t IConfigInstant::set_opts(const ConfigOption *opts,  PFileReader rd, int 
                     sp_error("item expect line:%d, %s %s", line, name.c_str(), arg.c_str());
                     return ERROR_CONFIG_PARSE_INVALID;
                 }
+                opts[i].opt_set(obj.get(), arg.c_str());
+                break;
             case SUBMODULE_START:
                 if (opts[i].type != CONF_OPT_TYPE_SUBMODULE) {
                     sp_error("submodule expect line:%d, %s %s", line, name.c_str(), arg.c_str());
                     return ERROR_CONFIG_PARSE_INVALID;
                 }
+                break;
             default:
                 sp_error("submodule expect line:%d, %s %s", line, name.c_str(), arg.c_str());
                 exit(-1); // illegal be here
         }
     }
+
 
     if (ret != SUCCESS) {
         return ret;
@@ -126,8 +131,8 @@ error_t IConfigInstant::set_opts(const ConfigOption *opts,  PFileReader rd, int 
     return ERROR_CONFIG_PARSE_INVALID;
 }
 
-PConfInstant IConfigInstant::create_submodule(const std::string &name) {
-    return nullptr;
+error_t ConfigInstant::parse(const std::string &line, std::string &name, std::string &arg, LineType &lt) {
+    return SUCCESS;
 }
 
 error_t ConfigFactoryRegister::reg(const std::string &name, PConfigFactory factory) {

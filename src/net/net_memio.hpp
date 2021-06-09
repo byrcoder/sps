@@ -20,6 +20,7 @@ class MemoryReaderWriter : public IReaderWriter {
 
     error_t read_fully(void* buf, size_t size, ssize_t* nread) override;
     error_t read(void* buf, size_t size, size_t& nread) override;
+    error_t read_line(std::string &line) override;
 
  public:
     void set_send_timeout(utime_t tm) override;

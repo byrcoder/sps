@@ -2,6 +2,7 @@
 
 #include <string.h>
 #include <algorithm>
+#include <string>
 #include <log/log_logger.hpp>
 
 namespace sps {
@@ -31,7 +32,7 @@ bool MemoryReaderWriter::seekable() {
 error_t MemoryReaderWriter::read(void *buf, size_t size, size_t &nread) {
     nread = std::min ((int) size, (int) (len - pos));
     if (nread <= 0) {
-        return ERROR_MEM_SOCKET_READ;
+        return ERROR_IO_EOF;
     }
 
     memcpy((char*) buf, this->buf + pos, nread);
@@ -40,10 +41,25 @@ error_t MemoryReaderWriter::read(void *buf, size_t size, size_t &nread) {
     return SUCCESS;
 }
 
+error_t MemoryReaderWriter::read_line(std::string &line) {
+    if (pos >= len) {
+        return ERROR_IO_EOF;
+    }
+
+    uint32_t start = pos;
+
+    while (pos < len && buf[pos++] != '\n') {
+        ++pos;
+    }
+
+    line = std::string(buf + start, pos - start);
+    return SUCCESS;
+}
+
 error_t MemoryReaderWriter::read_fully(void *buf, size_t size, ssize_t *nread) {
     auto n = std::min ((int) size, (int) (len - pos));
     if (n < size || n == 0) {
-        return ERROR_MEM_SOCKET_READ;
+        return ERROR_IO_EOF;
     }
 
     sp_info ("%s", buf);
