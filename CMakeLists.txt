@@ -150,7 +150,9 @@ if(ENABLE_UNITTESTS)
             ${PROJECT_SOURCE_DIR}/src/test/test_cache.cpp
             ${PROJECT_SOURCE_DIR}/src/test/test_co.cpp
             ${PROJECT_SOURCE_DIR}/src/test/test_http.cpp
-            ${PROJECT_SOURCE_DIR}/src/test/test_url.cpp)
+            ${PROJECT_SOURCE_DIR}/src/test/test_config.cpp
+            ${PROJECT_SOURCE_DIR}/src/test/test_url.cpp
+            )
 
 
     TARGET_LINK_LIBRARIES(test_all
