@@ -1,7 +1,6 @@
 #ifndef SPS_ERROR_HPP
 #define SPS_ERROR_HPP
 
-#define ERROR_CONFIG_EOF                  90
 #define ERROR_CONFIG_ITEM                 91
 #define ERROR_CONFIG_SUBMODULE            92
 #define ERROR_CONFIG_PARSE_INVALID        93
