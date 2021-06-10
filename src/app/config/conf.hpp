@@ -71,12 +71,10 @@ struct ConfigOption {
      * the default value for scalar options
      */
     union {
-        int64_t i64;
-        double dbl;
         const char *str;
     } default_val;
 
-    error_t opt_set(void* obj, const char* val) const;
+    error_t opt_set(void* obj, const char* val, int len) const;
 };
 
 class ConfigInstant;
@@ -85,21 +83,22 @@ typedef std::shared_ptr<ConfigInstant> PConfInstant;
 struct ConfigObject {
 };
 
-typedef std::unique_ptr<ConfigObject> PConfigObject;
+typedef std::shared_ptr<ConfigObject> PConfigObject;
 
 // 实例化
 class ConfigInstant {
  public:
-    ConfigInstant(PConfigObject obj,
+    ConfigInstant(const char* name, PConfigObject obj,
                   const ConfigOption opts[],
                   bool is_root = false);
 
  public:
     virtual error_t set_default();
     virtual error_t set_opts(PIReader rd, int &line);
-    virtual error_t parse(const std::string& line, std::string& name, std::string& arg, LineType& lt);
+    virtual error_t parse(const std::string& line, std::string& cmd, std::string& arg, LineType& lt);
 
  public:
+    const char*         name;
     PConfigObject       obj;
     const ConfigOption* opts;
     bool                is_root;

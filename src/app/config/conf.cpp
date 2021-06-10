@@ -1,5 +1,9 @@
 #include <app/config/conf.hpp>
+
+#include <cstdlib>
 #include <utility>
+#include <sstream>
+
 #include <log/log_logger.hpp>
 
 namespace sps {
@@ -8,7 +12,7 @@ error_t FileReader::read_line(const std::string &name, const std::string arg, Li
     return SUCCESS;
 }
 
-error_t ConfigOption::opt_set(void *obj, const char *val) const {
+error_t ConfigOption::opt_set(void *obj, const char *val, int len) const {
     if (!obj) {
         sp_error("set opt empty");
         return ERROR_CONFIG_OPT_SET;
@@ -17,27 +21,51 @@ error_t ConfigOption::opt_set(void *obj, const char *val) const {
     uint8_t *dst = ((uint8_t *) obj) + offset;
 
     switch (type) {
-        case CONF_OPT_TYPE_INT:
-            memcpy(dst, val, sizeof(int));
+        case CONF_OPT_TYPE_INT: {
+            int num = len > 0 ? atoi(val) : 0;
+            memcpy(dst, (void*) &num, sizeof(num));
+
+            sp_debug("set int { %s->%d } success", name, num);
+
             break;
+        }
         case CONF_OPT_TYPE_INT64:
-        case CONF_OPT_TYPE_UINT64:
-            memcpy(dst, val, sizeof(int64_t));
+        case CONF_OPT_TYPE_UINT64: {
+            int64_t num = len > 0 ? atoll(val) : 0;
+            memcpy(dst, (void*) &num, sizeof(num));
+
+            sp_debug("set uint64 { %s->%lld } success", name, num);
+
             break;
-        case CONF_OPT_TYPE_DOUBLE:
-            memcpy(dst, val, sizeof(double));
+        }
+        case CONF_OPT_TYPE_DOUBLE: {
+            double num = len > 0 ? atof(val) : 0;
+            memcpy(dst, (void*) &num, sizeof(num));
+
+            sp_debug("set double { %s->%f } success", name, num);
+
             break;
-        case CONF_OPT_TYPE_FLOAT:
-            memcpy(dst, val, sizeof(float));
+        }
+        case CONF_OPT_TYPE_FLOAT:{
+            float num = len > 0 ? atof(val) : 0;
+            memcpy(dst, (void*) &num, sizeof(num));
+
+            sp_debug("set float { %s->%f } success", name, num);
+
             break;
+        }
         case CONF_OPT_TYPE_CSTRING: {
             size_t len = strlen(val) + 1;
             *((char **) dst) = new char[len];
             memcpy(*(char **) dst, val, len);
+
+            // sp_debug("set cstring { %s->%s } success", name, val);
         }
             break;
         case CONF_OPT_TYPE_STRING:
             *((std::string*) dst) = val;
+
+            // sp_debug("set string { %s->%s } success", name, val);
             break;
         case CONF_OPT_TYPE_BOOL:
             memcpy(dst, val, sizeof(bool));
@@ -51,7 +79,8 @@ error_t ConfigOption::opt_set(void *obj, const char *val) const {
     return SUCCESS;
 }
 
-ConfigInstant::ConfigInstant(PConfigObject obj, const ConfigOption* opts, bool is_root) {
+ConfigInstant::ConfigInstant(const char* name, PConfigObject obj, const ConfigOption* opts, bool is_root) {
+    this->name    = name;
     this->is_root = is_root;
     this->opts    = opts;
     this->obj     = std::move(obj);
@@ -63,10 +92,11 @@ error_t ConfigInstant::set_default() {
     for (int i = 0;  (opts[i].name); ++i) {
         auto  opt        =  opts+i;
         const char* val  =  opt->default_val.str;
-        if ((ret = opt->opt_set(obj.get(), val)) != SUCCESS) {
+        if ((ret = opt->opt_set(obj.get(), val, strlen(val))) != SUCCESS) {
             sp_error("failed set opt ret:%d", ret);
             return ret;
         }
+        sp_debug("set default %s { %s->%s } success", name, opt->name, val);
     }
 
     return ret;
@@ -85,6 +115,8 @@ error_t ConfigInstant::set_opts(PIReader rd, int &line) {
     }
 
     while ((ret = rd->read_line(strline)) == SUCCESS && (ret = parse(strline, name, arg, line_type)) == SUCCESS) {
+        sp_debug("%d. %s", line, strline.c_str());
+
         ++line;
         int i = 0;
 
@@ -95,7 +127,7 @@ error_t ConfigInstant::set_opts(PIReader rd, int &line) {
         while (opts[i].name && name != opts[i].name) ++i;
 
         if (!opts[i].name) {
-            sp_error("skip line:%d, %s %s", line, name.c_str(), arg.c_str());
+            // sp_error("skip line:%d, %s, %s, %s", line, strline.c_str(), name.c_str(), arg.c_str());
             continue;
         }
         switch (line_type) {
@@ -104,7 +136,10 @@ error_t ConfigInstant::set_opts(PIReader rd, int &line) {
                     sp_error("item expect line:%d, %s %s", line, name.c_str(), arg.c_str());
                     return ERROR_CONFIG_PARSE_INVALID;
                 }
-                opts[i].opt_set(obj.get(), arg.c_str());
+
+                opts[i].opt_set(obj.get(), arg.c_str(), arg.size());
+                // sp_debug("set %s { %s->%s } success", this->name, opts[i].name, arg.c_str());
+
                 break;
             case SUBMODULE_START:
                 if (opts[i].type != CONF_OPT_TYPE_SUBMODULE) {
@@ -116,10 +151,14 @@ error_t ConfigInstant::set_opts(PIReader rd, int &line) {
                 sp_error("submodule expect line:%d, %s %s", line, name.c_str(), arg.c_str());
                 exit(-1); // illegal be here
         }
+
+        arg = "";
+        name = "";
     }
 
 
-    if (ret != SUCCESS) {
+    if (ret != SUCCESS && ret != ERROR_IO_EOF) {
+        sp_error("Failed read line:%d, ret:%d", line, ret);
         return ret;
     }
 
@@ -131,7 +170,81 @@ error_t ConfigInstant::set_opts(PIReader rd, int &line) {
     return ERROR_CONFIG_PARSE_INVALID;
 }
 
-error_t ConfigInstant::parse(const std::string &line, std::string &name, std::string &arg, LineType &lt) {
+error_t ConfigInstant::parse(const std::string &line, std::string &cmd, std::string &arg, LineType &lt) {
+    std::stringstream ss;
+    ss.str(line);
+
+    std::vector<std::string> args;
+
+    bool found_end = false;
+
+    while (!ss.eof()) {
+        std::string tmp_arg;
+        ss >> tmp_arg;
+
+        if (!tmp_arg.empty()) {
+            args.push_back(tmp_arg);
+        } else if (found_end) {
+            sp_error("Fatal second end flag %s", line.c_str());
+            return ERROR_CONFIG_PARSE_INVALID;
+        } else {
+            if (tmp_arg[tmp_arg.size()-1] == ';' ||
+                    tmp_arg[tmp_arg.size()-1] == '{' ||
+                    tmp_arg[tmp_arg.size()-1] == '}') {
+                found_end = true;
+            }
+        }
+    }
+
+    if (args.empty()) {
+        return SUCCESS;
+    }
+
+    if (args.size() == 1) {
+        if (args[0] == "}") {
+            lt = SUBMODULE_END;
+            return SUCCESS;
+        } else {
+            sp_error("unknown line type %s.", line.c_str());
+            return ERROR_CONFIG_PARSE_INVALID;
+        }
+    }
+
+    cmd = args[0];
+    if (cmd == "{" || cmd == "}") {
+        sp_error("unknown cmd line type %s.", line.c_str());
+        return ERROR_CONFIG_PARSE_INVALID;
+    }
+
+    auto last_arg = args[args.size()-1];
+
+    if (last_arg[last_arg.size()-1] == ';') {
+        lt = ITEM;
+    } else if (last_arg[last_arg.size()-1] == '{') {
+        lt = SUBMODULE_START;
+    } else if (last_arg[last_arg.size()-1] == '}') {
+        lt = SUBMODULE_END;
+    } else {
+        sp_error("unknown line type :%s", line.c_str());
+        return ERROR_CONFIG_PARSE_INVALID;
+    }
+
+    for (int i = 1; i < args.size() - 1; ++i) {
+        if (arg.empty()) {
+            arg += args[i];
+        } else {
+            arg += " " + args[i];
+        }
+    }
+
+    if (lt != SUBMODULE_START && lt != SUBMODULE_END) {
+        if (*args.rbegin() != ";") {
+            arg += " " + args.rbegin()->substr(0, args.rbegin()->size()-1);
+        }
+    }
+
+    sp_debug("parse line %s->%s.", cmd.c_str(), arg.c_str());
+
     return SUCCESS;
 }
 

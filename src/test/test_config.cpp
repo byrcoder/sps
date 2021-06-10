@@ -8,9 +8,10 @@ using namespace sps;
 
 GTEST_TEST(CONFIG, UPSTREAM) {
 
-    std::string conf = "upstream u1 {\n"
+    std::string conf = "\n"
                            "    server 127.0.0.1:8080;\n"
                            "    keepalive 80;\n"
+                           "\n"
                            "}";
 
     UpstreamConfigInstantFactory factory;
