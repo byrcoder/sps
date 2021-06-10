@@ -49,10 +49,12 @@ error_t MemoryReaderWriter::read_line(std::string &line) {
     uint32_t start = pos;
 
     while (pos < len && buf[pos++] != '\n') {
-        ++pos;
     }
 
-    line = std::string(buf + start, pos - start);
+    int tlen = (pos < len) ? (pos-start-1) : (pos-start);
+
+    line = std::string(buf + start, tlen);
+
     return SUCCESS;
 }
 
