@@ -2,6 +2,7 @@
 #define SPS_TYPEDEF_HPP
 
 #include <list>
+#include <map>
 #include <set>
 
 #include <error.hpp>
@@ -58,7 +59,6 @@ class Registers : public Single<T> {
  public:
     void reg(const S& obj) {
         objs.insert(obj);
-
     }
 
     void cancel(const S& obj) {
@@ -72,8 +72,28 @@ class Registers : public Single<T> {
     std::set<S> objs;
 };
 
-template<class T, class S>
-class FifoRegisters : public Single<T> {
+template<class Key, class Object>
+class KeyRegisters : public Single<Key> {
+ public:
+    void reg(const Key& key, const Object& obj) {
+        objs[key] = obj;
+    }
+
+    void cancel(const Key& key) {
+        objs.erase(key);
+    }
+
+    Object* get(const Key& key) {
+        auto it = objs.find(key);
+        return it == objs.end() ? nullptr : &(it->second);
+    }
+
+ private:
+    std::map<Key, Object> objs;
+};
+
+template<class S>
+class FifoRegisters  {
  public:
     void reg(const S& obj) {
         objs.push_back(obj);

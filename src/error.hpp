@@ -1,9 +1,15 @@
 #ifndef SPS_ERROR_HPP
 #define SPS_ERROR_HPP
 
+#define ERROR_CONFIG_ITEM                 91
+#define ERROR_CONFIG_SUBMODULE            92
+#define ERROR_CONFIG_PARSE_INVALID        93
+
 #define ERROR_CONFIG_OPT_SET              100
 #define ERROR_CONFIG_OPT_TYPE             101
 #define ERROR_CONFIG_FACTORY_DUP          102
+
+#define ERROR_MODULE_TYPE_NOT_MATCH       200
 
 // tcp socket 操作错误吗 1000～1200 tcp错误
 #define ERROR_SOCKET_CREATE                 1000
@@ -32,7 +38,11 @@
 #define ERROR_SRT_SOCKET_BIND               1310
 #define ERROR_SRT_SOCKET_LISTEN             1311
 #define ERROR_SRT_SOCKET_UNKNOWN            1320
-#define ERROR_NOT_SUPPORT_SRT_FAST_OPEN     1321
+#define ERROR_SRT_NOT_SUPPORT_FAST_OPEN     1321
+
+#define ERROR_FILE_OPEN                     1350
+#define ERROR_IO_EOF                        1351
+#define ERROR_FILE_READ                     1352
 
 // DNS 等解析错误
 #define ERROR_SYSTEM_IP_INVALID             1500
@@ -50,6 +60,7 @@
 #define ERROR_HTTP_RES_EOF                  1705
 #define ERROR_HTTP_UPSTREAM_NOT_FOUND       1706
 
+#define ERROR_UPSTREAM_NOT_FOUND            1800
 
 // stream 协议
 #define ERROR_STREAM_EOF                    3000

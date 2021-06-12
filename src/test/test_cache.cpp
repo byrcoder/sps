@@ -59,9 +59,3 @@ GTEST_TEST(CACHE, CREATE) {
         sp_trace("message: %s.", std::string(l->buffer(), l->size()).c_str());
     }
 }
-
-//int main(int argc, char **argv) {
-//    testing::InitGoogleTest(&argc, argv);
-//    st_init();
-//    return RUN_ALL_TESTS();
-//}

@@ -7,14 +7,17 @@
 
 namespace sps {
 
-HttpSocketHandler::HttpSocketHandler(PSocket io) : ISocketHandler(std::move(io)) { }
+HttpSocketHandler::HttpSocketHandler(PSocket io, PHttpPhaseHandler& handler) :
+    ISocketHandler(std::move(io)), hd(handler) {
+
+}
 
 error_t HttpSocketHandler::handler() {
     HttpPhCtx ctx(nullptr, io);
     do {
         error_t ret = SUCCESS;
 
-        if ((ret = SingleInstance<HttpPhaseHandler>::get_instance().handler(ctx)) != SUCCESS) {
+        if ((ret = hd->handler(ctx)) != SUCCESS) {
             return ret;
         }
         sp_trace("Success handler ret %d", ret);
@@ -23,11 +26,16 @@ error_t HttpSocketHandler::handler() {
     return SUCCESS;
 }
 
-PISocketHandler HttpHandlerFactory::create(PSocket io) {
-    return std::make_shared<HttpSocketHandler>(io);
+HttpHandlerFactory::HttpHandlerFactory(PHttpPhaseHandler hd) {
+    handler = std::move(hd);
 }
 
-HttpServer::HttpServer(Transport transport) : Server(std::make_shared<HttpHandlerFactory>(),
+PISocketHandler HttpHandlerFactory::create(PSocket io) {
+    return std::make_shared<HttpSocketHandler>(io, handler);
+}
+
+HttpServer::HttpServer(PHttpPhaseHandler handler, Transport transport) :
+    Server(std::make_shared<HttpHandlerFactory>(std::move(handler)),
         transport) {
 }
 
