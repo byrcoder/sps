@@ -15,7 +15,7 @@ struct HostConfCtx : public ConfCtx {
 static const ConfigOption host_options[] = {
         { "hostname",  "hostname",   OFFSET(hostname), CONF_OPT_TYPE_STRING, {.str = "unknown hostname"} },
         { "pass_proxy","pass_proxy", OFFSET(pass_proxy), CONF_OPT_TYPE_STRING, {.str = "unknown pass_proxy"} },
-        { "pass_url", "pass_url",    OFFSET(pass_proxy), CONF_OPT_TYPE_STRING, {.str = "unknown pass url"} },
+        { "pass_url", "pass_url",    OFFSET(pass_url), CONF_OPT_TYPE_STRING, {.str = "unknown pass url"} },
         { nullptr }
 };
 #undef OFFSET

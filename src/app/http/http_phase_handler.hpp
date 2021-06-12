@@ -3,6 +3,8 @@
 
 #include <app/url/url.hpp>
 #include <app/http/http_parser.hpp>
+#include <app/server/conf_server.hpp>
+
 #include <net/net_socket.hpp>
 
 
@@ -47,16 +49,20 @@ class HttpParsePhaseHandler : public IHttpPhaseHandler {
     error_t handler(HttpPhCtx& ctx) override;
 };
 
-class HttpProxyPhaseHandler : public IHttpPhaseHandler {
+class HttpRouterPhaseHandler : public IHttpPhaseHandler {
  public:
-    HttpProxyPhaseHandler();
+    explicit HttpRouterPhaseHandler(PServerModule ctx);
 
  public:
     error_t handler(HttpPhCtx& ctx) override;
 
  private:
-    error_t create_proxy_request(HttpPhCtx& ctx, PRequestUrl& proxy_req);
+    PHostModule find_host_ctx(HttpPhCtx& ctx);
 
+    error_t do_handler(PHostModule& host_ctx, HttpPhCtx& ctx);
+
+ private:
+    PServerModule server_ctx;
 };
 
 class Http404PhaseHandler : public IHttpPhaseHandler, public Single<Http404PhaseHandler> {
@@ -70,13 +76,15 @@ class Http404PhaseHandler : public IHttpPhaseHandler, public Single<Http404Phase
 /**
  * work as nginx
  */
-class HttpPhaseHandler : public FifoRegisters<HttpPhaseHandler, PIHttpPhaseHandler> {
+class HttpPhaseHandler : public FifoRegisters<PIHttpPhaseHandler> {
  public:
     error_t handler(HttpPhCtx& ctx);
 
  public:
     HttpPhaseHandler();
 };
+
+typedef std::shared_ptr<HttpPhaseHandler> PHttpPhaseHandler;
 
 }
 

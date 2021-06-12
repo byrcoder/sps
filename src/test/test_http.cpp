@@ -37,9 +37,3 @@ GTEST_TEST(HTTP_REQUEST, CREATE) {
     // EXPECT_TRUE(x == len);
     EXPECT_TRUE(y == (strstr(buf, "--") - buf));
 }
-
-//int main(int argc, char **argv) {
-//    testing::InitGoogleTest(&argc, argv);
-//    st_init();
-//    return RUN_ALL_TESTS();
-//}

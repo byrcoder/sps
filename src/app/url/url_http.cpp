@@ -30,16 +30,16 @@ std::string http_request(const std::string& method, const std::string& url, cons
 
 // TODO: FIX ME
 error_t HttpProtocol::open(PRequestUrl url, Transport tp) {
-    error_t   ret   = SUCCESS;
-    auto      ip    = url->get_ip().empty() ? url->get_host() : url->get_host();
-    Transport p     = (tp == Transport::DEFAULT ? Transport::TCP : tp);
+    error_t        ret   = SUCCESS;
+    std::string    ip    = (url->get_ip().empty()) ? (url->get_host()) : (url->get_ip());
+    Transport      p     = (tp == Transport::DEFAULT ? Transport::TCP : tp);
 
     auto socket = SingleInstance<ClientSocketFactory>::get_instance().create_ss(
                     p, ip, url->get_port(), url->get_timeout());
 
     if (!socket) {
         sp_error("Failed connect %s:%d, %d",
-                 url->get_ip().c_str(), url->get_port(), p);
+                 ip.c_str(), url->get_port(), p);
         return ERROR_HTTP_SOCKET_CONNECT;
     }
 
@@ -60,16 +60,9 @@ error_t HttpProtocol::open(PRequestUrl url, Transport tp) {
 
     PHttpResponse http_rsp = rsp = parser.get_response();
 
-    if (http_rsp->status_code != HTTP_STATUS_OK) {
-        sp_error("Failed Request %d, %s", http_rsp->status_code, req.c_str());
-        ret = ERROR_HTTP_RSP_NOT_OK;
-    } else {
-        ret = SUCCESS;
-    }
-
     init(socket, ip, url->get_port());
 
-    return ret;
+    return SUCCESS;
 }
 
 error_t HttpProtocol::read(void *buf, size_t size, size_t& nr) {

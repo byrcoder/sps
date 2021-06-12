@@ -33,7 +33,7 @@ class ServerModule : public IModule {
 
     error_t post_sub_module(PIModule sub) override;
 
- private:
+ public:
     std::map<std::string, PHostModule> hosts;
 };
 
