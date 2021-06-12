@@ -60,6 +60,7 @@
 #define ERROR_HTTP_RES_EOF                  1705
 #define ERROR_HTTP_UPSTREAM_NOT_FOUND       1706
 
+#define ERROR_UPSTREAM_NOT_FOUND            1800
 
 // stream 协议
 #define ERROR_STREAM_EOF                    3000

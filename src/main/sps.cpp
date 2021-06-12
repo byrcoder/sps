@@ -5,6 +5,9 @@
 #include <app/http/http_phase_handler.hpp>
 #include <app/http/http_server.hpp>
 
+#include <app/server/conf_server.hpp>
+
+
 #include <app/url/url_protocol.hpp>
 #include <app/url/url_http.hpp>
 
@@ -22,7 +25,7 @@
 extern sps::PIModuleFactory modules[];
 
 std::vector<sps::PServer> servers;
-sps::PIModule core_module;
+sps::PCoreModule core_module;
 
 error_t init_co() {
     return sps::ICoFactory::get_instance().init();
@@ -51,8 +54,8 @@ error_t init_config(const char* filename) {
     error_t ret  = SUCCESS;
     auto    fr   = std::make_shared<sps::FileReader>(filename);
 
-    core_module = SingleInstance<sps::ModuleFactoryRegister>::get_instance()
-            .create("core", "",  nullptr);
+    core_module = std::dynamic_pointer_cast<sps::CoreModule>(SingleInstance<sps::ModuleFactoryRegister>::get_instance()
+            .create("core", "",  nullptr));
 
     if ((ret = fr->initialize()) != SUCCESS) {
         sp_error("Failed open file %s", filename);
@@ -67,23 +70,34 @@ error_t init_config(const char* filename) {
     return SUCCESS;
 }
 
-error_t init_http() {
-    auto& hp = SingleInstance<sps::HttpPhaseHandler>::get_instance();
+error_t run_http_server() {
+    error_t ret = SUCCESS;
+    for (auto& http : core_module->http_modules) {
+        for (auto& server : http->server_modules) {
+            auto server_conf = std::static_pointer_cast<sps::ServerConfCtx>(server->conf);
+            auto hp          = std::make_shared<sps::HttpPhaseHandler>();
 
-    hp.reg(std::make_shared<sps::HttpParsePhaseHandler>());
-    hp.reg(std::make_shared<sps::HttpProxyPhaseHandler>());
-    // hp.reg(std::make_shared<sps::Http404PhaseHandler>());
+            hp->reg(std::make_shared<sps::HttpParsePhaseHandler>());
+            hp->reg(std::make_shared<sps::HttpRouterPhaseHandler>(server));
 
-    auto http_server = std::make_shared<sps::HttpServer>();
-    if (http_server->listen("127.0.0.1", 8000) != SUCCESS) {
-        sp_error("Failed http listen");
-        return 0;
+            auto http_server = std::make_shared<sps::HttpServer>(hp);
+
+            if (http_server->listen("", server_conf->listen_port) != SUCCESS) {
+                sp_error("Failed http listen :%d", server_conf->listen_port);
+                return 0;
+            }
+            sp_info("success http server listen %d", server_conf->listen_port);
+            servers.push_back(http_server);
+
+            ret = sps::ICoFactory::get_instance().start(http_server);
+            if (ret != SUCCESS) {
+                sp_error("Failed start http server ret:%d", ret);
+                return ret;
+            }
+        }
     }
 
-    sp_error("Success http server listen");
-    servers.push_back(http_server);
-
-    return sps::ICoFactory::get_instance().start(http_server);
+    return ret;
 }
 
 error_t init() {
@@ -99,7 +113,13 @@ error_t init() {
         return ret;
     }
 
-    if ((ret = init_http()) != SUCCESS) {
+    return ret;
+}
+
+error_t run_servers() {
+    error_t ret = SUCCESS;
+
+    if ((ret = run_http_server()) != SUCCESS) {
         sp_error("Failed start http server ret:%d", ret);
         return ret;
     }
@@ -124,6 +144,10 @@ int main(int argc, char* argv[]) {
     ret = init();
 
     if (ret != SUCCESS) {
+        return ret;
+    }
+
+    if ((ret = run_servers()) != SUCCESS) {
         return ret;
     }
 

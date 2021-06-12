@@ -92,8 +92,8 @@ class KeyRegisters : public Single<Key> {
     std::map<Key, Object> objs;
 };
 
-template<class T, class S>
-class FifoRegisters : public Single<T> {
+template<class S>
+class FifoRegisters  {
  public:
     void reg(const S& obj) {
         objs.push_back(obj);
