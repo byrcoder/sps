@@ -9,6 +9,7 @@ namespace sps {
 
 MemoryReaderWriter::MemoryReaderWriter(char* buf, int len) {
     init(buf, len);
+    line_num = 0;
 }
 
 void MemoryReaderWriter::init(char *buf, int len) {
@@ -55,7 +56,13 @@ error_t MemoryReaderWriter::read_line(std::string &line) {
 
     line = std::string(buf + start, tlen);
 
+    ++line_num;
+
     return SUCCESS;
+}
+
+int MemoryReaderWriter::cur_line_num() {
+    return line_num;
 }
 
 error_t MemoryReaderWriter::read_fully(void *buf, size_t size, ssize_t *nread) {
