@@ -34,10 +34,13 @@ class FileReader : public IReader {
 
     error_t read_line(std::string& line) override;
 
+    int     cur_line_num() override;
+
  private:
     std::string filename;
     bool inited;
     std::ifstream fh;
+    int line_num;
 
 };
 
