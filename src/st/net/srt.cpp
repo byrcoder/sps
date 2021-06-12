@@ -185,11 +185,11 @@ error_t st_srt_connect(SRTSOCKET fd, const std::string& server, int port,
     if (zero_req != nullptr && zero_req_len > 0) {
 #ifndef  SRT_ZERO_RRT_ENABLED
         sp_error("[st_srt_connect] not support 0rrt, req must be null");
-        return ERROR_NOT_SUPPORT_SRT_FAST_OPEN;
+        return ERROR_SRT_NOT_SUPPORT_FAST_OPEN;
 #endif
         if (!one_or_zero_rtt) {
             sp_error("[st_srt_connect] support 0rrt but config not set one_or_zero_rtt");
-            return ERROR_NOT_SUPPORT_SRT_FAST_OPEN;
+            return ERROR_SRT_NOT_SUPPORT_FAST_OPEN;
         }
     }
 

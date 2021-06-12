@@ -150,7 +150,17 @@ if(ENABLE_UNITTESTS)
             ${PROJECT_SOURCE_DIR}/src/test/test_cache.cpp
             ${PROJECT_SOURCE_DIR}/src/test/test_co.cpp
             ${PROJECT_SOURCE_DIR}/src/test/test_http.cpp
-            ${PROJECT_SOURCE_DIR}/src/test/test_url.cpp)
+            ${PROJECT_SOURCE_DIR}/src/test/test_config.cpp
+            ${PROJECT_SOURCE_DIR}/src/test/test_url.cpp
+            ${PROJECT_SOURCE_DIR}/src/test/test_main.cpp
+            )
+
+    add_executable(test_tmp
+            ${SRC_LIST}
+            ${HEAD_LIST}
+            ${PROJECT_SOURCE_DIR}/src/test/test_config.cpp
+            ${PROJECT_SOURCE_DIR}/src/test/test_main.cpp
+            )
 
 
     TARGET_LINK_LIBRARIES(test_all
@@ -160,12 +170,25 @@ if(ENABLE_UNITTESTS)
             libhttp_parser.a
             )
 
+    TARGET_LINK_LIBRARIES(test_tmp
+            libgtest.a
+            srt
+            libst.a
+            libhttp_parser.a
+            )
 
     add_test(
             NAME
-            test_cache
+            test_all
             COMMAND
             ${CMAKE_BINARY_DIR}/test_all
+    )
+
+    add_test(
+            NAME
+            test_tmp
+            COMMAND
+            ${CMAKE_BINARY_DIR}/test_tmp
     )
 
     enable_testing()
