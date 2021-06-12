@@ -4,6 +4,7 @@ namespace sps {
 
 FileReader::FileReader(const std::string &filename) {
     this->filename = filename;
+    line_num       = 0;
 }
 
 FileReader::~FileReader() {
@@ -44,6 +45,7 @@ error_t FileReader::read(void *buf, size_t size, size_t &nread) {
 
 error_t FileReader::read_line(std::string &line) {
     if (getline(fh, line)) {
+        ++line_num;
         return SUCCESS;
     }
 
@@ -52,6 +54,10 @@ error_t FileReader::read_line(std::string &line) {
     }
 
     return ERROR_FILE_READ;
+}
+
+int FileReader::cur_line_num() {
+    return line_num;
 }
 
 }

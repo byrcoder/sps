@@ -1,8 +1,10 @@
 #include <gtest/gtest.h>
 
-#include <app/config/conf_upstream.hpp>
+#include <app/upstream/conf_upstream.hpp>
 
 #include <net/net_memio.hpp>
+
+#include <log/log_logger.hpp>
 
 using namespace sps;
 
@@ -14,15 +16,25 @@ GTEST_TEST(CONFIG, UPSTREAM) {
                            "\n"
                            "}";
 
-    UpstreamConfigInstantFactory factory;
-    ConfUpstream upstream;
+    UpStreamModuleFactory factory;
 
-    auto instant = factory.create();
+    auto module = factory.create("upstream", "x1", nullptr);
 
     auto rd = std::make_shared<MemoryReaderWriter>((char*)conf.c_str(), conf.size());
 
     int line = 0;
 
-    EXPECT_TRUE(instant->set_opts(rd, line) == SUCCESS);
+    EXPECT_TRUE(module->init_conf(rd) == SUCCESS);
 
+    const ConfCtx* vconf = module->conf.get();
+
+    const UpStreamConfCtx* up = static_cast<const UpStreamConfCtx*>(vconf);
+
+    EXPECT_TRUE(up != nullptr);
+
+    EXPECT_TRUE(up->server == "127.0.0.1:8080");
+
+    EXPECT_TRUE(up->keepalive == 80);
+
+    sp_info("%s, %d", up->server.c_str(), up->keepalive);
 }
