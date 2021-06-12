@@ -3,25 +3,33 @@
 
 #include <app/server/server.hpp>
 #include <net/net_socket.hpp>
+#include "http_phase_handler.hpp"
 
 namespace sps {
 
 class HttpSocketHandler : public ISocketHandler {
  public:
-    explicit HttpSocketHandler(PSocket io);
+    explicit HttpSocketHandler(PSocket io, PHttpPhaseHandler& handler);
 
  public:
-    error_t handler() override ;
+    error_t handler() override;
+
+ public:
+    PHttpPhaseHandler& hd;
 };
 
 class HttpHandlerFactory : public ISocketHandlerFactory {
  public:
+    explicit HttpHandlerFactory(PHttpPhaseHandler hd);
     PISocketHandler create(PSocket io) override;
+
+ private:
+    PHttpPhaseHandler handler;
 };
 
 class HttpServer : public Server {
  public:
-    explicit HttpServer(Transport transport = Transport::TCP);
+    explicit HttpServer(PHttpPhaseHandler handler, Transport transport = Transport::TCP);
 };
 
 }

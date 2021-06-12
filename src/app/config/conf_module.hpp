@@ -51,7 +51,7 @@ typedef std::shared_ptr<IModule> PIModule;
   public:
     std::string            module_type;
     std::string            module_name;
-    PConfCtx             conf;
+    PConfCtx               conf;
     const ConfigOption*    opts;
     PIModule               parent;
 };

@@ -34,6 +34,8 @@ class CoreModule : public IModule {
     std::list<PUpStreamModule>  upstream_modules;
 };
 
+typedef std::shared_ptr<CoreModule> PCoreModule;
+
 MODULE_FACTORY(Core)
 
 }
