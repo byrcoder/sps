@@ -23,6 +23,10 @@ class IReader {
      * 尽量读数据
      */
     virtual error_t read(void* buf, size_t size, size_t& nread) = 0;
+
+    virtual error_t read_line(std::string& line) { throw "not impl"; }
+
+    virtual error_t cur_line_num()  { return 0; }
 };
 
 class IWriter {

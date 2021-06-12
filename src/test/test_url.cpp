@@ -11,30 +11,24 @@ extern "C" {
 #include <public.h>
 }
 
-auto& protocols = SingleInstance<sps::UrlProtocol>::get_instance();
 
 GTEST_TEST(URL_REQUEST, CREATE) {
+    auto& protocols = SingleInstance<sps::UrlProtocol>::get_instance();
     const std::string url = "http://www.baidu.com/?a=b&c=2";
     auto p = protocols.create(url);
 
+    error_t ret = SUCCESS;
     EXPECT_TRUE(p != nullptr);
 
-    EXPECT_TRUE(p->open(url, sps::DEFAULT) == SUCCESS);
+    if (!p) return;
+    EXPECT_TRUE((ret = p->open(url, sps::DEFAULT)) == SUCCESS);
+    if (ret != SUCCESS) return;
 
     char buf[1024] = { 0 };
     size_t nread = 0;
-    auto ret = p->read(buf, 1023, nread);
+    ret = p->read(buf, 1023, nread);
     EXPECT_TRUE(ret == SUCCESS);
 
     if (ret != SUCCESS) return;
     sp_info("%s.", buf);
-}
-
-int main(int argc, char **argv) {
-    protocols.reg(
-            std::make_shared<sps::HttpProtocolFactory>()
-            );
-    testing::InitGoogleTest(&argc, argv);
-    st_init();
-    return RUN_ALL_TESTS();
 }
