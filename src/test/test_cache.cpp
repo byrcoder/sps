@@ -1,7 +1,7 @@
-#include <cache/cache.hpp>
-#include <cache/buffer.hpp>
-#include <sync/sync.hpp>
-#include <log/log_logger.hpp>
+#include <cache/sps_cache.hpp>
+#include <cache/sps_cache_buffer.hpp>
+#include <sync/sps_sync.hpp>
+#include <log/sps_log.hpp>
 
 #include <string>
 #include <list>

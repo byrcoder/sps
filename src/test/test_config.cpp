@@ -1,10 +1,10 @@
 #include <gtest/gtest.h>
 
-#include <app/upstream/conf_upstream.hpp>
+#include <app/upstream/sps_upstream_config.hpp>
 
-#include <net/net_memio.hpp>
+#include <net/sps_net_memio.hpp>
 
-#include <log/log_logger.hpp>
+#include <log/sps_log.hpp>
 
 using namespace sps;
 

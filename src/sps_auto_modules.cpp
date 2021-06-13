@@ -1,15 +1,15 @@
 #ifndef SPS_AUTO_MODULES_HPP
 #define SPS_AUTO_MODULES_HPP
 
-#include <app/config/conf_core.hpp>
-#include <app/config/conf_host.hpp>
-#include <app/config/conf_loc.hpp>
+#include <app/core/sps_core_config.hpp>
+#include <app/config/sps_config_host.hpp>
+#include <app/config/sps_config_loc.hpp>
 
-#include <app/http/conf_http.hpp>
+#include <app/http/sps_http_config.hpp>
 
-#include <app/server/conf_server.hpp>
+#include <app/server/sps_server_config.hpp>
 
-#include <app/upstream/conf_upstream.hpp>
+#include <app/upstream/sps_upstream_config.hpp>
 
 #define MODULE_INSTANCE(NAME) (std::make_shared<sps::NAME##ModuleFactory>())
 
