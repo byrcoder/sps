@@ -184,7 +184,7 @@ StTcpSocket::StTcpSocket(st_netfd_t stfd) {
 }
 
 StTcpSocket::~StTcpSocket() {
-    sp_trace("tcp socket close, fd:%d", st_tcp_fd(stfd));
+    sp_debug("tcp socket close, fd:%d", st_tcp_fd(stfd));
     st_tcp_close(stfd);
 }
 
@@ -286,13 +286,14 @@ error_t StServerSocket::listen(std::string sip, int sport, bool reuse_sport, int
     error_t ret = st_tcp_listen(sip, sport, back_log, server_fd, reuse_sport);
 
     if (ret != SUCCESS) {
-        sp_error("Failed Listen %s:%d, %d, %s", sip.c_str(), sport, back_log, reuse_sport ? "true" : "false");
+        sp_error("failed listen %s:%d, %d, %s", sip.c_str(), sport, back_log, reuse_sport ? "true" : "false");
         return ret;
     }
-    sp_trace("Success Listen %s:%d, %d, %s", sip.c_str(), sport, back_log, reuse_sport ? "true" : "false");
+    sp_trace("success listen %s:%d, backlog: %d, reuse: %u", sip.c_str(), sport, back_log, reuse_sport);
 
     this->backlog    = back_log;
     this->reuse_port = reuse_sport;
+    this->port       = sport;
 
     return ret;
 }
@@ -309,7 +310,8 @@ PSocket StServerSocket::accept() {
         buf[0] = '\0'; // 防止内存写乱
     }
 
-    sp_trace("Accept client:%s, cfd:%d, from %s:%d", std::string(buf, INET6_ADDRSTRLEN).c_str(),
+    sp_trace("accept client %s:%u, cfd:%d, from %s:%d", std::string(buf, INET6_ADDRSTRLEN).c_str(),
+             ntohs(addr.sin_port),
              st_tcp_fd(cfd), ip.c_str(), port);
 
     auto io = std::make_shared<StTcpSocket>(cfd);

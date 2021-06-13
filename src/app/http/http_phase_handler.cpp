@@ -18,14 +18,15 @@ error_t HttpParsePhaseHandler::handler(HttpPhCtx &ctx) {
     auto http_parser = std::make_shared<HttpParser>();
     error_t ret = SUCCESS;
 
-    sp_trace("Request Http Parse");
+    sp_debug("Request Http Parse");
 
     if ((ret = http_parser->parse_header(ctx.socket, HttpType::REQUEST)) <= SUCCESS) {
+        sp_error("failed get http request ret:%d", ret);
         return ret;
     }
 
     ctx.req = http_parser->get_request();
-    sp_trace("Request %s, %s, %s", ctx.req->host.c_str(), ctx.req->url.c_str(), ctx.req->params.c_str());
+    sp_trace("request info %s, %s", ctx.req->host.c_str(), ctx.req->url.c_str());
 
     return SPS_HTTP_PHASE_CONTINUE;
 }
@@ -46,8 +47,22 @@ error_t HttpRouterPhaseHandler::handler(HttpPhCtx &ctx) {
 }
 
 PHostModule HttpRouterPhaseHandler::find_host_ctx(HttpPhCtx& ctx) {
-    auto it = this->server_ctx->hosts.find(ctx.req->host);
-    return it == this->server_ctx->hosts.end() ? nullptr : it->second;
+    auto it = server_ctx->exact_hosts.find(ctx.req->host);
+    if (it != server_ctx->exact_hosts.end()) {
+        return it->second;
+    }
+
+    if (server_ctx->wildcard_hosts.empty()) {
+        return server_ctx->default_host;
+    }
+
+    auto wild_host = ServerModule::get_wildcard_host(ctx.req->host);
+    it = server_ctx->wildcard_hosts.find(wild_host);
+    if (it !=  server_ctx->wildcard_hosts.end()) {
+        return it->second;
+    }
+
+    return server_ctx->default_host;
 }
 
 error_t HttpRouterPhaseHandler::do_handler(PHostModule& host_ctx, HttpPhCtx &ctx) {
@@ -89,7 +104,7 @@ error_t HttpRouterPhaseHandler::do_handler(PHostModule& host_ctx, HttpPhCtx &ctx
                 http_rsp->headers.size(), http_rsp->content_length, ret);
         return ret;
     }
-    sp_info("write head status: %d, %lu, %d.", http_rsp->status_code,
+    sp_debug("write head status %d, %lu, %d.", http_rsp->status_code,
              http_rsp->headers.size(), http_rsp->content_length);
 
     char   buf[1024];
@@ -105,7 +120,7 @@ error_t HttpRouterPhaseHandler::do_handler(PHostModule& host_ctx, HttpPhCtx &ctx
         }
     }
 
-    sp_trace("Final response code:%d, ret:%ld, eof:%d", http_rsp->status_code,
+    sp_trace("final response code:%d, ret:%ld, eof:%d", http_rsp->status_code,
               ret, ret == ERROR_HTTP_RES_EOF);
 
     return (ret == ERROR_HTTP_RES_EOF || ret == SUCCESS) ? SPS_HTTP_PHASE_SUCCESS_NO_CONTINUE : ret;
@@ -145,12 +160,12 @@ error_t HttpPhaseHandler::handler(HttpPhCtx& ctx) {
     for (auto& f : filters) {
         ret = f->handler(ctx);
         if (ret == SPS_HTTP_PHASE_SUCCESS_NO_CONTINUE) {
-            sp_trace("Success %s handler", f->get_name());
-            return ret;
+            sp_debug("success %s handler", f->get_name());
+            return SUCCESS;
         } else if (ret == SPS_HTTP_PHASE_CONTINUE) {
             continue;
         } else {
-            sp_error("Failed %s handler ret:%d", f->get_name(), ret);
+            sp_error("failed handler ret:%d", ret);
             return ret;
         }
     }

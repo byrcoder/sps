@@ -26,7 +26,7 @@ error_t Server::accept() {
         auto io = server_socket->accept();
         auto h  = factory->create(io);
 
-        sp_info("Success accept new client");
+        sp_debug("success accept new client");
 
         if (ICoFactory::get_instance().start(h) != SUCCESS) {
             sp_error("Failed start handler");

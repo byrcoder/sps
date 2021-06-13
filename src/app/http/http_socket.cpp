@@ -26,8 +26,10 @@ error_t HttpResponseSocket::init(int s_code, std::list<RequestHeader> *hd,
 }
 
 error_t HttpResponseSocket::write_header() {
+    error_t  ret           = SUCCESS;
+    bool     content_sent  = false;
+
     std::stringstream  ss;
-    bool content_sent  = false;
     ss << "HTTP/1.1 " << status_code << " " << http_status_str(
             static_cast<http_status>(status_code)) << CRCN
        << "Server: sps" << CRCN;
@@ -50,9 +52,10 @@ error_t HttpResponseSocket::write_header() {
 
     sent_header = true;
 
-    sp_info ("Http Rsp %s.", http_header.c_str());
+    ret = Socket::write((void*) http_header.c_str(), http_header.size());
+    sp_info("http wrote rsp header ret: %d, %s.", ret, http_header.c_str());
 
-    return Socket::write((void*) http_header.c_str(), http_header.size());
+    return ret;
 }
 
 error_t HttpResponseSocket::write(void *buf, size_t size) {

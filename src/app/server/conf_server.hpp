@@ -33,8 +33,16 @@ class ServerModule : public IModule {
 
     error_t post_sub_module(PIModule sub) override;
 
+    error_t add_router(PHostModule host);
+
+ public:
+    static std::string get_wildcard_host(std::string host);
+
  public:
     std::map<std::string, PHostModule> hosts;
+    std::map<std::string, PHostModule> exact_hosts;   // 完全匹配
+    std::map<std::string, PHostModule> wildcard_hosts;    // *.匹配
+    PHostModule                        default_host;  // 默认匹配
 };
 
 typedef std::shared_ptr<ServerModule> PServerModule ;

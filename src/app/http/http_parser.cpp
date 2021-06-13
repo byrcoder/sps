@@ -54,7 +54,7 @@ int HttpParserContext::parse_request() {
         full_url = "http:/" + url;
     }
 
-    sp_info("=======parse url:%s=======", full_url.c_str());
+    sp_debug("=======parse url:%s=======", full_url.c_str());
 
     req->headers = headers;
     return req->parse_url(full_url);
@@ -68,7 +68,7 @@ int HttpParserContext::parse_response() {
     res->chunked        = http.uses_transfer_encoding;
     res->headers        = headers;
 
-    sp_info("header size:%lu, status_code:%d, cl:%llu", headers.size(), http.status_code,
+    sp_debug("header size:%lu, status_code:%d, cl:%llu", headers.size(), http.status_code,
             http.content_length);
 
     return SUCCESS;
@@ -108,7 +108,7 @@ int HttpParser::parse_header(PIReader io, HttpType ht) {
         }
 
         if ((ret = io->read_fully(buf.get() + buf_read, state, nullptr)) != SUCCESS) {
-            sp_error("Failed read ret:%d", ret);
+            sp_error("failed read ret:%d", ret);
             return ret > 0 ? -ret : ret;
         }
 
@@ -133,7 +133,7 @@ int HttpParser::parse_header(PIReader io, HttpType ht) {
         ht = HttpType::REQUEST;
     }
 
-    // sp_info("http head: %s", buf.get());
+    // sp_debug("http head: %s", buf.get());
     return parse_header(buf.get(), buf_read, ht);
 }
 
@@ -142,7 +142,7 @@ int HttpParser::parse_header(const char *b, int len, HttpType ht) {
 
     size_t parsed = http_parser_execute(&ctx->http, &http_setting, b, len);
 
-    sp_info("parsed: %zu, ht:%u", parsed, ht);
+    sp_debug("parsed: %zu, ht:%u", parsed, ht);
 
     if ((ht == HttpType::REQUEST || ht == HttpType::BOTH)  && parsed >= 0) ctx->parse_request();
     else if ((ht == HttpType::RESPONSE || ht == HttpType::BOTH) && parsed >= 0) ctx->parse_response();
@@ -170,25 +170,21 @@ int HttpParser::on_url(http_parser* hp, const char *at, size_t length) {
     auto p = static_cast<HttpParser *>(hp->data);
 
     p->ctx->url = std::string(at, length);
-    sp_info("url: %s", p->ctx->url.c_str());
+    sp_debug("url: %s", p->ctx->url.c_str());
 
     return SUCCESS;
 }
 
 int HttpParser::on_status(http_parser* hp, const char *at, size_t length) {
-    auto p = static_cast<HttpParser *>(hp->data);
-
-    // sp_info("status: %lu, %s", length, at);
-    // p->ctx->http_status = atoi(std::string(at, length).c_str());  // 这里不是http status
-
+    // auto p = static_cast<HttpParser *>(hp->data);
     return SUCCESS;
 }
 
 int HttpParser::on_header_field(http_parser* hp, const char *at, size_t length) {
     auto p = static_cast<HttpParser *>(hp->data);
 
-    p->head.key   = std::string(at, length);
-    // sp_info("key: %s", p->head.key.c_str());
+    p->head.key = std::string(at, length);
+    sp_debug("key: %s", p->head.key.c_str());
 
     return SUCCESS;
 }
@@ -197,7 +193,7 @@ int HttpParser::on_header_value(http_parser* hp, const char *at, size_t length) 
     auto p = static_cast<HttpParser *>(hp->data);
 
     p->head.value = std::string(at, length);
-    sp_info("header %s->%s", p->head.key.c_str(), p->head.value.c_str());
+    sp_debug("header %s->%s", p->head.key.c_str(), p->head.value.c_str());
 
     p->ctx->headers.push_back(p->head);
 
@@ -212,7 +208,7 @@ int HttpParser::on_body(http_parser* hp, const char *at, size_t length) {
     auto p = static_cast<HttpParser *>(hp->data);
 
     p->ctx->body = std::string(at, length);
-    sp_info("body: %s", p->ctx->body.c_str());
+    sp_debug("body: %s", p->ctx->body.c_str());
 
     return SUCCESS;
 }
