@@ -13,9 +13,10 @@ struct HostConfCtx : public ConfCtx {
 
 #define OFFSET(x) offsetof(HostConfCtx, x)
 static const ConfigOption host_options[] = {
-        { "hostname",  "hostname",   OFFSET(hostname), CONF_OPT_TYPE_STRING, {.str = "unknown hostname"} },
-        { "pass_proxy","pass_proxy", OFFSET(pass_proxy), CONF_OPT_TYPE_STRING, {.str = "unknown pass_proxy"} },
-        { "pass_url", "pass_url",    OFFSET(pass_url), CONF_OPT_TYPE_STRING, {.str = "unknown pass url"} },
+        { "hostname",  "hostname",      OFFSET(hostname),   CONF_OPT_TYPE_STRING,   {.str = "- hostname"} },
+        { "pass_proxy","pass_proxy",    OFFSET(pass_proxy), CONF_OPT_TYPE_STRING,   {.str = "- pass_proxy"} },
+        { "pass_url",  "pass_url",      OFFSET(pass_url),   CONF_OPT_TYPE_STRING,   {.str = "- pass_url"} },
+        { "stream",    "stream module",    0,       CONF_OPT_TYPE_SUBMODULE, {.str = "-"} },
         { nullptr }
 };
 #undef OFFSET
