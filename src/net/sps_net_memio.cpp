@@ -71,7 +71,7 @@ error_t MemoryReaderWriter::read_fully(void *buf, size_t size, ssize_t *nread) {
         return ERROR_IO_EOF;
     }
 
-    sp_info ("%s", buf);
+    sp_debug ("%s", buf);
     memcpy((char*) buf, this->buf + pos, n);
 
     pos += n;

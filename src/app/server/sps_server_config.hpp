@@ -4,7 +4,7 @@
 #include <string>
 
 #include <app/config/sps_config_module.hpp>
-#include <app/config/sps_config_host.hpp>
+#include <app/host/sps_host_config.hpp>
 
 namespace sps {
 

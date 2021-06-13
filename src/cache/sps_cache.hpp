@@ -8,7 +8,7 @@
 
 #include <cache/sps_cache_buffer.hpp>
 #include <sync/sps_sync.hpp>
-#include <typedef.hpp>
+#include <sps_typedef.hpp>
 
 namespace sps {
 

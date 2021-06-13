@@ -6,7 +6,7 @@
 
 #include <net/sps_net_io.hpp>
 
-#include <typedef.hpp>
+#include <sps_typedef.hpp>
 #include <list>
 #include <app/url/sps_url_protocol.hpp>
 

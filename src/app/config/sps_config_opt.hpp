@@ -5,7 +5,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <typedef.hpp>
+#include <sps_typedef.hpp>
 #include <net/sps_net_io.hpp>
 
 namespace sps {
