@@ -1,7 +1,7 @@
-#include <app/http/http_parser.hpp>
+#include <app/http/sps_http_parser.hpp>
 #include <gtest/gtest.h>
-#include <net/net_memio.hpp>
-#include <log/log_logger.hpp>
+#include <net/sps_net_memio.hpp>
+#include <log/sps_log.hpp>
 extern "C" {
 #include <public.h>
 }

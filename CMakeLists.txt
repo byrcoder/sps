@@ -72,7 +72,9 @@ file(GLOB SRC_LIST
 
         "${PROJECT_SOURCE_DIR}/src/app/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/app/config/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/app/core/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/app/http/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/app/server/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/app/stream/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/app/tran/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/app/upstream/*.cpp"
@@ -86,7 +88,6 @@ file(GLOB SRC_LIST
 
         "${PROJECT_SOURCE_DIR}/src/net/*.cpp"
 
-        "src/app/server/*.cpp"
 
         "${PROJECT_SOURCE_DIR}/src/st/co/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/st/net/*.cpp"
@@ -100,8 +101,10 @@ file(GLOB HEAD_LIST
         "${PROJECT_SOURCE_DIR}/src/*.hpp"
 
         "${PROJECT_SOURCE_DIR}/src/app/*.hpp"
-        "${PROJECT_SOURCE_DIR}/src/app/config/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/app/config/*.hpp"
+        "${PROJECT_SOURCE_DIR}/src/app/core/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/app/http/*.hpp"
+        "${PROJECT_SOURCE_DIR}/src/app/server/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/app/stream/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/app/tran/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/app/upstream/*.hpp"
@@ -109,23 +112,18 @@ file(GLOB HEAD_LIST
 
         "${PROJECT_SOURCE_DIR}/src/cache/*.hpp"
 
-
         "${PROJECT_SOURCE_DIR}/src/co/*.hpp"
 
         "${PROJECT_SOURCE_DIR}/src/log/*.hpp"
 
         "${PROJECT_SOURCE_DIR}/src/net/*.hpp"
 
-        "src/app/server/*.hpp"
-
         "${PROJECT_SOURCE_DIR}/src/st/co/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/st/net/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/st/sync/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/st/*.hpp"
 
-        "${PROJECT_SOURCE_DIR}/src/sync/*.cpp"
-
-        "src/app/upstream/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/sync/*.hpp"
         )
 
 message("src: ${SRC_LIST}  header:${HEAD_LIST}")
@@ -133,7 +131,7 @@ message("src: ${SRC_LIST}  header:${HEAD_LIST}")
 add_executable(sps
         ${SRC_LIST}
         ${HEAD_LIST}
-        ${PROJECT_SOURCE_DIR}/src/main/sps.cpp
+        ${PROJECT_SOURCE_DIR}/src/main/sps_main_sps.cpp
         )
 
 TARGET_LINK_LIBRARIES(sps
