@@ -2,8 +2,8 @@
 #define SPS_AUTO_MODULES_HPP
 
 #include <app/core/sps_core_config.hpp>
-#include <app/config/sps_config_host.hpp>
-#include <app/config/sps_config_loc.hpp>
+#include <app/host/sps_host_config.hpp>
+#include <app/host/sps_host_loc_config.hpp>
 
 #include <app/http/sps_http_config.hpp>
 

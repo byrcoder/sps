@@ -20,7 +20,7 @@
 
 #include <sync/sps_sync.hpp>
 
-#include <typedef.hpp>
+#include <sps_typedef.hpp>
 
 extern sps::PIModuleFactory modules[];
 

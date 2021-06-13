@@ -1,5 +1,5 @@
-#ifndef SPS_CONFIG_LOC_HPP
-#define SPS_CONFIG_LOC_HPP
+#ifndef SPS_HOST_LOC_CONFIG_HPP
+#define SPS_HOST_LOC_CONFIG_HPP
 
 #include <string>
 #include <app/config/sps_config_module.hpp>
@@ -34,4 +34,4 @@ class LocationModuleFactory;
 
 }
 
-#endif  // SPS_CONFIG_LOC_HPP
+#endif  // SPS_HOST_LOC_CONFIG_HPP

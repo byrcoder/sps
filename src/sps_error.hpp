@@ -1,5 +1,5 @@
-#ifndef SPS_ERROR_HPP
-#define SPS_ERROR_HPP
+#ifndef SPS_SPS_ERROR_HPP
+#define SPS_SPS_ERROR_HPP
 
 #define ERROR_CONFIG_ITEM                 91
 #define ERROR_CONFIG_SUBMODULE            92
@@ -70,4 +70,4 @@
 
 
 
-#endif // SPS_ERROR_HPP
+#endif // SPS_SPS_ERROR_HPP

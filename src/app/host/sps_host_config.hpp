@@ -1,5 +1,5 @@
-#ifndef SPS_CONFIG_HOST_HPP
-#define SPS_CONFIG_HOST_HPP
+#ifndef SPS_HOST_CONFIG_HPP
+#define SPS_HOST_CONFIG_HPP
 
 #include <app/config/sps_config_module.hpp>
 
@@ -33,4 +33,4 @@ class HostModuleFactory;
 
 }
 
-#endif  // SPS_CONFIG_HOST_HPP
+#endif  // SPS_HOST_CONFIG_HPP

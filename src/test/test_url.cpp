@@ -2,7 +2,7 @@
 #include <app/url/sps_url_protocol.hpp>
 #include <app/url/sps_url_http.hpp>
 
-#include <typedef.hpp>
+#include <sps_typedef.hpp>
 
 #include <gtest/gtest.h>
 #include <net/sps_net_memio.hpp>

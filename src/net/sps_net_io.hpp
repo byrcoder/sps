@@ -2,7 +2,7 @@
 #define SPS_NET_IO_HPP
 
 #include <memory>
-#include "typedef.hpp"
+#include "sps_typedef.hpp"
 
 class IReader {
  public:
