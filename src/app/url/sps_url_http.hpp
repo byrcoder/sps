@@ -18,6 +18,12 @@ class HttpProtocol : public IURLProtocol {
  public:
     error_t read(void* buf, size_t size, size_t& nread) override;
 
+    error_t read_chunked(void* buf, size_t size, size_t nread);
+
+    error_t read_chunked_length();
+
+    error_t read_chunked_data(void* buf, size_t size, size_t nread);
+
  public:
     bool eof();
 
@@ -27,6 +33,11 @@ class HttpProtocol : public IURLProtocol {
  private:
     PHttpResponse rsp;
     size_t  nread = 0;
+
+    size_t nb_chunked_size = 0;
+    size_t nb_chunked_left = 0;
+
+    bool is_eof         = false;
 };
 
 class HttpProtocolFactory : public IUrlProtocolFactory {

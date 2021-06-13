@@ -2,6 +2,7 @@
 #define SPS_HOST_CONFIG_HPP
 
 #include <app/config/sps_config_module.hpp>
+#include <app/stream/sps_stream_config.hpp>
 
 namespace sps {
 
@@ -26,6 +27,12 @@ class HostModule : public IModule {
     MODULE_CONSTRUCT(Host, host_options);
 
     MODULE_CREATE_CTX(Host);
+
+ public:
+    error_t post_sub_module(PIModule sub) override;
+
+ public:
+    PStreamModule stream_module;
 };
 typedef std::shared_ptr<HostModule> PHostModule;
 

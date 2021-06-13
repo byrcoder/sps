@@ -32,6 +32,11 @@ bool MemoryReaderWriter::seekable() {
 
 error_t MemoryReaderWriter::read(void *buf, size_t size, size_t &nread) {
     nread = std::min ((int) size, (int) (len - pos));
+
+    if (size == 0) {
+        return ERROR_IO_BUFFER_FULL;
+    }
+
     if (nread <= 0) {
         return ERROR_IO_EOF;
     }
