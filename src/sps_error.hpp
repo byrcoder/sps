@@ -43,6 +43,7 @@
 #define ERROR_FILE_OPEN                     1350
 #define ERROR_IO_EOF                        1351
 #define ERROR_FILE_READ                     1352
+#define ERROR_IO_BUFFER_FULL                1353
 
 // DNS 等解析错误
 #define ERROR_SYSTEM_IP_INVALID             1500
@@ -59,6 +60,8 @@
 #define ERROR_HTTP_RSP_NOT_OK               1704
 #define ERROR_HTTP_RES_EOF                  1705
 #define ERROR_HTTP_UPSTREAM_NOT_FOUND       1706
+#define ERROR_HTTP_CHUNKED_LENGTH_LARGE     1707
+#define ERROR_HTTP_CHUNKED_INVALID          1708
 
 #define ERROR_UPSTREAM_NOT_FOUND            1800
 
