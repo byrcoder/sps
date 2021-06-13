@@ -26,7 +26,7 @@ PIURLProtocol UrlProtocol::create(PRequestUrl url) {
     auto& ps = refs();
     for (auto& p : ps) {
         if (p->match(url)) {
-            sp_info("create by %s", p->schema);
+            sp_debug("create by %s", p->schema);
             return p->create(url);
         }
     }

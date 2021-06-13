@@ -109,7 +109,7 @@ error_t IModule::init_conf(PIReader rd) {
                     return ret;
                 }
 
-                sp_info("success submodule %s->%s", module_type.c_str(), sub->module_type.c_str());
+                sp_info("success add submodule %s->%s", module_type.c_str(), sub->module_type.c_str());
                 break;
             }
             default:

@@ -54,14 +54,14 @@ error_t RequestUrl::parse_url(const std::string& url) {
         if (off_value == std::string::npos) {
             value   =  params.substr(off_pre);
             pp.push_back(RequestHeader(key, value));
-            sp_info("%lu, &:%u, [%s]=[%s], final:%u", off_key, -1, key.c_str(), value.c_str(), off_pre);
+            sp_debug("%lu, &:%u, [%s]=[%s], final:%u", off_key, -1, key.c_str(), value.c_str(), off_pre);
             break;
         }
 
         value = params.substr(off_pre, off_value - off_pre);
         off_pre = off_value + 1;
 
-        sp_info("%lu, &:%lu, [%s]=[%s], final:%u", off_key, off_value, key.c_str(), value.c_str(), off_pre);
+        sp_debug("%lu, &:%lu, [%s]=[%s], final:%u", off_key, off_value, key.c_str(), value.c_str(), off_pre);
         pp.push_back(RequestParam(key, value));
 
     } while(true);
@@ -77,7 +77,7 @@ error_t RequestUrl::parse_url(const std::string& url) {
 
     this->url = path + (params.empty() ? "" : "?" + params);
 
-    sp_info("url:%s -> [%s] [%s:%d] [%s] [.%s] [%s]",
+    sp_info("url:%s -> [%s] [%s:%d] [%s] [%s] [%s]",
             url.c_str(), schema.c_str(), host.c_str(), port, path.c_str(), ext.c_str(), params.c_str());
 
 

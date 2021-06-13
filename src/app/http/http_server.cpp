@@ -20,7 +20,7 @@ error_t HttpSocketHandler::handler() {
         if ((ret = hd->handler(ctx)) != SUCCESS) {
             return ret;
         }
-        sp_trace("Success handler ret %d", ret);
+        sp_trace("success handler ret %d", ret);
     } while(true);
 
     return SUCCESS;

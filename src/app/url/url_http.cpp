@@ -38,7 +38,7 @@ error_t HttpProtocol::open(PRequestUrl url, Transport tp) {
                     p, ip, url->get_port(), url->get_timeout());
 
     if (!socket) {
-        sp_error("Failed connect %s:%d, %d",
+        sp_error("failed connect %s:%d, type: %d",
                  ip.c_str(), url->get_port(), p);
         return ERROR_HTTP_SOCKET_CONNECT;
     }
@@ -46,11 +46,12 @@ error_t HttpProtocol::open(PRequestUrl url, Transport tp) {
     auto req = http_request(url->method, url->url, url->host, "", &url->headers);
 
     if ((ret = socket->write((char*) req.c_str(), req.size())) != SUCCESS) {
-        sp_error("Failed write: %s, %d", req.c_str(), ret);
+        sp_error("failed write to %s:%d, ret: %d -> %s.", ip.c_str(),
+                url->get_port(), ret, req.c_str());
         return ret;
     }
 
-    sp_trace("Success Sent Request %s.", req.c_str());
+    sp_trace("success open %s:%d -> request %s.", ip.c_str(), url->get_port(), req.c_str());
 
     HttpParser parser;
     if ((ret = parser.parse_header(socket, HttpType::RESPONSE)) <= 0) {
