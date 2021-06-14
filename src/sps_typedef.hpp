@@ -41,6 +41,11 @@ class SingleInstance {
         static T obj;
         return obj;
     }
+
+    static std::shared_ptr<T> get_instance_share_ptr() {
+        static std::shared_ptr<T> ptr = std::shared_ptr<T>(&get_instance());
+        return ptr;
+    }
 };
 
 template<class T>

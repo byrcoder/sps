@@ -1,4 +1,4 @@
-#include <app/http/sps_http_config.hpp>
+#include <app/http/sps_http_module.hpp>
 #include <log/sps_log.hpp>
 
 namespace sps {
