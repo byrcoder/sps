@@ -29,8 +29,8 @@ SOFTWARE.
 #include <memory>
 #include <string>
 
-#include <cache/sps_cache_buffer.hpp>
-#include <sync/sps_sync.hpp>
+#include <sps_cache_buffer.hpp>
+#include <sps_sync.hpp>
 #include <sps_typedef.hpp>
 
 namespace sps {

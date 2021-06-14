@@ -27,7 +27,7 @@ SOFTWARE.
 #include <string>
 #include <memory>
 
-#include "sps_typedef.hpp"
+#include <sps_typedef.hpp>
 
 namespace sps {
 

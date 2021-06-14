@@ -21,9 +21,9 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#include <app/url/sps_url_protocol.hpp>
-#include <app/url/sps_url_file.hpp>
-#include <app/url/sps_url_http.hpp>
+#include <sps_url_file.hpp>
+#include <sps_url_http.hpp>
+#include <sps_url_protocol.hpp>
 
 namespace sps {
 

@@ -21,17 +21,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#include <app/core/sps_core_module.hpp>
-#include <app/host/sps_host_module.hpp>
-#include <app/host/sps_host_loc_module.hpp>
-
-#include <app/http/sps_http_module.hpp>
-
-#include <app/server/sps_server_module.hpp>
-
-#include <app/stream/sps_stream_module.hpp>
-
-#include <app/upstream/sps_upstream_module.hpp>
+#include <sps_core_module.hpp>
+#include <sps_host_module.hpp>
+#include <sps_host_loc_module.hpp>
+#include <sps_http_module.hpp>
+#include <sps_server_module.hpp>
+#include <sps_stream_module.hpp>
+#include <sps_upstream_module.hpp>
 
 namespace sps {
 

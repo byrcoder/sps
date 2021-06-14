@@ -23,25 +23,18 @@ SOFTWARE.
 
 #include <vector>
 
-#include <app/core/sps_core_module.hpp>
+#include <sps_co.hpp>
+#include <sps_core_module.hpp>
 
-#include <app/http/sps_http_phase_handler.hpp>
-#include <app/http/sps_http_server.hpp>
-#include <app/host/sps_host_router_handler.hpp>
-#include <app/server/sps_server_module.hpp>
-#include <app/url/sps_url_protocol.hpp>
-
-#include <install/sps_install.hpp>
-
-#include <co/sps_co.hpp>
-
-#include <log/sps_log.hpp>
-
-#include <sync/sps_sync.hpp>
-
-
+#include <sps_http_phase_handler.hpp>
+#include <sps_http_server.hpp>
+#include <sps_host_router_handler.hpp>
+#include <sps_install.hpp>
+#include <sps_log.hpp>
+#include <sps_server_module.hpp>
+#include <sps_sync.hpp>
 #include <sps_typedef.hpp>
-
+#include <sps_url_protocol.hpp>
 
 std::vector<sps::PServer> servers;
 sps::PCoreModule core_module;

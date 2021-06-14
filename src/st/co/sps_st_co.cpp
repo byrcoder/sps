@@ -21,7 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#include <st/co/sps_st_co.hpp>
+#include <sps_st_co.hpp>
 #include <public.h>
 
 namespace sps {
