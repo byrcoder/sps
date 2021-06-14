@@ -24,7 +24,7 @@ SOFTWARE.
 #ifndef SPS_CORE_CONFIG_HPP
 #define SPS_CORE_CONFIG_HPP
 
-#include <app/config/sps_config_module.hpp>
+#include <app/module/sps_module.hpp>
 #include <app/http/sps_http_module.hpp>
 
 #include <app/upstream/sps_upstream_module.hpp>

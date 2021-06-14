@@ -37,8 +37,8 @@ extern "C" {
 #include <set>
 #include <string>
 
-#include <st/co/co.hpp>
-#include <net/io.hpp>
+#include <st/co/sps_st_co.hpp>
+#include <net/sps_net_io.hpp>
 
 namespace sps {
 

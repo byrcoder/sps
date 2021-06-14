@@ -21,7 +21,7 @@ GTEST_TEST(URL_REQUEST, CREATE) {
     EXPECT_TRUE(p != nullptr);
 
     if (!p) return;
-    EXPECT_TRUE((ret = p->open(url, sps::DEFAULT)) == SUCCESS);
+    EXPECT_TRUE((ret = p->open(url)) == SUCCESS);
     if (ret != SUCCESS) return;
 
     char buf[1024] = { 0 };

@@ -52,7 +52,7 @@ std::string http_request(const std::string& method, const std::string& url, cons
 }
 
 // TODO: FIX ME
-error_t HttpProtocol::open(PRequestUrl url, Transport tp) {
+error_t HttpUrlProtocol::open(PRequestUrl& url, Transport tp) {
     error_t        ret   = SUCCESS;
     std::string    ip    = (url->get_ip().empty()) ? (url->get_host()) : (url->get_ip());
     Transport      p     = (tp == Transport::DEFAULT ? Transport::TCP : tp);
@@ -89,7 +89,7 @@ error_t HttpProtocol::open(PRequestUrl url, Transport tp) {
     return SUCCESS;
 }
 
-error_t HttpProtocol::read(void *buf, size_t size, size_t& nr) {
+error_t HttpUrlProtocol::read(void *buf, size_t size, size_t& nr) {
     if (eof()) {
         return ERROR_HTTP_RES_EOF;
     }
@@ -114,7 +114,7 @@ error_t HttpProtocol::read(void *buf, size_t size, size_t& nr) {
     return ret;
 }
 
-error_t HttpProtocol::read_chunked(void *buf, size_t size, size_t nread) {
+error_t HttpUrlProtocol::read_chunked(void *buf, size_t size, size_t nread) {
     error_t ret = SUCCESS;
     nread       = 0;
 
@@ -134,7 +134,7 @@ error_t HttpProtocol::read_chunked(void *buf, size_t size, size_t nread) {
     return read_chunked_data(buf, size, nread);
 }
 
-error_t HttpProtocol::read_chunked_length() {
+error_t HttpUrlProtocol::read_chunked_length() {
     error_t    ret = SUCCESS;
     size_t     nr  = 0;
     char       tmp_buf[34];
@@ -174,7 +174,7 @@ error_t HttpProtocol::read_chunked_length() {
     return ret; // SUCCESS
 }
 
-error_t HttpProtocol::read_chunked_data(void *buf, size_t size, size_t nread) {
+error_t HttpUrlProtocol::read_chunked_data(void *buf, size_t size, size_t nread) {
     assert(nb_chunked_left > 0);
 
     size      = std::min(nb_chunked_left, size);
@@ -193,20 +193,20 @@ error_t HttpProtocol::read_chunked_data(void *buf, size_t size, size_t nread) {
     return ret;
 }
 
-bool HttpProtocol::eof() {
+bool HttpUrlProtocol::eof() {
     return is_eof;
 }
 
-PResponse HttpProtocol::response() {
+PResponse HttpUrlProtocol::response() {
     return rsp;
 }
 
-HttpProtocolFactory::HttpProtocolFactory() : IUrlProtocolFactory("http", DEFAULT) {
+HttpURLProtocolFactory::HttpURLProtocolFactory() : IURLProtocolFactory("http", DEFAULT) {
 
 }
 
-PIURLProtocol HttpProtocolFactory::create(PRequestUrl url) {
-    return std::make_shared<HttpProtocol>();
+PIURLProtocol HttpURLProtocolFactory::create(PRequestUrl url) {
+    return std::make_shared<HttpUrlProtocol>();
 }
 
 }

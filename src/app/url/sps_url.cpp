@@ -100,9 +100,17 @@ error_t RequestUrl::parse_url(const std::string& url) {
 
     this->url = path + (params.empty() ? "" : "?" + params);
 
-    sp_info("url:%s -> [%s] [%s:%d] [%s] [%s] [%s]",
-            url.c_str(), schema.c_str(), host.c_str(), port, path.c_str(), ext.c_str(), params.c_str());
+    if (schema == "file") {
+        this->url    = url.substr(sizeof("file://"));
+        this->path   = url;
+        this->params = "";
+        this->port   = -1;
+    }
 
+    sp_info("url:%s -> [%s] [%s:%d] [%s] [%s] [%s] [%s]",
+            url.c_str(), schema.c_str(), host.c_str(), port, path.c_str(),
+            ext.c_str(), params.c_str(),
+            this->url.c_str());
 
     return SUCCESS;
 }

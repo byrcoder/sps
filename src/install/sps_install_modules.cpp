@@ -21,40 +21,33 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_HOST_LOC_CONFIG_HPP
-#define SPS_HOST_LOC_CONFIG_HPP
+#include <app/core/sps_core_module.hpp>
+#include <app/host/sps_host_module.hpp>
+#include <app/host/sps_host_loc_module.hpp>
 
-#include <string>
-#include <app/module/sps_module.hpp>
+#include <app/http/sps_http_module.hpp>
+
+#include <app/server/sps_server_module.hpp>
+
+#include <app/stream/sps_stream_module.hpp>
+
+#include <app/upstream/sps_upstream_module.hpp>
 
 namespace sps {
 
-// TODO: ADD add location for request
+#define MODULE_INSTANCE(NAME) (std::make_shared<NAME##ModuleFactory>())
 
-struct LocationConfCtx : public ConfCtx {
-    std::string pattern;    // 匹配模式或者路径
-    std::string proxy_pass; // 代理路径
+PIModuleFactory sps_modules[] = {
+        MODULE_INSTANCE(Core),
+
+        MODULE_INSTANCE(Http),
+        MODULE_INSTANCE(Server),
+        MODULE_INSTANCE(Host),
+        MODULE_INSTANCE(Location),
+        MODULE_INSTANCE(Stream),
+
+        MODULE_INSTANCE(UpStream),
+        nullptr
 };
-
-#define OFFSET(x) offsetof(LocationConfCtx, x)
-static const ConfigOption loc_options[] = {
-        {"pattern",        "location name",    OFFSET(pattern),     CONF_OPT_TYPE_STRING, { .str = "/" }, },
-        {"proxy_pass",     "proxy pass",       OFFSET(proxy_pass),  CONF_OPT_TYPE_STRING, { .str = "" }, },
-        {nullptr }
-};
-#undef OFFSET
-
-class LocationModule : public IModule {
- public:
-    MODULE_CONSTRUCT(Location, loc_options);
-
-    MODULE_CREATE_CTX(Location);
-};
-typedef std::shared_ptr<LocationModule> PLocationModule;
-
-MODULE_FACTORY(Location)
-class LocationModuleFactory;
 
 }
-
-#endif  // SPS_HOST_LOC_CONFIG_HPP
