@@ -63,7 +63,10 @@
 #define ERROR_HTTP_CHUNKED_LENGTH_LARGE     1707
 #define ERROR_HTTP_CHUNKED_INVALID          1708
 
-#define ERROR_UPSTREAM_NOT_FOUND            1800
+// HOST 错误
+#define ERROR_HOST_NOT_EXISTS               1800
+
+#define ERROR_UPSTREAM_NOT_FOUND            1900
 
 // stream 协议
 #define ERROR_STREAM_EOF                    3000

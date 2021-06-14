@@ -2,7 +2,7 @@
 #define SPS_HOST_CONFIG_HPP
 
 #include <app/config/sps_config_module.hpp>
-#include <app/stream/sps_stream_config.hpp>
+#include <app/stream/sps_stream_module.hpp>
 
 namespace sps {
 
@@ -38,6 +38,27 @@ typedef std::shared_ptr<HostModule> PHostModule;
 
 MODULE_FACTORY(Host)
 class HostModuleFactory;
+
+class HostModulesRouter {
+ public:
+    static std::string get_wildcard_host(std::string host);
+
+ public:
+    HostModulesRouter() = default;
+
+ public:
+    error_t register_host(PHostModule host);
+
+    PHostModule find_host(const std::string& host);
+
+ private:
+    std::map<std::string, PHostModule> hosts;
+    std::map<std::string, PHostModule> exact_hosts;   // 完全匹配
+    std::map<std::string, PHostModule> wildcard_hosts;    // *.匹配
+    PHostModule                        default_host;  // 默认匹配
+};
+
+typedef std::shared_ptr<HostModulesRouter> PHostModulesRouter;
 
 }
 

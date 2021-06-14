@@ -1,4 +1,4 @@
-#include <app/core/sps_core_config.hpp>
+#include <app/core/sps_core_module.hpp>
 
 #include <log/sps_log.hpp>
 

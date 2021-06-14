@@ -4,7 +4,7 @@
 #include <string>
 
 #include <app/config/sps_config_module.hpp>
-#include <app/host/sps_host_config.hpp>
+#include <app/host/sps_host_module.hpp>
 
 namespace sps {
 
@@ -33,18 +33,9 @@ class ServerModule : public IModule {
 
     error_t post_sub_module(PIModule sub) override;
 
-    error_t add_router(PHostModule host);
-
  public:
-    static std::string get_wildcard_host(std::string host);
-
- public:
-    std::map<std::string, PHostModule> hosts;
-    std::map<std::string, PHostModule> exact_hosts;   // 完全匹配
-    std::map<std::string, PHostModule> wildcard_hosts;    // *.匹配
-    PHostModule                        default_host;  // 默认匹配
+    PHostModulesRouter hosts_router = std::make_shared<HostModulesRouter>();
 };
-
 typedef std::shared_ptr<ServerModule> PServerModule ;
 
 MODULE_FACTORY(Server)

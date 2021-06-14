@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <app/upstream/sps_upstream_config.hpp>
+#include <app/upstream/sps_upstream_module.hpp>
 
 #include <net/sps_net_memio.hpp>
 
