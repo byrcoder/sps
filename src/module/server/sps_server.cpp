@@ -34,9 +34,10 @@ void ISocketHandler::on_stop() {
     SingleInstance<SocketManager>::get_instance().cancel(shared_from_this());
 }
 
-Server::Server(PISocketHandlerFactory f, Transport transport) {
+error_t Server::init(PISocketHandlerFactory f, Transport transport) {
     factory         = std::move(f);
     tran            = transport;
+    return SUCCESS;
 }
 
 int Server::listen(std::string ip, int port, bool reuse_port, int backlog) {

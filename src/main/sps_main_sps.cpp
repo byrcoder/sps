@@ -46,7 +46,6 @@ error_t init_co() {
 error_t init_config(const char* filename) {
     error_t ret           = SUCCESS;
     auto&   protocols     = SingleInstance<sps::UrlProtocol>::get_instance();
-
     auto    file_reader   = protocols.create("file://" + std::string(filename));
 
     if (!file_reader) {
@@ -54,7 +53,8 @@ error_t init_config(const char* filename) {
         return ERROR_URL_PROTOCOL_NOT_EXISTS;
     }
 
-    core_module = std::dynamic_pointer_cast<sps::CoreModule>(SingleInstance<sps::ModuleFactoryRegister>::get_instance()
+    core_module = std::dynamic_pointer_cast<sps::CoreModule>(
+            SingleInstance<sps::ModuleFactoryRegister>::get_instance()
             .create("core", "",  nullptr));
 
     if ((ret = file_reader->open(std::string(filename))) != SUCCESS) {
@@ -72,31 +72,30 @@ error_t init_config(const char* filename) {
 
 error_t run_http_server() {
     error_t ret = SUCCESS;
+
     for (auto& http : core_module->http_modules) {
         for (auto& server : http->server_modules) {
             auto server_conf = std::static_pointer_cast<sps::ServerConfCtx>(server->conf);
-            auto hp          = std::make_shared<sps::HttpPhaseHandler>();
+            auto http_server = std::make_shared<sps::HttpServer>();
 
-            hp->reg(std::make_shared<sps::HttpParsePhaseHandler>());       // parser
-            hp->reg(std::make_shared<sps::HostRouterPhaseHandler>(
-                    server->hosts_router,
-                    std::make_shared<sps::HttpProxyPhaseHandler>(),
-                    SingleInstance<sps::Http404PhaseHandler>::get_instance_share_ptr())); // router
-
-            auto http_server = std::make_shared<sps::HttpServer>(hp);
-
-            if (http_server->listen("", server_conf->listen_port) != SUCCESS) {
-                sp_error("Failed http listen :%d", server_conf->listen_port);
-                return 0;
+            if ((ret = http_server->init(server)) != SUCCESS) {
+                sp_error("Failed http server init ret: %d", ret);
+                return ret;
             }
-            sp_info("success http server listen %d", server_conf->listen_port);
-            servers.push_back(http_server);
+
+            if ((ret = http_server->listen("", server_conf->listen_port)) != SUCCESS) {
+                sp_error("Failed http listen: %d, ret: %d", server_conf->listen_port, ret);
+                return ret;
+            }
 
             ret = sps::ICoFactory::get_instance().start(http_server);
             if (ret != SUCCESS) {
                 sp_error("Failed start http server ret:%d", ret);
                 return ret;
             }
+
+            sp_info("success http server listen %d", server_conf->listen_port);
+            servers.push_back(http_server);
         }
     }
 

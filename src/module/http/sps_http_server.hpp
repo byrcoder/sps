@@ -52,7 +52,9 @@ class HttpHandlerFactory : public ISocketHandlerFactory {
 
 class HttpServer : public Server {
  public:
-    explicit HttpServer(PHttpPhaseHandler handler, Transport transport = Transport::TCP);
+    HttpServer() = default;
+
+    error_t init(PServerModule& module);
 };
 
 }
