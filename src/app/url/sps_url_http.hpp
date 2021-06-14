@@ -32,11 +32,11 @@ SOFTWARE.
 
 namespace sps {
 
-class HttpProtocol : public IURLProtocol {
+class HttpUrlProtocol : public IURLProtocol {
  public:
-    explicit HttpProtocol() = default;
+    explicit HttpUrlProtocol() = default;
  public:
-    error_t open(PRequestUrl url, Transport p) override;
+    error_t open(PRequestUrl& url, Transport p) override;
 
  public:
     error_t read(void* buf, size_t size, size_t& nread) override;
@@ -63,9 +63,9 @@ class HttpProtocol : public IURLProtocol {
     bool is_eof         = false;
 };
 
-class HttpProtocolFactory : public IUrlProtocolFactory {
+class HttpURLProtocolFactory : public IURLProtocolFactory {
  public:
-    HttpProtocolFactory();
+    HttpURLProtocolFactory();
 
  public:
     PIURLProtocol create(PRequestUrl url);

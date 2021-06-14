@@ -27,7 +27,7 @@ SOFTWARE.
 #include <string>
 #include <map>
 
-#include <app/config/sps_config_module.hpp>
+#include <app/module/sps_module.hpp>
 
 namespace sps {
 

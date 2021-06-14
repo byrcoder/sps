@@ -39,6 +39,7 @@ enum Transport {
 #endif
     QUIC = 3,
 
+    FILE = 4,
 
     DEFAULT = 0xFF
 };

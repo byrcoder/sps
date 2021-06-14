@@ -82,6 +82,8 @@ class ICache {
  public:
     virtual PICacheStream get(const std::string& name) = 0;
     virtual error_t       put(const std::string& name, PICacheStream cs) = 0;
+    virtual error_t       erase(const std::string& name) = 0;
+    virtual PICacheStream operator[](const std::string& name) = 0;
 };
 
 typedef std::shared_ptr<ICache> PICache;
@@ -90,6 +92,9 @@ class InfiniteCache : public ICache {
  public:
     PICacheStream get(const std::string& name) override;
     error_t       put(const std::string& name, PICacheStream cs) override;
+    error_t       erase(const std::string& name) override;
+
+    PICacheStream operator[](const std::string& name) override;
 
  private:
     std::map<std::string, PICacheStream> css;

@@ -73,4 +73,14 @@ error_t InfiniteCache::put(const std::string &name, PICacheStream cs) {
     return SUCCESS;
 }
 
+error_t InfiniteCache::erase(const std::string &name) {
+    css.erase(name);
+    return SUCCESS;
+}
+
+PICacheStream InfiniteCache::operator[](const std::string &name) {
+    auto it = css.find(name);
+    return it == css.end() ? nullptr : it->second;
+}
+
 }

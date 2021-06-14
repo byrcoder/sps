@@ -21,7 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#include <app/stream/sps_stream_flvdec.hpp>
+#include <avformat/sps_stream_flvdec.hpp>
 #include <app/stream/sps_stream_msg.hpp>
 #include <app/url/sps_url.hpp>
 

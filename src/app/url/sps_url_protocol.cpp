@@ -26,26 +26,26 @@ SOFTWARE.
 
 namespace sps {
 
-error_t IURLProtocol::open(const std::string url, Transport p) {
+error_t IURLProtocol::open(const std::string& url) {
     auto req = std::make_shared<RequestUrl>();
     error_t ret = SUCCESS;
     if ((ret = req->parse_url(url)) != SUCCESS) {
         return ret;
     }
 
-    return open(req, p);
+    return open(req, DEFAULT);
 }
 
-IUrlProtocolFactory::IUrlProtocolFactory(const char *schema, Transport t) {
+IURLProtocolFactory::IURLProtocolFactory(const char *schema, Transport t) {
     this->schema = schema;
     this->t     = t;
 }
 
-bool IUrlProtocolFactory::match(PRequestUrl url) {
+bool IURLProtocolFactory::match(PRequestUrl url) {
     return url->schema == this->schema;
 }
 
-PIURLProtocol UrlProtocol::create(PRequestUrl url) {
+PIURLProtocol UrlProtocol::create(PRequestUrl& url) {
     auto& ps = refs();
     for (auto& p : ps) {
         if (p->match(url)) {
@@ -64,7 +64,12 @@ PIURLProtocol UrlProtocol::create(const std::string &url) {
         return nullptr;
     }
 
-    return create(req);
+    auto p =  create(req);
+
+    if (!p) {
+        sp_error("not found schema %s", req->schema.c_str());
+    }
+    return p;
 }
 
 }

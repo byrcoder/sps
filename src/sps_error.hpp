@@ -67,10 +67,13 @@ SOFTWARE.
 #define ERROR_SRT_SOCKET_UNKNOWN            1320
 #define ERROR_SRT_NOT_SUPPORT_FAST_OPEN     1321
 
+#define ERROR_URL_PROTOCOL_NOT_EXISTS       1340
+
 #define ERROR_FILE_OPEN                     1350
 #define ERROR_IO_EOF                        1351
 #define ERROR_FILE_READ                     1352
-#define ERROR_IO_BUFFER_FULL                1353
+#define ERROR_FILE_WRITE                    1353
+#define ERROR_IO_BUFFER_FULL                1354
 
 // DNS 等解析错误
 #define ERROR_SYSTEM_IP_INVALID             1500

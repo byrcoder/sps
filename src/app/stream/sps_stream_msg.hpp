@@ -25,7 +25,7 @@ SOFTWARE.
 #define SPS_STREAM_MSG_HPP
 
 #include <cache/sps_cache_buffer.hpp>
-#include <app/stream/sps_stream_dec.hpp>
+#include <avformat/sps_stream_dec.hpp>
 
 namespace sps {
 
