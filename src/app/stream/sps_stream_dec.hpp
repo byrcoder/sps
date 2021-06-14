@@ -6,7 +6,7 @@
 
 #include <net/sps_net_io.hpp>
 
-#include <typedef.hpp>
+#include <sps_typedef.hpp>
 #include <list>
 #include <app/url/sps_url_protocol.hpp>
 
@@ -57,18 +57,18 @@ typedef std::shared_ptr<IAVInputFormat> PIAVInputFormat;
 // c++ 没有无反射，每个IAvDeumxer的创建需要实现工厂方法
 class AvDemuxerFactory : public Registers<AvDemuxerFactory, PIAVInputFormat> {
  public:
-    AvDemuxerFactory();
+    AvDemuxerFactory() = default;
 
  public:
-    error_t init();
+    virtual error_t init();
 
  public:
     // TODO: to impl probe media format
-    PIAvDemuxer probe(PIURLProtocol p, PRequestUrl url);
+    virtual PIAvDemuxer probe(PIURLProtocol& p, PRequestUrl& url);
 
  public:
-    PIAvDemuxer create(PIURLProtocol p, PRequestUrl url);
-    PIAvDemuxer create(PIURLProtocol p, const std::string& url);
+    PIAvDemuxer create(PIURLProtocol& p, PRequestUrl& url);
+    PIAvDemuxer create(PIURLProtocol& p, const std::string& url);
 };
 
 }

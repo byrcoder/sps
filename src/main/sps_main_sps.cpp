@@ -1,11 +1,12 @@
 #include <vector>
 
-#include <app/core/sps_core_config.hpp>
+#include <app/core/sps_core_module.hpp>
 
 #include <app/http/sps_http_phase_handler.hpp>
 #include <app/http/sps_http_server.hpp>
+#include <app/host/sps_host_router_handler.hpp>
 
-#include <app/server/sps_server_config.hpp>
+#include <app/server/sps_server_module.hpp>
 
 
 #include <app/url/sps_url_protocol.hpp>
@@ -20,7 +21,7 @@
 
 #include <sync/sps_sync.hpp>
 
-#include <typedef.hpp>
+#include <sps_typedef.hpp>
 
 extern sps::PIModuleFactory modules[];
 
@@ -77,8 +78,11 @@ error_t run_http_server() {
             auto server_conf = std::static_pointer_cast<sps::ServerConfCtx>(server->conf);
             auto hp          = std::make_shared<sps::HttpPhaseHandler>();
 
-            hp->reg(std::make_shared<sps::HttpParsePhaseHandler>());
-            hp->reg(std::make_shared<sps::HttpRouterPhaseHandler>(server));
+            hp->reg(std::make_shared<sps::HttpParsePhaseHandler>());       // parser
+            hp->reg(std::make_shared<sps::HostRouterPhaseHandler>(
+                    server->hosts_router,
+                    std::make_shared<sps::HttpProxyPhaseHandler>(),
+                    SingleInstance<sps::Http404PhaseHandler>::get_instance_share_ptr())); // router
 
             auto http_server = std::make_shared<sps::HttpServer>(hp);
 

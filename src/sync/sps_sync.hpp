@@ -5,7 +5,7 @@
 #include <set>
 
 #include <public.h> // st
-#include <typedef.hpp>
+#include <sps_typedef.hpp>
 #include <log/sps_log.hpp>
 
 #define SLEEP_FOREVER -1

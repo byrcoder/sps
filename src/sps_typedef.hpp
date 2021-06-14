@@ -1,11 +1,11 @@
-#ifndef SPS_TYPEDEF_HPP
-#define SPS_TYPEDEF_HPP
+#ifndef SPS_SPS_TYPEDEF_HPP
+#define SPS_SPS_TYPEDEF_HPP
 
 #include <list>
 #include <map>
 #include <set>
 
-#include <error.hpp>
+#include <sps_error.hpp>
 
 #ifndef __unused
 
@@ -40,6 +40,11 @@ class SingleInstance {
     static T& get_instance() {
         static T obj;
         return obj;
+    }
+
+    static std::shared_ptr<T> get_instance_share_ptr() {
+        static std::shared_ptr<T> ptr = std::shared_ptr<T>(&get_instance());
+        return ptr;
     }
 };
 
@@ -113,4 +118,4 @@ class FifoRegisters  {
     std::list<S> objs;
 };
 
-#endif // SPS_TYPEDEF_HPP
+#endif // SPS_SPS_TYPEDEF_HPP

@@ -223,9 +223,12 @@ error_t StTcpSocket::read_fully(void* buf, size_t size, ssize_t* nread) {
 }
 
 error_t StTcpSocket::read(void* buf, size_t size, size_t& nread) {
+    if (size == 0) {
+        return ERROR_IO_BUFFER_FULL;
+    }
+
     error_t nb_read = st_read(stfd, buf, size, rtm);
     if (nb_read <= 0) {
-        // @see https://github.com/ossrs/srs/issues/200
         if (nb_read < 0 && errno == ETIME) {
             return ERROR_SOCKET_TIMEOUT;
         }
@@ -242,7 +245,7 @@ error_t StTcpSocket::read(void* buf, size_t size, size_t& nread) {
     }
 
     rbytes += nb_read;
-    nread = nb_read;
+    nread   = nb_read;
     return SUCCESS;
 }
 
