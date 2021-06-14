@@ -21,7 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#include <cache/sps_cache_buffer.hpp>
+#include <sps_cache_buffer.hpp>
 
 #include <string.h>
 

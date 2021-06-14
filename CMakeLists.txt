@@ -65,21 +65,45 @@ link_directories(3rdparty/state-threads/obj
                  3rdparty/http-parser
         )
 
-include_directories(${PROJECT_SOURCE_DIR}/src)
+include_directories(
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_SOURCE_DIR}/src/avformat
+        ${PROJECT_SOURCE_DIR}/src/cache
+        ${PROJECT_SOURCE_DIR}/src/co
+        ${PROJECT_SOURCE_DIR}/src/install
+        ${PROJECT_SOURCE_DIR}/src/io
+        ${PROJECT_SOURCE_DIR}/src/kernel
+        ${PROJECT_SOURCE_DIR}/src/log
+
+        ${PROJECT_SOURCE_DIR}/src/module/
+        ${PROJECT_SOURCE_DIR}/src/module/core/
+        ${PROJECT_SOURCE_DIR}/src/module/host/
+        ${PROJECT_SOURCE_DIR}/src/module/http/
+        ${PROJECT_SOURCE_DIR}/src/module/server/
+        ${PROJECT_SOURCE_DIR}/src/module/stream/
+        ${PROJECT_SOURCE_DIR}/src/module/upstream/
+
+        ${PROJECT_SOURCE_DIR}/src/st/co
+        ${PROJECT_SOURCE_DIR}/src/st/io
+        ${PROJECT_SOURCE_DIR}/src/st/sync
+
+        ${PROJECT_SOURCE_DIR}/src/sync
+        ${PROJECT_SOURCE_DIR}/src/url
+        )
 
 file(GLOB SRC_LIST
         "${PROJECT_SOURCE_DIR}/src/*.cpp"
 
-        "${PROJECT_SOURCE_DIR}/src/app/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/app/module/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/app/core/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/app/host/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/app/http/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/app/server/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/app/stream/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/app/tran/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/app/upstream/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/app/url/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/module/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/module/module/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/module/core/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/module/host/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/module/http/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/module/server/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/module/stream/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/module/tran/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/module/upstream/*.cpp"
+        "src/url/*.cpp"
 
         "${PROJECT_SOURCE_DIR}/src/avformat/*.cpp"
 
@@ -91,52 +115,19 @@ file(GLOB SRC_LIST
 
         "${PROJECT_SOURCE_DIR}/src/log/*.cpp"
 
-        "${PROJECT_SOURCE_DIR}/src/net/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/io/*.cpp"
 
 
         "${PROJECT_SOURCE_DIR}/src/st/co/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/st/net/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/st/io/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/st/sync/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/st/*.cpp"
 
         "${PROJECT_SOURCE_DIR}/src/sync/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/url/*.cpp"
         )
 
-file(GLOB HEAD_LIST
-        "${PROJECT_SOURCE_DIR}/src/*.hpp"
-
-        "${PROJECT_SOURCE_DIR}/src/app/*.hpp"
-        "${PROJECT_SOURCE_DIR}/src/app/module/*.hpp"
-        "${PROJECT_SOURCE_DIR}/src/app/core/*.hpp"
-        "${PROJECT_SOURCE_DIR}/src/app/host/*.hpp"
-        "${PROJECT_SOURCE_DIR}/src/app/http/*.hpp"
-        "${PROJECT_SOURCE_DIR}/src/app/server/*.hpp"
-        "${PROJECT_SOURCE_DIR}/src/app/stream/*.hpp"
-        "${PROJECT_SOURCE_DIR}/src/app/tran/*.hpp"
-        "${PROJECT_SOURCE_DIR}/src/app/upstream/*.hpp"
-        "${PROJECT_SOURCE_DIR}/src/app/url/*.hpp"
-
-        "${PROJECT_SOURCE_DIR}/src/avformat/*.hpp"
-
-        "${PROJECT_SOURCE_DIR}/src/cache/*.hpp"
-
-        "${PROJECT_SOURCE_DIR}/src/co/*.hpp"
-
-        "${PROJECT_SOURCE_DIR}/src/install/*.hpp"
-
-        "${PROJECT_SOURCE_DIR}/src/log/*.hpp"
-
-        "${PROJECT_SOURCE_DIR}/src/net/*.hpp"
-
-        "${PROJECT_SOURCE_DIR}/src/st/co/*.hpp"
-        "${PROJECT_SOURCE_DIR}/src/st/net/*.hpp"
-        "${PROJECT_SOURCE_DIR}/src/st/sync/*.hpp"
-        "${PROJECT_SOURCE_DIR}/src/st/*.hpp"
-
-        "${PROJECT_SOURCE_DIR}/src/sync/*.hpp"
-        )
-
-message("src: ${SRC_LIST}  header:${HEAD_LIST}")
+message("src: ${SRC_LIST}")
 
 add_executable(sps
         ${SRC_LIST}
@@ -155,19 +146,19 @@ if(ENABLE_UNITTESTS)
     add_executable(test_all
             ${SRC_LIST}
             ${HEAD_LIST}
-            ${PROJECT_SOURCE_DIR}/src/test/test_cache.cpp
-            ${PROJECT_SOURCE_DIR}/src/test/test_co.cpp
-            ${PROJECT_SOURCE_DIR}/src/test/test_http.cpp
-            ${PROJECT_SOURCE_DIR}/src/test/test_config.cpp
-            ${PROJECT_SOURCE_DIR}/src/test/test_url.cpp
-            ${PROJECT_SOURCE_DIR}/src/test/test_main.cpp
+            test/test_cache.cpp
+            test/test_co.cpp
+            test/test_http.cpp
+            test/test_config.cpp
+            test/test_url.cpp
+            test/test_main.cpp
             )
 
     add_executable(test_tmp
             ${SRC_LIST}
             ${HEAD_LIST}
-            ${PROJECT_SOURCE_DIR}/src/test/test_config.cpp
-            ${PROJECT_SOURCE_DIR}/src/test/test_main.cpp
+            test/test_config.cpp
+            test/test_main.cpp
             )
 
 
