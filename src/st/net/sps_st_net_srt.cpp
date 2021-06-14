@@ -30,8 +30,8 @@ SOFTWARE.
 #include <srtcore/udt.h>
 #include <sstream>
 
-#include <st/net/tcp.hpp>
-#include <log/logger.hpp>
+#include <st/net/sps_st_net_tcp.hpp>
+#include <log/sps_log.hpp>
 
 
 namespace sps {

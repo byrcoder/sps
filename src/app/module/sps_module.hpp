@@ -31,7 +31,7 @@ SOFTWARE.
 #include <memory>
 #include <string>
 
-#include <app/config/sps_config_opt.hpp>
+#include <app/module/sps_module_opt.hpp>
 
 #include <log/sps_log.hpp>
 /**

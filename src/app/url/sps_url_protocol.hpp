@@ -35,20 +35,20 @@ class IURLProtocol : public Socket {
     IURLProtocol() = default;
 
  public:
-    virtual error_t open(PRequestUrl url, Transport p = DEFAULT) = 0;
-    error_t open(const std::string url, Transport p);
+    virtual error_t open(PRequestUrl& url, Transport p) = 0;
+    virtual error_t open(const std::string& url);
 
  public:
     virtual PResponse response() = 0;
 };
 typedef std::shared_ptr<IURLProtocol> PIURLProtocol;
 
-class IUrlProtocolFactory  {
+class IURLProtocolFactory  {
  public:
-    IUrlProtocolFactory(const char* schema, Transport t);
+    IURLProtocolFactory(const char* schema, Transport t);
 
  public:
-    ~IUrlProtocolFactory() = default;
+    ~IURLProtocolFactory() = default;
 
  public:
     virtual bool match(PRequestUrl url);
@@ -59,11 +59,11 @@ class IUrlProtocolFactory  {
     Transport   t;
 };
 
-typedef std::shared_ptr<IUrlProtocolFactory> PIUrlProtocolFactory;
+typedef std::shared_ptr<IURLProtocolFactory> PIURLProtocolFactory;
 
-class UrlProtocol : public Registers<UrlProtocol, PIUrlProtocolFactory> {
+class UrlProtocol : public Registers<UrlProtocol, PIURLProtocolFactory> {
  public:
-    PIURLProtocol create(PRequestUrl url);
+    PIURLProtocol create(PRequestUrl& url);
     PIURLProtocol create(const std::string& url);
 };
 
