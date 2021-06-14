@@ -65,11 +65,12 @@ typedef std::shared_ptr<ISocketHandlerFactory> PISocketHandlerFactory;
  */
 class Server : public ICoHandler {
  public:
-    explicit Server(PISocketHandlerFactory factory, Transport transport);
+    explicit Server() = default;
     ~Server() override = default;
 
  public:
-    int listen(std::string ip, int port, bool reuse_port = true, int backlog = 1024);
+    error_t init(PISocketHandlerFactory factory, Transport transport);
+    error_t listen(std::string ip, int port, bool reuse_port = true, int backlog = 1024);
 
  public:
     virtual error_t accept();
