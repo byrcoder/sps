@@ -1,3 +1,26 @@
+/*****************************************************************************
+MIT License
+Copyright (c) 2021 byrcoder
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*****************************************************************************/
+
 #ifndef SPS_SPS_TYPEDEF_HPP
 #define SPS_SPS_TYPEDEF_HPP
 
@@ -15,24 +38,6 @@
 
 typedef int error_t;
 typedef unsigned long long utime_t;
-
-#define SUCCESS 0L
-
-#define ERROR_THREAD_DISPOSED              20
-#define ERROR_THREAD_STARTED               21
-#define ERROR_ST_CREATE_CYCLE_THREAD       22
-#define ERROR_THREAD_TERMINATED            23
-#define ERROR_THREAD_INTERRUPED            24
-
-#define ERROR_CO_CREATE 100
-
-
-
-
-
-
-
-
 
 template<class T>
 class SingleInstance {
