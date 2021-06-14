@@ -21,7 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#include <app/config/sps_config_module.hpp>
+#include <app/module/sps_module.hpp>
 #include <log/sps_log.hpp>
 
 #include <sstream>

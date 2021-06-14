@@ -80,7 +80,7 @@ error_t HttpProxyPhaseHandler::handler(HostPhaseCtx &ctx) {
         return ERROR_UPSTREAM_NOT_FOUND;
     }
 
-    if ((ret = url_protocol->open(proxy_req)) != SUCCESS) {
+    if ((ret = url_protocol->open(proxy_req, DEFAULT)) != SUCCESS) {
         sp_error("Failed open url protocol %s. %s, ret:%ld.",proxy_req->url.c_str(),
                 host_conf->pass_proxy.c_str(), ret);
         return ret;

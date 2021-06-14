@@ -71,7 +71,7 @@ file(GLOB SRC_LIST
         "${PROJECT_SOURCE_DIR}/src/*.cpp"
 
         "${PROJECT_SOURCE_DIR}/src/app/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/app/config/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/app/module/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/app/core/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/app/host/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/app/http/*.cpp"
@@ -81,9 +81,13 @@ file(GLOB SRC_LIST
         "${PROJECT_SOURCE_DIR}/src/app/upstream/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/app/url/*.cpp"
 
+        "${PROJECT_SOURCE_DIR}/src/avformat/*.cpp"
+
         "${PROJECT_SOURCE_DIR}/src/cache/*.cpp"
 
         "${PROJECT_SOURCE_DIR}/src/co/*.cpp"
+
+        "${PROJECT_SOURCE_DIR}/src/install/*.cpp"
 
         "${PROJECT_SOURCE_DIR}/src/log/*.cpp"
 
@@ -102,7 +106,7 @@ file(GLOB HEAD_LIST
         "${PROJECT_SOURCE_DIR}/src/*.hpp"
 
         "${PROJECT_SOURCE_DIR}/src/app/*.hpp"
-        "${PROJECT_SOURCE_DIR}/src/app/config/*.hpp"
+        "${PROJECT_SOURCE_DIR}/src/app/module/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/app/core/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/app/host/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/app/http/*.hpp"
@@ -112,9 +116,13 @@ file(GLOB HEAD_LIST
         "${PROJECT_SOURCE_DIR}/src/app/upstream/*.hpp"
         "${PROJECT_SOURCE_DIR}/src/app/url/*.hpp"
 
+        "${PROJECT_SOURCE_DIR}/src/avformat/*.hpp"
+
         "${PROJECT_SOURCE_DIR}/src/cache/*.hpp"
 
         "${PROJECT_SOURCE_DIR}/src/co/*.hpp"
+
+        "${PROJECT_SOURCE_DIR}/src/install/*.hpp"
 
         "${PROJECT_SOURCE_DIR}/src/log/*.hpp"
 

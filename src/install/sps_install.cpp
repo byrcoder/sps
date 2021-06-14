@@ -21,35 +21,51 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_AUTO_MODULES_HPP
-#define SPS_AUTO_MODULES_HPP
+#include <app/url/sps_url_protocol.hpp>
+#include <app/module/sps_module.hpp>
 
-#include <app/core/sps_core_module.hpp>
-#include <app/host/sps_host_module.hpp>
-#include <app/host/sps_host_loc_module.hpp>
+#include <log/sps_log.hpp>
 
-#include <app/http/sps_http_module.hpp>
+namespace sps {
 
-#include <app/server/sps_server_module.hpp>
+extern PIModuleFactory sps_modules[];
+extern PIURLProtocolFactory sps_url_protocols[];
 
-#include <app/stream/sps_stream_module.hpp>
+void init_modules() {
+    int i = 0;
+    auto &modules = SingleInstance<sps::ModuleFactoryRegister>::get_instance();
+    while (sps_modules[i]) {
+        modules.reg(std::string(sps_modules[i]->module), sps_modules[i]);
+        sp_info("register module %s", sps_modules[i]->module.c_str());
+        ++i;
+    }
 
-#include <app/upstream/sps_upstream_module.hpp>
-
-#define MODULE_INSTANCE(NAME) (std::make_shared<sps::NAME##ModuleFactory>())
-
-sps::PIModuleFactory modules[] = {
-    MODULE_INSTANCE(Core),
-
-    MODULE_INSTANCE(Http),
-    MODULE_INSTANCE(Server),
-    MODULE_INSTANCE(Host),
-    MODULE_INSTANCE(Location),
-    MODULE_INSTANCE(Stream),
-
-    MODULE_INSTANCE(UpStream),
-    nullptr
-};
+    sp_info("total module %d", i);
+}
 
 
-#endif  // SPS_AUTO_MODULES_HPP
+void init_url_protocol() {
+    auto &protocols = SingleInstance<sps::UrlProtocol>::get_instance();
+
+    int i = 0;
+    while (sps_url_protocols[i]) {
+        protocols.reg(sps_url_protocols[i]);
+        sp_info("register url protocol %s", sps_url_protocols[i]->schema);
+        ++i;
+    }
+    sp_info("total url protocol %d", i);
+}
+
+// TODO: FIXME thread safe
+void sps_once_install() {
+    static bool installed = false;
+    if (installed) {
+        return;
+    }
+
+    installed = true;
+    init_modules();
+    init_url_protocol();
+}
+
+}

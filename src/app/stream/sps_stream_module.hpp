@@ -24,7 +24,7 @@ SOFTWARE.
 #ifndef SPS_STREAM_CONFIG_HPP
 #define SPS_STREAM_CONFIG_HPP
 
-#include <app/config/sps_config_module.hpp>
+#include <app/module/sps_module.hpp>
 
 namespace sps {
 

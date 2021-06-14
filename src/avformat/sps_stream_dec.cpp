@@ -21,40 +21,53 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_HOST_LOC_CONFIG_HPP
-#define SPS_HOST_LOC_CONFIG_HPP
+#include <avformat/sps_stream_dec.hpp>
 
-#include <string>
-#include <app/module/sps_module.hpp>
+#include <avformat/sps_stream_flvdec.hpp>
+#include <log/sps_log.hpp>
 
 namespace sps {
 
-// TODO: ADD add location for request
-
-struct LocationConfCtx : public ConfCtx {
-    std::string pattern;    // 匹配模式或者路径
-    std::string proxy_pass; // 代理路径
-};
-
-#define OFFSET(x) offsetof(LocationConfCtx, x)
-static const ConfigOption loc_options[] = {
-        {"pattern",        "location name",    OFFSET(pattern),     CONF_OPT_TYPE_STRING, { .str = "/" }, },
-        {"proxy_pass",     "proxy pass",       OFFSET(proxy_pass),  CONF_OPT_TYPE_STRING, { .str = "" }, },
-        {nullptr }
-};
-#undef OFFSET
-
-class LocationModule : public IModule {
- public:
-    MODULE_CONSTRUCT(Location, loc_options);
-
-    MODULE_CREATE_CTX(Location);
-};
-typedef std::shared_ptr<LocationModule> PLocationModule;
-
-MODULE_FACTORY(Location)
-class LocationModuleFactory;
-
+IAVInputFormat::IAVInputFormat(const char *name, const char *ext) {
+    this->name = name;
+    this->ext_name = ext;
 }
 
-#endif  // SPS_HOST_LOC_CONFIG_HPP
+bool IAVInputFormat::match(const char *ext) const {
+    int n = strlen(ext);
+    int m = strlen(ext_name);
+    return  memcmp(ext, ext_name, std::max(n, m));
+}
+
+error_t AvDemuxerFactory::init() {
+    return SUCCESS;
+}
+
+PIAvDemuxer AvDemuxerFactory::probe(PIURLProtocol& p, PRequestUrl& url) {
+    return nullptr;
+}
+
+PIAvDemuxer AvDemuxerFactory::create(PIURLProtocol& p, PRequestUrl& url) {
+    auto& fmts = refs();
+
+    for (auto& f : fmts) {
+        if (f->match(url->get_ext())) {
+            return f->create(p);
+        }
+    }
+
+    return probe(p, url);
+}
+
+PIAvDemuxer AvDemuxerFactory::create(PIURLProtocol& p, const std::string &url) {
+    PRequestUrl purl = std::make_shared<RequestUrl>();
+
+    if (purl->parse_url(url) != SUCCESS) {
+        sp_error("Invalid url %s.", url.c_str());
+        return nullptr;
+    }
+
+    return create(p, purl);
+}
+
+}

@@ -21,11 +21,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#include <app/config/sps_config_opt.hpp>
+#include <app/module/sps_module_opt.hpp>
 
 #include <cstdlib>
 #include <utility>
-#include <sstream>
 
 #include <log/sps_log.hpp>
 
