@@ -6,15 +6,15 @@
 
 namespace sps {
 
-HttpPhCtx::HttpPhCtx(PRequestUrl r, PSocket s) {
+HostPhaseCtx::HostPhaseCtx(PRequestUrl r, PSocket s) {
     req      = std::move(r);
     socket   = std::move(s);
 }
 
-HttpParsePhaseHandler::HttpParsePhaseHandler() : IHttpPhaseHandler("http-parser-handler") {
+HttpParsePhaseHandler::HttpParsePhaseHandler() : IPhaseHandler("http-parser-handler") {
 }
 
-error_t HttpParsePhaseHandler::handler(HttpPhCtx &ctx) {
+error_t HttpParsePhaseHandler::handler(HostPhaseCtx &ctx) {
     auto http_parser = std::make_shared<HttpParser>();
     error_t ret = SUCCESS;
 
@@ -31,41 +31,11 @@ error_t HttpParsePhaseHandler::handler(HttpPhCtx &ctx) {
     return SPS_HTTP_PHASE_CONTINUE;
 }
 
-HttpRouterPhaseHandler::HttpRouterPhaseHandler(PServerModule ctx) : IHttpPhaseHandler("http-router-handler") {
-    this->server_ctx = std::move(ctx);
+HttpProxyPhaseHandler::HttpProxyPhaseHandler() : IPhaseHandler("http-router-handler") {
 }
 
-error_t HttpRouterPhaseHandler::handler(HttpPhCtx &ctx) {
-    PHostModule host_ctx = find_host_ctx(ctx);
-
-    if (!host_ctx) {
-        sp_error("Not found host:%s", ctx.req->host.c_str());
-        return SingleInstance<Http404PhaseHandler>::get_instance().handler(ctx);
-    }
-
-    return do_handler(host_ctx, ctx);
-}
-
-PHostModule HttpRouterPhaseHandler::find_host_ctx(HttpPhCtx& ctx) {
-    auto it = server_ctx->exact_hosts.find(ctx.req->host);
-    if (it != server_ctx->exact_hosts.end()) {
-        return it->second;
-    }
-
-    if (server_ctx->wildcard_hosts.empty()) {
-        return server_ctx->default_host;
-    }
-
-    auto wild_host = ServerModule::get_wildcard_host(ctx.req->host);
-    it = server_ctx->wildcard_hosts.find(wild_host);
-    if (it !=  server_ctx->wildcard_hosts.end()) {
-        return it->second;
-    }
-
-    return server_ctx->default_host;
-}
-
-error_t HttpRouterPhaseHandler::do_handler(PHostModule& host_ctx, HttpPhCtx &ctx) {
+error_t HttpProxyPhaseHandler::handler(HostPhaseCtx &ctx) {
+    auto& host_ctx       = ctx.host;
     auto  host_conf     = std::static_pointer_cast<HostConfCtx>(host_ctx->conf);
     auto  proxy_req     = std::make_shared<RequestUrl>(*ctx.req);
     auto  n             = host_conf->pass_proxy.find(':');
@@ -126,11 +96,11 @@ error_t HttpRouterPhaseHandler::do_handler(PHostModule& host_ctx, HttpPhCtx &ctx
     return (ret == ERROR_HTTP_RES_EOF || ret == SUCCESS) ? SPS_HTTP_PHASE_SUCCESS_NO_CONTINUE : ret;
 }
 
-Http404PhaseHandler::Http404PhaseHandler() : IHttpPhaseHandler("http-404-handler") {
+Http404PhaseHandler::Http404PhaseHandler() : IPhaseHandler("http-404-handler") {
 
 }
 
-error_t Http404PhaseHandler::handler(HttpPhCtx& ctx) {
+error_t Http404PhaseHandler::handler(HostPhaseCtx& ctx) {
     auto socket = ctx.socket;
     PHttpResponseSocket http_socket = std::make_shared<HttpResponseSocket>(socket,
             socket->get_cip(), socket->get_port());
@@ -148,7 +118,7 @@ error_t Http404PhaseHandler::handler(HttpPhCtx& ctx) {
     return SPS_HTTP_PHASE_SUCCESS_NO_CONTINUE;
 }
 
-error_t HttpPhaseHandler::handler(HttpPhCtx& ctx) {
+error_t HttpPhaseHandler::handler(HostPhaseCtx& ctx) {
     error_t ret = SUCCESS;
 
     auto& filters = refs();

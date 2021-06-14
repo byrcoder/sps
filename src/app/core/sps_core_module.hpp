@@ -2,9 +2,9 @@
 #define SPS_CORE_CONFIG_HPP
 
 #include <app/config/sps_config_module.hpp>
-#include <app/http/sps_http_config.hpp>
+#include <app/http/sps_http_module.hpp>
 
-#include <app/upstream/sps_upstream_config.hpp>
+#include <app/upstream/sps_upstream_module.hpp>
 
 namespace sps {
 

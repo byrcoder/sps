@@ -1,4 +1,4 @@
-#include <app/upstream/sps_upstream_config.hpp>
+#include <app/upstream/sps_upstream_module.hpp>
 #include <memory>
 
 namespace sps {

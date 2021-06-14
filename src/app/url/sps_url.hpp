@@ -4,7 +4,7 @@
 #include <list>
 #include <memory>
 #include <string>
-#include <typedef.hpp>
+#include <sps_typedef.hpp>
 
 namespace sps {
 

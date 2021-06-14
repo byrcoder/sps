@@ -71,15 +71,107 @@ error_t HttpProtocol::read(void *buf, size_t size, size_t& nr) {
         return ERROR_HTTP_RES_EOF;
     }
 
-    nr = 0;
-    error_t ret = get_io()->read(buf, size, nr);
-    nread += nr;
+    if (rsp->chunked) {
+        return read_chunked(buf, size, nr);
+    }
+
+    // Content-Length default -1, no limited
+    if (rsp->content_length >= 0) {
+        size = std::min(rsp->content_length-nread, size);
+    }
+
+    nr           = 0;
+    error_t ret  = get_io()->read(buf, size, nr);
+
+    if (ret == SUCCESS) {
+        nread += nr;
+        is_eof = nread >= rsp->content_length;
+    }
 
     return ret;
 }
 
+error_t HttpProtocol::read_chunked(void *buf, size_t size, size_t nread) {
+    error_t ret = SUCCESS;
+    nread       = 0;
+
+    // nb_chunked_left size
+    if (nb_chunked_left == 0) {
+        ret = read_chunked_length();
+    }
+
+    if (ret != SUCCESS) {
+        return ret;
+    }
+
+    if (is_eof) {
+        return ERROR_HTTP_RES_EOF;
+    }
+
+    return read_chunked_data(buf, size, nread);
+}
+
+error_t HttpProtocol::read_chunked_length() {
+    error_t    ret = SUCCESS;
+    size_t     nr  = 0;
+    char       tmp_buf[34];
+
+    int i = 0;
+    do {
+        ret = get_io()->read(tmp_buf+i, 1, nr);
+        ++i;
+    } while(ret == SUCCESS && tmp_buf[i-1] != '\n' && i < sizeof(tmp_buf)-1);
+
+    if (ret != SUCCESS) {
+        return ret;
+    }
+
+    if (tmp_buf[i-1] != '\n') {
+        return ERROR_HTTP_CHUNKED_LENGTH_LARGE;
+    }
+
+    if (i < 2 || tmp_buf[i-1] != '\r') {
+        return ERROR_HTTP_CHUNKED_INVALID;
+    }
+
+    tmp_buf[i-2] = '\0'; // \r
+
+    nb_chunked_left = nb_chunked_size = std::strtoul(tmp_buf, nullptr, 16);
+
+    if (nb_chunked_size == 0) {
+        // last \r\n
+        ret = get_io()->read_fully(tmp_buf, 2, nullptr);
+
+        if (ret == SUCCESS && tmp_buf[0] == '\r' && tmp_buf[1] == '\n') {
+            is_eof = true; // last chunked size
+        } else if (ret == SUCCESS) {
+            ret = ERROR_HTTP_CHUNKED_INVALID;
+        }
+    }
+    return ret; // SUCCESS
+}
+
+error_t HttpProtocol::read_chunked_data(void *buf, size_t size, size_t nread) {
+    assert(nb_chunked_left > 0);
+
+    size      = std::min(nb_chunked_left, size);
+    auto ret  = get_io()->read(buf, size,nread);
+
+    nb_chunked_left -= nread; // ignore ret
+
+    if (ret == SUCCESS && nb_chunked_left == 0) {
+        char tail[2];
+        ret = get_io()->read_fully(tail, 2, nullptr);
+
+        if (ret == SUCCESS && (tail[0] != '\r' || tail[1] != '\n')) {
+            ret = ERROR_HTTP_CHUNKED_INVALID;
+        }
+    }
+    return ret;
+}
+
 bool HttpProtocol::eof() {
-    return rsp->content_length <= nread;
+    return is_eof;
 }
 
 PResponse HttpProtocol::response() {

@@ -13,7 +13,7 @@ HttpSocketHandler::HttpSocketHandler(PSocket io, PHttpPhaseHandler& handler) :
 }
 
 error_t HttpSocketHandler::handler() {
-    HttpPhCtx ctx(nullptr, io);
+    HostPhaseCtx ctx(nullptr, io);
     do {
         error_t ret = SUCCESS;
 

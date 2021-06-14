@@ -63,9 +63,11 @@ error_t ConfigOption::opt_set(void *obj, const char *val, int len) const {
 
             sp_debug("set string { %s->%s } success", name, val);
             break;
-        case CONF_OPT_TYPE_BOOL:
-            memcpy(dst, val, sizeof(bool));
+        case CONF_OPT_TYPE_BOOL: {
+            bool num = memcmp(val, "on", 3) == 0;
+            memcpy(dst, val, sizeof(num));
             break;
+        }
         case CONF_OPT_TYPE_SUBMODULE:
 
         default:
