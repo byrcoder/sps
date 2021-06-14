@@ -21,7 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#include <cache/sps_cache.hpp>
+#include <sps_cache.hpp>
 
 namespace sps {
 

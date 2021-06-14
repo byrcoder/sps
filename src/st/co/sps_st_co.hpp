@@ -24,7 +24,7 @@ SOFTWARE.
 #ifndef SPS_ST_CO_HPP
 #define SPS_ST_CO_HPP
 
-#include <co/sps_co.hpp>
+#include <sps_co.hpp>
 
 extern "C" {
 #include <public.h>

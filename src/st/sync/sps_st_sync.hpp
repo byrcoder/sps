@@ -24,7 +24,7 @@ SOFTWARE.
 #ifndef SPS_ST_SYNC_HPP
 #define SPS_ST_SYNC_HPP
 
-#include <sync/sps_sync.hpp>
+#include <sps_sync.hpp>
 
 namespace sps {
 

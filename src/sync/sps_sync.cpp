@@ -21,8 +21,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#include <sync/sps_sync.hpp>
-#include <st/sync/sps_st_sync.hpp>
+#include <sps_sync.hpp>
+#include <sps_st_sync.hpp>
 
 namespace sps {
 
