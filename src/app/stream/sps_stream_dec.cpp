@@ -16,19 +16,15 @@ bool IAVInputFormat::match(const char *ext) const {
     return  memcmp(ext, ext_name, std::max(n, m));
 }
 
-AvDemuxerFactory::AvDemuxerFactory() {
-
-}
-
 error_t AvDemuxerFactory::init() {
     return SUCCESS;
 }
 
-PIAvDemuxer AvDemuxerFactory::probe(PIURLProtocol p, PRequestUrl url) {
+PIAvDemuxer AvDemuxerFactory::probe(PIURLProtocol& p, PRequestUrl& url) {
     return nullptr;
 }
 
-PIAvDemuxer AvDemuxerFactory::create(PIURLProtocol p, PRequestUrl url) {
+PIAvDemuxer AvDemuxerFactory::create(PIURLProtocol& p, PRequestUrl& url) {
     auto& fmts = refs();
 
     for (auto& f : fmts) {
@@ -40,7 +36,7 @@ PIAvDemuxer AvDemuxerFactory::create(PIURLProtocol p, PRequestUrl url) {
     return probe(p, url);
 }
 
-PIAvDemuxer AvDemuxerFactory::create(PIURLProtocol p, const std::string &url) {
+PIAvDemuxer AvDemuxerFactory::create(PIURLProtocol& p, const std::string &url) {
     PRequestUrl purl = std::make_shared<RequestUrl>();
 
     if (purl->parse_url(url) != SUCCESS) {
