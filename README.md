@@ -8,7 +8,15 @@
 
 # Introduction
 
-  streaming proxy server(SPS) is a proprietary server for live or vod proxy server for http.
+  Streaming proxy server(SPS) is a proprietary server for live or vod proxy server for http. 
+  Plug is the characteristic of SPS, which will make sps extensible. 
+  
+  |  sps structure layer |   impl    |     directory  |
+  |  -----------------|------------- |--------------------|
+  | os dispatch       | coroutine    |      co  （plugin state-threads） |
+  | transport         | tcp/srt      |      io   (plugin state-threads srt) |
+  | app               | http proxy   |      modules (plugin                 |
+  | streaming         | flv          |      avformat(plugin flv)            |
   
 # Requirements
 

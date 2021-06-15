@@ -43,4 +43,53 @@ error_t ServerModule::post_sub_module(PIModule sub) {
     return SUCCESS;
 }
 
+error_t ServerModule::install() {
+    error_t ret         = SUCCESS;
+    auto    server_conf = std::static_pointer_cast<sps::ServerConfCtx>(conf);
+    auto    server      = std::make_shared<Server>();
+
+    if (!socket_handler) {
+        sp_error("fail install empty handler server!");
+        return ERROR_CONFIG_INSTALL;
+    }
+
+    Transport t = Transport::TCP;
+#ifndef SRT_DISABLED
+    if (server_conf->transport == "SRT") {
+        t = Transport::SRT;
+    }
+#endif
+    ret = server->init(socket_handler, t);
+
+    if (ret != SUCCESS) {
+        sp_error("fail install transport %u", t);
+        return ERROR_CONFIG_INSTALL;
+    }
+
+    if ((ret = server->listen("", server_conf->listen_port,
+            server_conf->reuse_port, server_conf->backlog)) != SUCCESS) {
+        sp_error("failed http listen port: %d, reuse: %u, backlog: %d, ret: %d",
+                server_conf->listen_port, server_conf->reuse_port, server_conf->backlog, ret);
+        return ret;
+    }
+
+    if ((ret = sps::ICoFactory::get_instance().start(server))!= SUCCESS) {
+        sp_error("failed start http server ret:%d", ret);
+        return ret;
+    }
+
+    sp_info("success http listen port: %d, reuse: %u, backlog: %d",
+            server_conf->listen_port, server_conf->reuse_port, server_conf->backlog);
+
+    servers.push_back(server);
+    return ret;
+}
+
+error_t ServerModule::pre_install(PISocketHandlerFactory factory) {
+    this->socket_handler = factory;
+    return SUCCESS;
+}
+
+std::vector<PServer> ServerModule::servers;
+
 }

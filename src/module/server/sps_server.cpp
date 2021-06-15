@@ -53,7 +53,7 @@ error_t Server::accept() {
         sp_debug("success accept new client");
 
         if (ICoFactory::get_instance().start(h) != SUCCESS) {
-            sp_error("Failed start handler");
+            sp_error("failed start handler");
             continue;
         }
 

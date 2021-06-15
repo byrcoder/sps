@@ -51,4 +51,15 @@ error_t CoreModule::post_sub_module(PIModule sub) {
     return SUCCESS;
 }
 
+error_t CoreModule::install()  {
+    error_t ret = SUCCESS;
+
+    for (auto& h :  http_modules) {
+        if ((ret = h->install()) != SUCCESS) {
+            return ret;
+        }
+    }
+    return ret;
+}
+
 }
