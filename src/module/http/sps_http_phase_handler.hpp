@@ -46,15 +46,6 @@ class HttpParsePhaseHandler : public IPhaseHandler {
     error_t handler(HostPhaseCtx& ctx) override;
 };
 
-// 域名发现
-class HttpProxyPhaseHandler : public IPhaseHandler {
- public:
-    explicit HttpProxyPhaseHandler();
-
- public:
-    error_t handler(HostPhaseCtx& ctx) override;
-};
-
 // 404 响应
 class Http404PhaseHandler : public IPhaseHandler, public Single<Http404PhaseHandler> {
  public:

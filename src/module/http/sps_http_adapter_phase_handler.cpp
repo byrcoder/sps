@@ -21,43 +21,25 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_HOST_PHASE_HANDLER_HPP
-#define SPS_HOST_PHASE_HANDLER_HPP
+//
+// Created by byrcoder on 2021/6/15.
+//
 
-#include <sps_url.hpp>
-#include <sps_host_module.hpp>
-#include <sps_io_socket.hpp>
+#include <sps_http_adapter_phase_handler.hpp>
 
 namespace sps {
 
-struct HostPhaseCtx {
-    HostPhaseCtx(PRequestUrl r, PSocket s);
-
-    PRequestUrl req;
-    PSocket     socket;
-    std::string ip;
-    int         port;
-    PHostModule host;
-};
-
-/**
- * work as nginx
- */
-class IPhaseHandler {
- public:
-    explicit IPhaseHandler(const char* name) : name(name) { }
-    const char* get_name() { return name; }
-
- public:
-    virtual error_t handler(HostPhaseCtx& ctx) = 0;
-
- private:
-    const char* name;
-};
-
-typedef std::shared_ptr<IPhaseHandler> PIPhaseHandler;
-
+HttpAdapterPhaseHandler::HttpAdapterPhaseHandler() : IPhaseHandler("adapter-handler") {
+    proxy_handler  = std::make_unique<HttpProxyPhaseHandler>();
+    stream_handler = std::make_unique<StreamPhaseHandler>();
 }
 
+error_t HttpAdapterPhaseHandler::handler(HostPhaseCtx &ctx) {
+    if (ctx.host->stream_module) {
+        return stream_handler->handler(ctx);
+    } else {
+        return proxy_handler->handler(ctx);
+    }
+}
 
-#endif  // SPS_HOST_PHASE_HANDLER_HPP
+}

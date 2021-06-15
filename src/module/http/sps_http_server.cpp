@@ -22,9 +22,12 @@ SOFTWARE.
 *****************************************************************************/
 
 #include <sps_http_server.hpp>
-#include <sps_http_phase_handler.hpp>
-#include <sps_http_socket.hpp>
+
 #include <sps_host_router_handler.hpp>
+#include <sps_http_adapter_phase_handler.hpp>
+#include <sps_http_phase_handler.hpp>
+#include <sps_http_proxy_phase_handler.hpp>
+#include <sps_http_socket.hpp>
 
 #include <sps_log.hpp>
 
@@ -67,7 +70,7 @@ error_t HttpServer::init(PServerModule& module) {
     // host router -> do host handler or default return 404
     handler->reg(std::make_shared<sps::HostRouterPhaseHandler>(
             module->hosts_router,
-            std::make_shared<sps::HttpProxyPhaseHandler>(),
+            std::make_shared<sps::HttpAdapterPhaseHandler>(),
             SingleInstance<sps::Http404PhaseHandler>::get_instance_share_ptr()));
 
     return Server::init(std::make_shared<HttpHandlerFactory>(std::move(handler)),

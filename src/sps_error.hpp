@@ -100,6 +100,7 @@ SOFTWARE.
 
 // stream 协议
 #define ERROR_STREAM_EOF                    3000
+#define ERROR_STREAM_NOT_IMPL               3001
 // flv 协议
 #define ERROR_FLV_PROBE                     3101
 #define ERROR_FLV_BUFFER_OVERFLOW           3102
