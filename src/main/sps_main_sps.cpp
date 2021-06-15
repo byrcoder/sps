@@ -26,9 +26,6 @@ SOFTWARE.
 #include <sps_co.hpp>
 #include <sps_core_module.hpp>
 
-#include <sps_http_phase_handler.hpp>
-#include <sps_http_server.hpp>
-#include <sps_host_router_handler.hpp>
 #include <sps_install.hpp>
 #include <sps_log.hpp>
 #include <sps_server_module.hpp>
@@ -36,7 +33,6 @@ SOFTWARE.
 #include <sps_typedef.hpp>
 #include <sps_url_protocol.hpp>
 
-std::vector<sps::PServer> servers;
 sps::PCoreModule core_module;
 
 error_t init_co() {
@@ -70,46 +66,8 @@ error_t init_config(const char* filename) {
     return SUCCESS;
 }
 
-error_t run_http_server() {
-    error_t ret = SUCCESS;
-
-    for (auto& http : core_module->http_modules) {
-        for (auto& server : http->server_modules) {
-            auto server_conf = std::static_pointer_cast<sps::ServerConfCtx>(server->conf);
-            auto http_server = std::make_shared<sps::HttpServer>();
-
-            if ((ret = http_server->init(server)) != SUCCESS) {
-                sp_error("Failed http server init ret: %d", ret);
-                return ret;
-            }
-
-            if ((ret = http_server->listen("", server_conf->listen_port)) != SUCCESS) {
-                sp_error("Failed http listen: %d, ret: %d", server_conf->listen_port, ret);
-                return ret;
-            }
-
-            ret = sps::ICoFactory::get_instance().start(http_server);
-            if (ret != SUCCESS) {
-                sp_error("Failed start http server ret:%d", ret);
-                return ret;
-            }
-
-            sp_info("success http server listen %d", server_conf->listen_port);
-            servers.push_back(http_server);
-        }
-    }
-
-    return ret;
-}
-
-error_t run_servers() {
-    error_t ret = SUCCESS;
-
-    if ((ret = run_http_server()) != SUCCESS) {
-        sp_error("Failed start http server ret:%d", ret);
-        return ret;
-    }
-
+error_t install_core() {
+    error_t ret = core_module->install();
     return ret;
 }
 
@@ -132,7 +90,7 @@ int main(int argc, char* argv[]) {
         return ret;
     }
 
-    if ((ret = run_servers()) != SUCCESS) {
+    if ((ret = install_core()) != SUCCESS) {
         return ret;
     }
 

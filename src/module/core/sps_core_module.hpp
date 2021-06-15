@@ -53,6 +53,9 @@ class CoreModule : public IModule {
     error_t post_sub_module(PIModule sub) override;
 
  public:
+    error_t install() override;
+
+ public:
     std::list<PHttpModule>      http_modules;
     std::list<PUpStreamModule>  upstream_modules;
 };

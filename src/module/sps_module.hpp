@@ -49,15 +49,19 @@ typedef std::shared_ptr<ConfCtx> PConfCtx;
 class IModule;
 typedef std::shared_ptr<IModule> PIModule;
 
- class IModule : public std::enable_shared_from_this<IModule> {
+class IModule : public std::enable_shared_from_this<IModule> {
  public:
     IModule(std::string module_type, std::string module_name, const ConfigOption* opts, PIModule parent);
-
     virtual ~IModule() = default;
+
+ public:
+    // every thing work in
+    virtual error_t install();
 
  public:
     virtual PConfCtx create_conf() = 0;
 
+ public:
     virtual error_t pre_conf();
 
     virtual error_t post_conf();

@@ -35,6 +35,10 @@ IModule::IModule(std::string module_type, std::string module_name, const ConfigO
     this->parent = std::move(parent);
 }
 
+error_t IModule::install() {
+    return SUCCESS;
+}
+
 error_t IModule::pre_conf() {
     return SUCCESS;
 }

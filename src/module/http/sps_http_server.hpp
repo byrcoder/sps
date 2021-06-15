@@ -50,13 +50,6 @@ class HttpHandlerFactory : public ISocketHandlerFactory {
     PHttpPhaseHandler handler;
 };
 
-class HttpServer : public Server {
- public:
-    HttpServer() = default;
-
-    error_t init(PServerModule& module);
-};
-
 }
 
 #endif  // SPS_HTTP_SERVER_HPP
