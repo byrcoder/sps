@@ -1,10 +1,10 @@
 <p align="center">
   <a href="https://github.com/byrcoder/sps">
-    <img alt="SPS" src="https://github.com/byrcoder/sps/blob/dev/conf/doc/sps.jpeg" width="600"/>
+    <img alt="SPS" src="doc/sps.png" width="712" height="306"/>
   </a>
 </p>
 
-[![Build Status Linux and macOS][travis-badge]][travis]
+[![Build Status Linux and macOS]
 
 # Introduction
 

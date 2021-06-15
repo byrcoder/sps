@@ -21,43 +21,21 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_HOST_PHASE_HANDLER_HPP
-#define SPS_HOST_PHASE_HANDLER_HPP
+//
+// Created by byrcoder on 2021/6/15.
+//
 
-#include <sps_url.hpp>
-#include <sps_host_module.hpp>
-#include <sps_io_socket.hpp>
+#include <sps_stream_phase_handler.hpp>
 
 namespace sps {
 
-struct HostPhaseCtx {
-    HostPhaseCtx(PRequestUrl r, PSocket s);
-
-    PRequestUrl req;
-    PSocket     socket;
-    std::string ip;
-    int         port;
-    PHostModule host;
-};
-
-/**
- * work as nginx
- */
-class IPhaseHandler {
- public:
-    explicit IPhaseHandler(const char* name) : name(name) { }
-    const char* get_name() { return name; }
-
- public:
-    virtual error_t handler(HostPhaseCtx& ctx) = 0;
-
- private:
-    const char* name;
-};
-
-typedef std::shared_ptr<IPhaseHandler> PIPhaseHandler;
+StreamPhaseHandler::StreamPhaseHandler() : IPhaseHandler("stream-handler"){
 
 }
 
+error_t StreamPhaseHandler::handler(HostPhaseCtx &ctx) {
+    sp_warn("to impl stream handler");
+    return ERROR_STREAM_NOT_IMPL;
+}
 
-#endif  // SPS_HOST_PHASE_HANDLER_HPP
+}
