@@ -60,21 +60,4 @@ PISocketHandler HttpHandlerFactory::create(PSocket io) {
     return std::make_shared<HttpSocketHandler>(io, handler);
 }
 
-error_t HttpServer::init(PServerModule& module) {
-    auto server_conf = std::static_pointer_cast<sps::ServerConfCtx>(module->conf);
-    auto handler     = std::make_shared<sps::HttpPhaseHandler>();
-
-    // http header parser
-    handler->reg(std::make_shared<sps::HttpParsePhaseHandler>());
-
-    // host router -> do host handler or default return 404
-    handler->reg(std::make_shared<sps::HostRouterPhaseHandler>(
-            module->hosts_router,
-            std::make_shared<sps::HttpAdapterPhaseHandler>(),
-            SingleInstance<sps::Http404PhaseHandler>::get_instance_share_ptr()));
-
-    return Server::init(std::make_shared<HttpHandlerFactory>(std::move(handler)),
-            Transport::TCP);
-}
-
 }
