@@ -23,6 +23,9 @@ SOFTWARE.
 
 #include <sps_http_module.hpp>
 #include <sps_log.hpp>
+#include <module/host/sps_host_router_handler.hpp>
+#include "sps_http_server.hpp"
+#include "sps_http_adapter_phase_handler.hpp"
 
 namespace sps {
 
@@ -41,6 +44,32 @@ error_t HttpModule::post_sub_module(PIModule sub) {
     }
 
     return SUCCESS;
+}
+
+error_t HttpModule::install() {
+    error_t ret = SUCCESS;
+
+    for (auto& s : server_modules) {
+        auto handler     = std::make_shared<sps::HttpPhaseHandler>();
+
+        // http header parser
+        handler->reg(std::make_shared<sps::HttpParsePhaseHandler>());
+
+        // host router -> do host handler or default return 404
+        handler->reg(std::make_shared<sps::HostRouterPhaseHandler>(
+                s->hosts_router,
+                std::make_shared<sps::HttpAdapterPhaseHandler>(),
+                SingleInstance<sps::Http404PhaseHandler>::get_instance_share_ptr()));
+
+        s->pre_install(std::make_shared<HttpHandlerFactory>(handler));
+
+        if ((ret = s->install()) != SUCCESS) {
+            sp_error("failed install %s http server", s->module_name.c_str());
+            return ret;
+        }
+        sp_info("success install %s http server listen", s->module_name.c_str());
+    }
+    return ret;
 }
 
 }

@@ -28,6 +28,7 @@ SOFTWARE.
 
 #include <sps_module.hpp>
 #include <sps_host_module.hpp>
+#include "sps_server.hpp"
 
 namespace sps {
 
@@ -35,6 +36,8 @@ struct ServerConfCtx : public ConfCtx {
     int            listen_port;   // port
     std::string    server_name;   // tag for server name
     std::string    transport;     // tcp/udp/srt
+    bool           reuse_port;
+    int            backlog;
 };
 
 #define OFFSET(x) offsetof(ServerConfCtx, x)
@@ -42,8 +45,9 @@ static const ConfigOption server_options[] = {
         {"listen_port",     "listen port",      OFFSET(listen_port),  CONF_OPT_TYPE_INT,      { .str = "80" }, },
         {"server_name",     "proxy pass",       OFFSET(server_name),  CONF_OPT_TYPE_STRING,   { .str = "" }, },
         {"transport",       "transport",        OFFSET(transport),    CONF_OPT_TYPE_STRING,   { .str = "tcp" }, },
-        {"host",       "host sub module",       0,             CONF_OPT_TYPE_SUBMODULE,   { .str = "" }, },
-
+        {"reuse_port",      "reuse_port",       OFFSET(reuse_port),             CONF_OPT_TYPE_BOOL,   { .str = "off" }, },
+        {"backlog",         "backlog",          OFFSET(backlog),             CONF_OPT_TYPE_INT,   { .str = "1024" }, },
+        {"host",            "host sub module",       0,             CONF_OPT_TYPE_SUBMODULE,   { .str = "" }, },
         {nullptr }
 };
 #undef OFFSET
@@ -57,7 +61,18 @@ class ServerModule : public IModule {
     error_t post_sub_module(PIModule sub) override;
 
  public:
+    error_t install() override;
+
+ public:
+    error_t pre_install(PISocketHandlerFactory factory);
+
+ public:
     PHostModulesRouter hosts_router = std::make_shared<HostModulesRouter>();
+ private:
+    PISocketHandlerFactory socket_handler;
+
+ public:
+    static std::vector<PServer> servers;
 };
 typedef std::shared_ptr<ServerModule> PServerModule ;
 

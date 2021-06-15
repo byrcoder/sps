@@ -57,6 +57,9 @@ class HttpModule : public IModule {
     error_t post_sub_module(PIModule sub) override;
 
  public:
+    error_t install() override;
+
+ public:
     std::list<PServerModule> server_modules;
 };
 
