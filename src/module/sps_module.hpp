@@ -21,6 +21,29 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
+/**
+ * module X consists of followings:
+ * 1. Conf${X}Ctx reload context
+ * 2. ${X}Module
+ *     a. create_conf required, impl Conf${X} context
+ *     b. pre_conf optional, do something after create_conf and before init_conf default nothing
+ *     c. post_sub_module optional, do something after a submodule post_conf.
+ *     d. post_conf optional, do something after the init_conf success
+ *     e. install optional, do something startup such as starting a server
+ * 3. ${X}ModuleFactory how ${X}Module create work as reflection
+ *
+ * module struct show such as
+ * core(root of module ) \--- core options
+ *                        \--- upstream (submodule) ---- upstream options
+ *                         \ --- http (submodule) \--- http options
+ *                                                 \--- server(submodule) \--- server options
+ *                                                                         \ --- host (submodule) \ --- host options
+ *                                                                                                 \ --- stream (submodule)
+ *
+ *
+ *
+ */
+
 #ifndef SPS_CONFIG_MODULE_HPP
 #define SPS_CONFIG_MODULE_HPP
 
@@ -34,12 +57,7 @@ SOFTWARE.
 #include <sps_module_opt.hpp>
 
 #include <sps_log.hpp>
-/**
- * 定义module X：
- * 1. Conf${X}Ctx 上下文, 配置的具体内容
- * 2. ${X}Module  模块, 负责配置文件解析和上下游模块的串联
- * 3. ${X}ModuleFactory 模块的创建方法，// TODO: fixme with cpp reflect
- */
+
 namespace sps {
 
 struct ConfCtx {

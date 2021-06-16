@@ -27,6 +27,9 @@ SOFTWARE.
 
 #include <sps_stream_phase_handler.hpp>
 
+#include <sps_avformat_dec.hpp>
+#include <sps_avformat_enc.hpp>
+
 namespace sps {
 
 StreamPhaseHandler::StreamPhaseHandler() : IPhaseHandler("stream-handler"){
@@ -34,8 +37,77 @@ StreamPhaseHandler::StreamPhaseHandler() : IPhaseHandler("stream-handler"){
 }
 
 error_t StreamPhaseHandler::handler(HostPhaseCtx &ctx) {
-    sp_warn("to impl stream handler");
-    return ERROR_STREAM_NOT_IMPL;
+    auto    stream_ctx = std::static_pointer_cast<StreamConfCtx>(ctx.host->stream_module->conf);
+    error_t ret        = SUCCESS;
+
+    if (!stream_ctx->edge) {
+        sp_error("fatal not support stream publish source!");
+        return ERROR_AVFORMAT_SOURCE_NOT_SUPPORT;
+    }
+
+    auto& demuxers = SingleInstance<AVDemuxerFactory>::get_instance();
+    auto& encoders = SingleInstance<AVEncoderFactory>::get_instance();
+
+    auto enc = encoders.create(ctx.socket, ctx.req);
+
+    if (!enc) {
+        sp_error("failed found encoder for ext %s", ctx.req->ext.c_str());
+        return ERROR_AVFORMAT_ENCODER_NOT_EXISTS;
+    }
+
+    auto upstream_req  = stream_ctx->pass_proxy + ctx.req->path;
+    if (!ctx.req->params.empty()) {
+        upstream_req += "?" + ctx.req->params;
+    }
+
+    sp_info("upstream url %s.", upstream_req.c_str());
+
+    PIURLProtocol url_protocol = SingleInstance<UrlProtocol>::get_instance().create(upstream_req);
+    if (!url_protocol) {
+        sp_error("failed found url protocol for %s.", upstream_req.c_str());
+        return ERROR_URL_PROTOCOL_NOT_EXISTS;
+    }
+
+    auto dec = demuxers.create(url_protocol, upstream_req);
+
+    if (!dec) {
+        sp_error("failed found encoder for ext %s", ctx.req->ext.c_str());
+        return ERROR_AVFORMAT_DEMUX_NOT_EXISTS;
+    }
+
+    PIBuffer buffer;
+    ret = dec->read_header(buffer);
+
+    if (ret != SUCCESS) {
+        sp_error("failed dec read header url protocol for ret:%d", ret);
+        return ret;
+    }
+
+    ret = enc->write_header(buffer);
+
+    if (ret != SUCCESS) {
+        sp_error("failed encoder write header url protocol for ret:%d", ret);
+        return ret;
+    }
+
+    do {
+        ret = dec->read_message(buffer);
+
+        if (ret != SUCCESS) {
+            sp_error("failed dec read message url protocol for ret:%d", ret);
+            break;
+        }
+
+        ret = enc->write_message(buffer);
+
+        if (ret != SUCCESS) {
+            sp_error("failed encoder write message url protocol for ret:%d", ret);
+            break;
+        }
+
+    } while(ret == SUCCESS);
+
+    return ret;
 }
 
 }

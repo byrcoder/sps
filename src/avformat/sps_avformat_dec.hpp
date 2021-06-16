@@ -21,8 +21,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_STREAM_DEC_HPP
-#define SPS_STREAM_DEC_HPP
+#ifndef SPS_AVFORMAT_DEC_HPP
+#define SPS_AVFORMAT_DEC_HPP
 
 #include <list>
 
@@ -36,13 +36,13 @@ namespace sps {
 
 class IAVInputFormat;
 
-class IAvDemuxer;
-typedef std::shared_ptr<IAvDemuxer> PIAvDemuxer;
+class IAVDemuxer;
+typedef std::shared_ptr<IAVDemuxer> PIAVDemuxer;
 
-// 解封装协议
-class IAvDemuxer {
+// stream demuxer for example flv/ts/mp4
+class IAVDemuxer {
  public:
-    virtual ~IAvDemuxer() = default;
+    virtual ~IAVDemuxer() = default;
 
  public:
     const IAVInputFormat* name();
@@ -57,7 +57,7 @@ class IAvDemuxer {
     const IAVInputFormat* fmt;
 };
 
-// IAvDemuxer创建方法，是否匹配的方法
+// IAVInputFormat is the factory of IAVDemuxer
 class IAVInputFormat {
  public:
     IAVInputFormat(const char*name, const char* ext);
@@ -67,32 +67,29 @@ class IAVInputFormat {
     virtual bool match(const char* ext) const;
 
  public:
-    virtual PIAvDemuxer create(PIURLProtocol p) = 0;
+    virtual PIAVDemuxer create(PIReader p) = 0;
 
  public:
     const char* name;
-    const char* ext_name;
+    const char* ext;
 };
 
 typedef std::shared_ptr<IAVInputFormat> PIAVInputFormat;
 
-// c++ 没有无反射，每个IAvDeumxer的创建需要实现工厂方法
-class AvDemuxerFactory : public Registers<AvDemuxerFactory, PIAVInputFormat> {
+// AVDemuxerFactory consists of all IAVInputFormat
+class AVDemuxerFactory : public Registers<AVDemuxerFactory, PIAVInputFormat> {
  public:
-    AvDemuxerFactory() = default;
-
- public:
-    virtual error_t init();
+    AVDemuxerFactory() = default;
 
  public:
     // TODO: to impl probe media format
-    virtual PIAvDemuxer probe(PIURLProtocol& p, PRequestUrl& url);
+    virtual PIAVDemuxer probe(PIReader p, PRequestUrl& url);
 
  public:
-    PIAvDemuxer create(PIURLProtocol& p, PRequestUrl& url);
-    PIAvDemuxer create(PIURLProtocol& p, const std::string& url);
+    PIAVDemuxer create(PIReader p, PRequestUrl& url);
+    PIAVDemuxer create(PIReader p, const std::string& url);
 };
 
 }
 
-#endif  // SPS_STREAM_DEC_HPP
+#endif  // SPS_AVFORMAT_DEC_HPP

@@ -21,5 +21,42 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
+#include <sps_avformat_enc.hpp>
+#include <sps_log.hpp>
 
+namespace sps {
+
+IAVOutputFormat::IAVOutputFormat(const char *name, const char *ext) {
+    this->name = name;
+    this->ext  = ext;
+}
+
+bool IAVOutputFormat::match(const char *e) const {
+    int n = strlen(ext);
+    int m = strlen(ext);
+    return  memcmp(ext, e, std::max(n, m));
+}
+
+PIAVEncoder AVEncoderFactory::create(PIWriter p, PRequestUrl &url) {
+    auto& fmts = refs();
+
+    for (auto& f : fmts) {
+        if (f->match(url->get_ext())) {
+            return f->create(std::move(p));
+        }
+    }
+    return nullptr;
+}
+
+PIAVEncoder AVEncoderFactory::create(PIWriter p, const std::string &url) {
+    PRequestUrl purl = std::make_shared<RequestUrl>();
+
+    if (purl->parse_url(url) != SUCCESS) {
+        sp_error("Invalid url %s.", url.c_str());
+        return nullptr;
+    }
+    return create(std::move(p), purl);
+}
+
+}
 

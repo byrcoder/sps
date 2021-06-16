@@ -24,15 +24,19 @@ SOFTWARE.
 #include <sps_log.hpp>
 #include <sps_module.hpp>
 #include <sps_url_protocol.hpp>
+#include <avformat/sps_avformat_dec.hpp>
+#include <avformat/sps_avformat_enc.hpp>
 
 namespace sps {
 
 extern PIModuleFactory sps_modules[];
 extern PIURLProtocolFactory sps_url_protocols[];
+extern PIAVInputFormat av_input_formats[];
+extern PIAVOutputFormat av_output_formats[];
 
 void init_modules() {
     int i = 0;
-    auto &modules = SingleInstance<sps::ModuleFactoryRegister>::get_instance();
+    auto& modules = SingleInstance<sps::ModuleFactoryRegister>::get_instance();
     while (sps_modules[i]) {
         modules.reg(std::string(sps_modules[i]->module), sps_modules[i]);
         sp_info("register module %s", sps_modules[i]->module.c_str());
@@ -44,7 +48,7 @@ void init_modules() {
 
 
 void init_url_protocol() {
-    auto &protocols = SingleInstance<sps::UrlProtocol>::get_instance();
+    auto& protocols = SingleInstance<sps::UrlProtocol>::get_instance();
 
     int i = 0;
     while (sps_url_protocols[i]) {
@@ -53,6 +57,23 @@ void init_url_protocol() {
         ++i;
     }
     sp_info("total url protocol %d", i);
+}
+
+void init_avformats() {
+    auto& input = SingleInstance<AVDemuxerFactory>::get_instance();
+
+    int i = 0;
+    while (av_input_formats[i]) {
+        input.reg(av_input_formats[i]);
+        ++i;
+    }
+
+    auto& output = SingleInstance<AVEncoderFactory>::get_instance();
+    i = 0;
+    while (av_output_formats[i]) {
+        output.reg(av_output_formats[i]);
+        ++i;
+    }
 }
 
 // TODO: FIXME thread safe
@@ -65,6 +86,7 @@ void sps_once_install() {
     installed = true;
     init_modules();
     init_url_protocol();
+    init_avformats();
 }
 
 }

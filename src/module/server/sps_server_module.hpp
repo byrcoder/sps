@@ -64,12 +64,12 @@ class ServerModule : public IModule {
     error_t install() override;
 
  public:
-    error_t pre_install(PISocketHandlerFactory factory);
+    error_t pre_install(PIConnectionHandlerFactory factory);
 
  public:
     PHostModulesRouter hosts_router = std::make_shared<HostModulesRouter>();
  private:
-    PISocketHandlerFactory socket_handler;
+    PIConnectionHandlerFactory socket_handler;
 
  public:
     static std::vector<PServer> servers;

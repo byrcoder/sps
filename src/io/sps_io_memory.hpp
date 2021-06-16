@@ -21,8 +21,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_NET_MEMIO_HPP
-#define SPS_NET_MEMIO_HPP
+#ifndef SPS_IO_MEMORY_HPP
+#define SPS_IO_MEMORY_HPP
 
 #include <sps_io.hpp>
 #include <sps_typedef.hpp>
@@ -62,4 +62,4 @@ class MemoryReaderWriter : public IReaderWriter {
 
 }
 
-#endif  // SPS_NET_MEMIO_HPP
+#endif  // SPS_IO_MEMORY_HPP

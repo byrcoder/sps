@@ -85,7 +85,7 @@ error_t ServerModule::install() {
     return ret;
 }
 
-error_t ServerModule::pre_install(PISocketHandlerFactory factory) {
+error_t ServerModule::pre_install(PIConnectionHandlerFactory factory) {
     this->socket_handler = factory;
     return SUCCESS;
 }

@@ -112,7 +112,7 @@ error_t HttpUrlProtocol::read(void *buf, size_t size, size_t& nr) {
     return ret;
 }
 
-error_t HttpUrlProtocol::read_chunked(void *buf, size_t size, size_t nread) {
+error_t HttpUrlProtocol::read_chunked(void *buf, size_t size, size_t& nread) {
     error_t ret = SUCCESS;
     nread       = 0;
 
@@ -125,11 +125,9 @@ error_t HttpUrlProtocol::read_chunked(void *buf, size_t size, size_t nread) {
         return ret;
     }
 
-    if (is_eof) {
-        return ERROR_HTTP_RES_EOF;
-    }
+    ret = read_chunked_data(buf, size, nread);
 
-    return read_chunked_data(buf, size, nread);
+    return ret;
 }
 
 error_t HttpUrlProtocol::read_chunked_length() {
@@ -151,7 +149,8 @@ error_t HttpUrlProtocol::read_chunked_length() {
         return ERROR_HTTP_CHUNKED_LENGTH_LARGE;
     }
 
-    if (i < 2 || tmp_buf[i-1] != '\r') {
+    if (i < 2 || tmp_buf[i-2] != '\r') {
+        sp_error("invalid read chunked length i:%d", i);
         return ERROR_HTTP_CHUNKED_INVALID;
     }
 
@@ -159,34 +158,34 @@ error_t HttpUrlProtocol::read_chunked_length() {
 
     nb_chunked_left = nb_chunked_size = std::strtoul(tmp_buf, nullptr, 16);
 
-    if (nb_chunked_size == 0) {
-        // last \r\n
-        ret = get_io()->read_fully(tmp_buf, 2, nullptr);
-
-        if (ret == SUCCESS && tmp_buf[0] == '\r' && tmp_buf[1] == '\n') {
-            is_eof = true; // last chunked size
-        } else if (ret == SUCCESS) {
-            ret = ERROR_HTTP_CHUNKED_INVALID;
-        }
-    }
+    sp_debug("read chunked length %lu", nb_chunked_size);
     return ret; // SUCCESS
 }
 
-error_t HttpUrlProtocol::read_chunked_data(void *buf, size_t size, size_t nread) {
-    assert(nb_chunked_left > 0);
+error_t HttpUrlProtocol::read_chunked_data(void *buf, size_t size, size_t& nread) {
+    size         = std::min(nb_chunked_left, size);
+    error_t ret  =  SUCCESS;
 
-    size      = std::min(nb_chunked_left, size);
-    auto ret  = get_io()->read(buf, size,nread);
+    if (nb_chunked_size != 0) {
+        ret = get_io()->read_fully(buf, size, (ssize_t *) &nread);
+    }
 
     nb_chunked_left -= nread; // ignore ret
+
+    sp_debug("read chunked data ret:%d, nread:%lu", ret, nread);
 
     if (ret == SUCCESS && nb_chunked_left == 0) {
         char tail[2];
         ret = get_io()->read_fully(tail, 2, nullptr);
 
         if (ret == SUCCESS && (tail[0] != '\r' || tail[1] != '\n')) {
+            sp_error("invalid read http chunked data");
             ret = ERROR_HTTP_CHUNKED_INVALID;
         }
+    }
+
+    if (ret == SUCCESS && nb_chunked_size == 0) {
+        is_eof = true;
     }
     return ret;
 }

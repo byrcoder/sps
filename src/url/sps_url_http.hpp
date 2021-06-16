@@ -41,11 +41,11 @@ class HttpUrlProtocol : public IURLProtocol {
  public:
     error_t read(void* buf, size_t size, size_t& nread) override;
 
-    error_t read_chunked(void* buf, size_t size, size_t nread);
+    error_t read_chunked(void* buf, size_t size, size_t& nread);
 
     error_t read_chunked_length();
 
-    error_t read_chunked_data(void* buf, size_t size, size_t nread);
+    error_t read_chunked_data(void* buf, size_t size, size_t& nread);
 
  public:
     bool eof();

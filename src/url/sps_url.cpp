@@ -52,8 +52,17 @@ error_t RequestUrl::parse_url(const std::string& url) {
     if (u.field_set & (1 << UF_SCHEMA))
         schema = url.substr(u.field_data[UF_SCHEMA].off, u.field_data[UF_SCHEMA].len);
 
-    if (u.field_set & (1 << UF_PORT)) port = u.port;
-    else                              port = 80;
+    if (u.field_set & (1 << UF_PORT)) {
+        port = u.port;
+    }
+    else if (schema == "http") {
+        port = 80;
+    } else if (schema == "rtmp") {
+        port = 1935;
+    } else {
+        sp_warn("not found default port for schema:%s", schema.c_str());
+        port = 0; // unknown port
+    }
 
     if (u.field_set & (1 << UF_HOST))
         host = url.substr(u.field_data[UF_HOST].off, u.field_data[UF_HOST].len);

@@ -21,8 +21,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_NET_SOCKET_HPP
-#define SPS_NET_SOCKET_HPP
+#ifndef SPS_IO_SOCKET_HPP
+#define SPS_IO_SOCKET_HPP
 
 #include <climits>
 #include <list>
@@ -114,4 +114,4 @@ class ServerSocketFactory : public Single<ServerSocketFactory> {
 
 }
 
-#endif  // SPS_NET_SOCKET_HPP
+#endif  // SPS_IO_SOCKET_HPP
