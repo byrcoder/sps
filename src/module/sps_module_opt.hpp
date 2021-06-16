@@ -46,16 +46,6 @@ enum LineType {
     ROOT_END,
 };
 
-/*
- * config设置的层级结构
- * config --- global
- *        --- module(http) --- global
- *                         --- server --- global
- *                                    --- host --- global
- *                                             --- location
- *
- *
- */
 enum ConfigOptionType {
     CONF_OPT_TYPE_INT,
     CONF_OPT_TYPE_INT64,

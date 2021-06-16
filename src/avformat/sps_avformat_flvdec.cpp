@@ -117,11 +117,11 @@ error_t FlvDecoder::probe(PIBuffer &buffer) {
     return SUCCESS;
 }
 
-FlvInputFormat::FlvInputFormat() :
+FlvAVInputFormat::FlvAVInputFormat() :
     IAVInputFormat("flv", "flv") {
 }
 
-PIAvDemuxer FlvInputFormat::create(PIURLProtocol p) {
+PIAVDemuxer FlvAVInputFormat::create(PIReader p) {
     return std::make_shared<FlvDecoder>(p);
 }
 

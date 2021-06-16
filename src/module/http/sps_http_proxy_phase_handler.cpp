@@ -43,9 +43,9 @@ error_t HttpProxyPhaseHandler::handler(HostPhaseCtx &ctx) {
     auto& host_ctx       = ctx.host;
     auto  host_conf     = std::static_pointer_cast<HostConfCtx>(host_ctx->conf);
     auto  proxy_req     = std::make_shared<RequestUrl>(*ctx.req);
-    auto  n             = host_conf->pass_proxy.find(':');
     auto& protocols     = SingleInstance<UrlProtocol>::get_instance();
     auto  ret           = SUCCESS;
+    auto  n             = host_conf->pass_proxy.find(':');
 
     if (n != std::string::npos) {
         proxy_req->ip   = host_conf->pass_proxy.substr(0, n);
@@ -90,13 +90,13 @@ error_t HttpProxyPhaseHandler::handler(HostPhaseCtx &ctx) {
         ret = rsp.write(buf, nr);
 
         if (ret != SUCCESS) {
-            sp_error("Failed write url protocol %ld.", ret);
+            sp_error("failed write url protocol %ld.", ret);
             return ret;
         }
     }
 
-    sp_trace("final response code:%d, ret:%ld, eof:%d", http_rsp->status_code,
-             ret, ret == ERROR_HTTP_RES_EOF);
+    sp_trace("final response code:%d, ret:%ld, eof:%d, chunked:%d", http_rsp->status_code,
+             ret, ret == ERROR_HTTP_RES_EOF, http_rsp->chunked);
 
     return (ret == ERROR_HTTP_RES_EOF || ret == SUCCESS) ? SPS_HTTP_PHASE_SUCCESS_NO_CONTINUE : ret;
 }

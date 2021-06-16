@@ -91,8 +91,8 @@ int HttpParserContext::parse_response() {
     res->chunked        = http.uses_transfer_encoding;
     res->headers        = headers;
 
-    sp_debug("header size:%lu, status_code:%d, cl:%llu", headers.size(), http.status_code,
-            http.content_length);
+    sp_info("header size:%lu, status_code:%d, cl:%llu, chunked:%d", headers.size(), http.status_code,
+            http.content_length, http.uses_transfer_encoding);
 
     return SUCCESS;
 }

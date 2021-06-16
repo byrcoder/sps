@@ -21,8 +21,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_NET_IO_HPP
-#define SPS_NET_IO_HPP
+/**
+ *
+ * abstract classes for io, such as reader/writer
+ * all sockets and file operator must inheritance from this
+ * all url protocols must inheritance from this
+ */
+
+#ifndef SPS_IO_HPP
+#define SPS_IO_HPP
 
 #include <memory>
 
@@ -39,12 +46,12 @@ class IReader {
 
  public:
     /**
-     * 读满数据
+     * read fixed size bytes
      */
     virtual error_t read_fully(void* buf, size_t size, ssize_t* nread = nullptr) = 0;
 
     /**
-     * 尽量读数据
+     * read bytes no more than size
      */
     virtual error_t read(void* buf, size_t size, size_t& nread) = 0;
 
@@ -72,6 +79,7 @@ class IReaderWriter : virtual public IReader, virtual public IWriter {
 };
 
 typedef std::shared_ptr<IReader> PIReader;
+typedef std::shared_ptr<IWriter> PIWriter;
 typedef std::shared_ptr<IReaderWriter> PIReaderWriter;
 
-#endif  // SPS_NET_IO_HPP
+#endif  // SPS_IO_HPP

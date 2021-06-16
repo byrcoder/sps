@@ -21,51 +21,31 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-/**
- *
- * kernel IPhaseHandler which work for every connection when accepted
- * every module may has diff IPhaseHandler for example http has HttpParsePhaseHandler,
- * stream submodule has StreamPhaseHandler
- *
- */
+//
+// Created by byrcoder on 2021/6/16.
+//
 
-#ifndef SPS_HOST_PHASE_HANDLER_HPP
-#define SPS_HOST_PHASE_HANDLER_HPP
+#include <sps_avformat_dec.hpp>
+#include <sps_avformat_enc.hpp>
 
-#include <sps_url.hpp>
-#include <sps_host_module.hpp>
-#include <sps_io_socket.hpp>
+#include <sps_avformat_flvdec.hpp>
+#include <sps_avformat_flvenc.hpp>
 
 namespace sps {
 
-struct HostPhaseCtx {
-    HostPhaseCtx(PRequestUrl r, PSocket s);
+#define AVINPUTFORMAT_INSTANCE(NAME) (std::make_shared<NAME##AVInputFormat>())
 
-    PRequestUrl req;
-    PSocket     socket;
-    std::string ip;
-    int         port;
-    PHostModule host;
+PIAVInputFormat av_input_formats[] = {
+        AVINPUTFORMAT_INSTANCE(Flv),
+        nullptr,
 };
 
-/**
- * work as nginx
- */
-class IPhaseHandler {
- public:
-    explicit IPhaseHandler(const char* name) : name(name) { }
-    const char* get_name() { return name; }
 
- public:
-    virtual error_t handler(HostPhaseCtx& ctx) = 0;
+#define AVOUTPUTFORMAT_INSTANCE(NAME) (std::make_shared<NAME##AVOutputFormat>())
 
- private:
-    const char* name;
+PIAVOutputFormat av_output_formats[] = {
+        // AVOUTPUTFORMAT_INSTANCE(Flv),
+        nullptr,
 };
-
-typedef std::shared_ptr<IPhaseHandler> PIPhaseHandler;
 
 }
-
-
-#endif  // SPS_HOST_PHASE_HANDLER_HPP
