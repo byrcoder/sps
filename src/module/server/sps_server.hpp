@@ -32,16 +32,22 @@ SOFTWARE.
 
 namespace sps {
 
-class ISocketHandler;
-typedef std::shared_ptr<ISocketHandler> PISocketHandler;
+class IConnectionHandler;
+typedef std::shared_ptr<IConnectionHandler> PIConnectionHandler;
 
-class SocketManager : public Registers<SocketManager, PISocketHandler> {
+/**
+ * the assemble for all connections
+ */
+class ConnectionManager : public Registers<ConnectionManager, PIConnectionHandler> {
 
 };
 
-class ISocketHandler: public ICoHandler, public std::enable_shared_from_this<ISocketHandler> {
+/**
+ * this work for every connection
+ */
+class IConnectionHandler: public ICoHandler, public std::enable_shared_from_this<IConnectionHandler> {
  public:
-    explicit ISocketHandler(PSocket io);
+    explicit IConnectionHandler(PSocket io);
 
  public:
     void on_stop() override;
@@ -49,16 +55,19 @@ class ISocketHandler: public ICoHandler, public std::enable_shared_from_this<ISo
  protected:
     PSocket io;
 };
-typedef std::shared_ptr<ISocketHandler> PISocketHandler;
+typedef std::shared_ptr<IConnectionHandler> PIConnectionHandler;
 
-class ISocketHandlerFactory {
+/**
+ * every kind connection-handler has a factory
+ */
+class IConnectionHandlerFactory {
  public:
-    ~ISocketHandlerFactory() = default;
+    ~IConnectionHandlerFactory() = default;
 
  public:
-    virtual PISocketHandler create(std::shared_ptr<Socket> io) = 0;
+    virtual PIConnectionHandler create(std::shared_ptr<Socket> io) = 0;
 };
-typedef std::shared_ptr<ISocketHandlerFactory> PISocketHandlerFactory;
+typedef std::shared_ptr<IConnectionHandlerFactory> PIConnectionHandlerFactory;
 
 /**
  * 一个server必须实现listener, handler factory 和 handler
@@ -69,7 +78,7 @@ class Server : public ICoHandler {
     ~Server() override = default;
 
  public:
-    error_t init(PISocketHandlerFactory factory, Transport transport);
+    error_t init(PIConnectionHandlerFactory factory, Transport transport);
     error_t listen(std::string ip, int port, bool reuse_port = true, int backlog = 1024);
 
  public:
@@ -77,9 +86,9 @@ class Server : public ICoHandler {
     error_t handler() override;
 
  protected:
-    PISocketHandlerFactory factory;
-    PIServerSocket         server_socket;
-    Transport              tran;
+    PIConnectionHandlerFactory factory;
+    PIServerSocket             server_socket;
+    Transport                  tran;
 };
 typedef std::shared_ptr<Server> PServer;
 

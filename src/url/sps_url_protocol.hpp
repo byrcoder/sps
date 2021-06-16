@@ -21,6 +21,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
+/**
+ *
+ * URL : Uniform Resoure Locator
+ *       protocol://host[:port]/path.[ext]?[params]
+ *
+ * IURLProtocol: work for url start with protocol
+ * IURLProtocolFactory:
+ *       1. match for url with start with protocol
+ *       2. create IURLProtocol
+ *
+ * UrlProtocol consists of all IURLProtocolFactories
+ *
+ */
+
 #ifndef SPS_URL_PROTOCOL_HPP
 #define SPS_URL_PROTOCOL_HPP
 

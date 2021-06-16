@@ -26,15 +26,15 @@ SOFTWARE.
 
 namespace sps {
 
-ISocketHandler::ISocketHandler(PSocket io) {
+IConnectionHandler::IConnectionHandler(PSocket io) {
     this->io = std::move(io);
 }
 
-void ISocketHandler::on_stop() {
-    SingleInstance<SocketManager>::get_instance().cancel(shared_from_this());
+void IConnectionHandler::on_stop() {
+    SingleInstance<ConnectionManager>::get_instance().cancel(shared_from_this());
 }
 
-error_t Server::init(PISocketHandlerFactory f, Transport transport) {
+error_t Server::init(PIConnectionHandlerFactory f, Transport transport) {
     factory         = std::move(f);
     tran            = transport;
     return SUCCESS;
@@ -57,7 +57,7 @@ error_t Server::accept() {
             continue;
         }
 
-        SingleInstance<SocketManager>::get_instance().reg(h);
+        SingleInstance<ConnectionManager>::get_instance().reg(h);
     } while(true);
 
     return SUCCESS;

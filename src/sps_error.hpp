@@ -103,9 +103,14 @@ SOFTWARE.
 // stream 协议
 #define ERROR_STREAM_EOF                    3000
 #define ERROR_STREAM_NOT_IMPL               3001
+
+#define ERROR_AVFORMAT_ENCODER_NOT_EXISTS   3100
+#define ERROR_AVFORMAT_DEMUX_NOT_EXISTS   3101
+#define ERROR_AVFORMAT_SOURCE_NOT_SUPPORT   3102
+
 // flv 协议
-#define ERROR_FLV_PROBE                     3101
-#define ERROR_FLV_BUFFER_OVERFLOW           3102
+#define ERROR_FLV_PROBE                     3201
+#define ERROR_FLV_BUFFER_OVERFLOW           3202
 
 
 

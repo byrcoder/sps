@@ -21,6 +21,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
+/**
+ *
+ * URL : Uniform Resoure Locator
+ *       protocol://host[:port]/path.[ext]?[params]
+ * EXTEND for http:
+ *       HEADERS:   "KEY: VALUE"
+ *
+ */
+
 #ifndef SPS_URL_HPP
 #define SPS_URL_HPP
 

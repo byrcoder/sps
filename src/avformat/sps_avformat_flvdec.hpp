@@ -32,7 +32,7 @@ SOFTWARE.
 
 namespace sps {
 
-class FlvDecoder : public IAvDemuxer {
+class FlvDecoder : public IAVDemuxer {
  public:
     FlvDecoder(PIReader rd);
 
@@ -50,12 +50,12 @@ class FlvDecoder : public IAvDemuxer {
     static const int max_len = 1 * 1024 * 1024;
 };
 
-class FlvInputFormat : public IAVInputFormat {
+class FlvAVInputFormat : public IAVInputFormat {
  public:
-    FlvInputFormat();
+    FlvAVInputFormat();
 
  public:
-    PIAvDemuxer create(PIURLProtocol s) override;
+    PIAVDemuxer create(PIReader s) override;
 
 };
 

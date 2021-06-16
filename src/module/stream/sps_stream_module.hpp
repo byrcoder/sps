@@ -29,16 +29,15 @@ SOFTWARE.
 namespace sps {
 
 struct StreamConfCtx : public ConfCtx {
-    std::string play_avformat;
-    std::string upstream_avformat;
+    std::string upstream_url;
     bool        edge;
+    std::string pass_proxy;
 };
 
 #define OFFSET(x) offsetof(StreamConfCtx, x)
 static const ConfigOption stream_options[] = {
-        { "play_avformat",     "play avformat",         OFFSET(play_avformat),        CONF_OPT_TYPE_STRING, {.str = "-"} },
-        { "upstream_avformat", "upstream avformat",     OFFSET(upstream_avformat),    CONF_OPT_TYPE_STRING, {.str = "-"} },
-        { "edge",              "upstream avformat",     OFFSET(edge),                 CONF_OPT_TYPE_BOOL,   {.str = "off"} },
+        { "play_avformat",     "play avformat",         OFFSET(upstream_url),        CONF_OPT_TYPE_STRING, {.str = "-"} },
+        { "edge",              "upstream avformat",     OFFSET(edge),                 CONF_OPT_TYPE_BOOL,   {.str = "on"} },
         { nullptr }
 };
 #undef OFFSET

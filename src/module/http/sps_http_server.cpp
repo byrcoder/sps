@@ -33,12 +33,12 @@ SOFTWARE.
 
 namespace sps {
 
-HttpSocketHandler::HttpSocketHandler(PSocket io, PHttpPhaseHandler& handler) :
-    ISocketHandler(std::move(io)), hd(handler) {
+HttpConnectionHandler::HttpConnectionHandler(PSocket io, PHttpPhaseHandler& handler) :
+        IConnectionHandler(std::move(io)), hd(handler) {
 
 }
 
-error_t HttpSocketHandler::handler() {
+error_t HttpConnectionHandler::handler() {
     HostPhaseCtx ctx(nullptr, io);
     do {
         error_t ret = SUCCESS;
@@ -52,12 +52,12 @@ error_t HttpSocketHandler::handler() {
     return SUCCESS;
 }
 
-HttpHandlerFactory::HttpHandlerFactory(PHttpPhaseHandler hd) {
+HttpConnectionHandlerFactory::HttpConnectionHandlerFactory(PHttpPhaseHandler hd) {
     handler = std::move(hd);
 }
 
-PISocketHandler HttpHandlerFactory::create(PSocket io) {
-    return std::make_shared<HttpSocketHandler>(io, handler);
+PIConnectionHandler HttpConnectionHandlerFactory::create(PSocket io) {
+    return std::make_shared<HttpConnectionHandler>(io, handler);
 }
 
 }
