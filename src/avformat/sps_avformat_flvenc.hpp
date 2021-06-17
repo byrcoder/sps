@@ -27,4 +27,16 @@ SOFTWARE.
 #ifndef SPS_AVFORMAT_FLVENC_HPP
 #define SPS_AVFORMAT_FLVENC_HPP
 
+#include <sps_avformat_enc.hpp>
+
+namespace sps {
+
+class FlvAVMuxer : public IAVMuxer {
+ public:
+
+
+};
+
+}
+
 #endif  // SPS_AVFORMAT_FLVENC_HPP

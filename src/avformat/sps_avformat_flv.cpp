@@ -21,14 +21,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#include <sps_stream_msg.hpp>
-
-namespace sps {
-
-SpsPacket::SpsPacket(const IAVInputFormat* fmt, PacketType pkt,
-        const char* buf, int len) : CharBuffer(buf, len) {
-    this->fmt = fmt;
-    this->pkt = pkt;
-}
-
-}
+//
+// Created by byrcoder on 2021/6/17.
+//

@@ -21,53 +21,31 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#include <sps_avformat_dec.hpp>
-#include <sps_log.hpp>
+//
+// reference ffmpeg avformat flv.h
+// Created by byrcoder on 2021/6/17.
+//
 
-namespace sps {
+#ifndef SPS_AVFORMAT_FLV_HPP
+#define SPS_AVFORMAT_FLV_HPP
 
-IAVInputFormat::IAVInputFormat(const char *name, const char *ext) {
-    this->name = name;
-    this->ext  = ext;
-}
+enum {
+    FLV_HEADER_FLAG_HASVIDEO = 1,
+    FLV_HEADER_FLAG_HASAUDIO = 4,
+};
 
-bool IAVInputFormat::match(const char *e) const {
-    int n = strlen(ext);
-    int m = strlen(ext);
-    return  memcmp(ext, e, std::max(n, m));
-}
+enum FlvTagType {
+    FLV_TAG_TYPE_AUDIO = 0x08,
+    FLV_TAG_TYPE_VIDEO = 0x09,
+    FLV_TAG_TYPE_META  = 0x12,
+};
 
-PIAVDemuxer IAVInputFormat::create2(PIReader p) {
-    auto remuxer = _create(p);
-    if (remuxer) {
-        remuxer->fmt = this;
-    }
-    return remuxer;
-}
+enum {
+    FLV_STREAM_TYPE_VIDEO,
+    FLV_STREAM_TYPE_AUDIO,
+    FLV_STREAM_TYPE_SUBTITLE,
+    FLV_STREAM_TYPE_DATA,
+    FLV_STREAM_TYPE_NB,
+};
 
-PIAVDemuxer AVDemuxerFactory::probe(PIReader p, PRequestUrl& url) {
-    return nullptr;
-}
-
-PIAVDemuxer AVDemuxerFactory::create(PIReader p, PRequestUrl& url) {
-    auto& fmts = refs();
-
-    for (auto& f : fmts) {
-        if (f->match(url->get_ext())) {
-            return f->create2(std::move(p));
-        }
-    }
-    return probe(std::move(p), url);
-}
-
-PIAVDemuxer AVDemuxerFactory::create(PIReader p, const std::string &url) {
-    PRequestUrl purl = std::make_shared<RequestUrl>();
-
-    if (purl->parse_url(url) != SUCCESS) {
-        sp_error("Invalid url %s.", url.c_str());
-        return nullptr;
-    }
-    return create(std::move(p), purl);
-}
-
-}
+#endif  // SPS_AVFORMAT_FLV_HPP

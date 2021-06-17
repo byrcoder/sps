@@ -29,28 +29,29 @@ SOFTWARE.
 #include <sps_typedef.hpp>
 #include <sps_url.hpp>
 #include <sps_url_protocol.hpp>
+#include "sps_avformat_packet.hpp"
 
 namespace sps {
 
 class IAVOutputFormat;
 // stream encoder for example flv/ts/mp4
-class IAVEncoder {
+class IAVMuxer {
  public:
-    virtual ~IAVEncoder() = default;
+    virtual ~IAVMuxer() = default;
 
  public:
     const IAVOutputFormat* name();
 
  public:
-    virtual error_t write_header(PIBuffer& buffer)  = 0;
-    virtual error_t write_message(PIBuffer& buffer) = 0;
-    virtual error_t write_tail(PIBuffer& buffer)    = 0;
+    virtual error_t write_header(PSpsAVPacket& buffer)  = 0;
+    virtual error_t write_message(PSpsAVPacket& buffer) = 0;
+    virtual error_t write_tail(PSpsAVPacket& buffer)    = 0;
 
  public:
     const IAVOutputFormat* fmt;
 };
 
-typedef std::shared_ptr<IAVEncoder> PIAVEncoder;
+typedef std::shared_ptr<IAVMuxer> PIAVMuxer;
 
 class IAVOutputFormat {
  public:
@@ -61,7 +62,7 @@ class IAVOutputFormat {
     virtual bool match(const char* ext) const;
 
  public:
-    virtual PIAVEncoder create(PIWriter pw) const = 0;
+    virtual PIAVMuxer create(PIWriter pw) const = 0;
 
  public:
     const char* name;
@@ -76,8 +77,8 @@ class AVEncoderFactory : public Registers<AVEncoderFactory, PIAVOutputFormat> {
     AVEncoderFactory() = default;
 
  public:
-    PIAVEncoder create(PIWriter p, PRequestUrl& url);
-    PIAVEncoder create(PIWriter p, const std::string& url);
+    PIAVMuxer create(PIWriter p, PRequestUrl& url);
+    PIAVMuxer create(PIWriter p, const std::string& url);
 };
 
 }

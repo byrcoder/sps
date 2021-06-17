@@ -37,7 +37,7 @@ bool IAVOutputFormat::match(const char *e) const {
     return  memcmp(ext, e, std::max(n, m));
 }
 
-PIAVEncoder AVEncoderFactory::create(PIWriter p, PRequestUrl &url) {
+PIAVMuxer AVEncoderFactory::create(PIWriter p, PRequestUrl &url) {
     auto& fmts = refs();
 
     for (auto& f : fmts) {
@@ -48,7 +48,7 @@ PIAVEncoder AVEncoderFactory::create(PIWriter p, PRequestUrl &url) {
     return nullptr;
 }
 
-PIAVEncoder AVEncoderFactory::create(PIWriter p, const std::string &url) {
+PIAVMuxer AVEncoderFactory::create(PIWriter p, const std::string &url) {
     PRequestUrl purl = std::make_shared<RequestUrl>();
 
     if (purl->parse_url(url) != SUCCESS) {
