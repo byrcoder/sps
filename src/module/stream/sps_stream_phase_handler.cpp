@@ -75,7 +75,7 @@ error_t StreamPhaseHandler::handler(HostPhaseCtx &ctx) {
         return ERROR_AVFORMAT_DEMUX_NOT_EXISTS;
     }
 
-    PIBuffer buffer;
+    PSpsAVPacket buffer;
     ret = dec->read_header(buffer);
 
     if (ret != SUCCESS) {

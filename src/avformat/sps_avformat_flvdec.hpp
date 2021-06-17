@@ -27,20 +27,20 @@ SOFTWARE.
 #include <vector>
 
 #include <sps_avformat_dec.hpp>
+#include <sps_avformat_packet.hpp>
 #include <sps_io.hpp>
-#include <sps_stream_msg.hpp>
 
 namespace sps {
 
-class FlvDecoder : public IAVDemuxer {
+class FlvDemuxer : public IAVDemuxer {
  public:
-    FlvDecoder(PIReader rd);
+    FlvDemuxer(PIReader rd);
 
  public:
-    error_t read_header(PIBuffer& buffer)  override;
-    error_t read_message(PIBuffer& buffer) override;
-    error_t read_tail(PIBuffer& buffer)    override;
-    error_t probe(PIBuffer& buffer)        override;
+    error_t read_header(PSpsAVPacket & buffer)  override;
+    error_t read_message(PSpsAVPacket& buffer) override;
+    error_t read_tail(PSpsAVPacket& buffer)    override;
+    error_t probe(PSpsAVPacket& buffer)        override;
 
  private:
     std::vector<char> buf;
@@ -54,8 +54,8 @@ class FlvAVInputFormat : public IAVInputFormat {
  public:
     FlvAVInputFormat();
 
- public:
-    PIAVDemuxer create(PIReader s) override;
+ protected:
+    PIAVDemuxer _create(PIReader s) override;
 
 };
 

@@ -21,31 +21,27 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_STREAM_MSG_HPP
-#define SPS_STREAM_MSG_HPP
+//
+// Created by byrcoder on 2021/6/17.
+//
 
-#include <sps_cache_buffer.hpp>
-#include <sps_avformat_dec.hpp>
+#include <sps_avformat_packet.hpp>
 
 namespace sps {
 
-enum PacketType {
-    HEADER,
-    VIDEO,
-    AUDIO,
-    METADATA,
-};
-
-class SpsPacket : public CharBuffer {
- public:
-    SpsPacket(const IAVInputFormat* fmt, PacketType pkt, const char* buf, int len);
-
- public:
-    const IAVInputFormat* fmt;
-    PacketType pkt;
-};
-
+PSpsAVPacket SpsAVPacket::create(SpsAVPacketType pkt_type, SpsAVStreamType stream_type,
+        const char *buf, int len, int64_t dts, int64_t pts, int flags, int64_t duration) {
+    auto pkt = std::make_shared<SpsAVPacket> (buf, len);
+    pkt->pkt_type    = pkt_type;
+    pkt->stream_type = stream_type;
+    pkt->dts         = dts;
+    pkt->pts         = pts;
+    pkt->flags       = flags;
+    pkt->duration    = duration;
+    return pkt;
 }
 
+SpsAVPacket::SpsAVPacket(const char *buf, int len) :  CharBuffer(buf, len) {
+}
 
-#endif  // SPS_STREAM_MSG_HPP
+}

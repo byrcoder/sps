@@ -22,17 +22,18 @@ SOFTWARE.
 *****************************************************************************/
 
 #include <sps_avformat_flvdec.hpp>
-#include <sps_stream_msg.hpp>
+#include <sps_avformat_packet.hpp>
 #include <sps_url.hpp>
 #include <sps_io_socket.hpp>
+#include "sps_avformat_flv.hpp"
 
 namespace sps {
 
-FlvDecoder::FlvDecoder(PIReader rd) : buf(max_len, 0)  {
+FlvDemuxer::FlvDemuxer(PIReader rd) : buf(max_len, 0)  {
     this->rd = std::move(rd);
 }
 
-error_t FlvDecoder::read_header(PIBuffer &buffer) {
+error_t FlvDemuxer::read_header(PSpsAVPacket &buffer) {
     auto ret = rd->read_fully(&buf[0], 9, nullptr);
     if (ret != SUCCESS) {
         return ret;
@@ -42,12 +43,21 @@ error_t FlvDecoder::read_header(PIBuffer &buffer) {
         return ERROR_FLV_PROBE;
     }
 
-    buffer = std::make_shared<SpsPacket>(fmt,
-            PacketType::HEADER, &buf[0], 9);
+    // version buf[3]
+
+    int flags = ((int) buf[4]) & (FLV_HEADER_FLAG_HASVIDEO | FLV_HEADER_FLAG_HASAUDIO); // flags
+    // header_len buf[5...8]
+
+    buffer = SpsAVPacket::create(SpsAVPacketType::AV_PKT_TYPE_HEADER,
+                                AV_STREAM_TYPE_NB,
+                                &buf[0], 9,
+                                0, 0, flags, 0);
+    buffer->flags = buf[4];
+
     return ret;
 }
 
-error_t FlvDecoder::read_message(PIBuffer& buffer) {
+error_t FlvDemuxer::read_message(PSpsAVPacket& buffer) {
     const int flv_head_len = 15;
 
     error_t ret = SUCCESS;
@@ -97,17 +107,23 @@ error_t FlvDecoder::read_message(PIBuffer& buffer) {
 
     nread = flv_head_len + data_len;
 
-    buffer = std::make_shared<SpsPacket>(fmt,
-                                         PacketType::HEADER,
-                                         &buf[0], nread);
+//    buffer = std::make_shared<SpsAVPacket>(fmt,
+//                                           PacketType::HEADER,
+//                                           &buf[0], nread);
+
+    buffer = SpsAVPacket::create(SpsAVPacketType::AV_PKT_DATA,
+                                 AV_STREAM_TYPE_NB,
+                                 &buf[0], nread,
+                                 0, 0);
+
     return ret;
 }
 
-error_t FlvDecoder::read_tail(PIBuffer& buffer) {
+error_t FlvDemuxer::read_tail(PSpsAVPacket& buffer) {
     return SUCCESS;
 }
 
-error_t FlvDecoder::probe(PIBuffer &buffer) {
+error_t FlvDemuxer::probe(PSpsAVPacket& buffer) {
     auto buf = buffer->buffer();
     int  len = buffer->size();
 
@@ -121,8 +137,8 @@ FlvAVInputFormat::FlvAVInputFormat() :
     IAVInputFormat("flv", "flv") {
 }
 
-PIAVDemuxer FlvAVInputFormat::create(PIReader p) {
-    return std::make_shared<FlvDecoder>(p);
+PIAVDemuxer FlvAVInputFormat::_create(PIReader p) {
+    return std::make_shared<FlvDemuxer>(p);
 }
 
 }
