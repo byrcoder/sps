@@ -21,38 +21,45 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
+#include <sps_avformat_flv.hpp>
 #include <sps_avformat_flvdec.hpp>
 #include <sps_avformat_packet.hpp>
-#include <sps_url.hpp>
-#include <sps_io_socket.hpp>
-#include "sps_avformat_flv.hpp"
+#include <sps_io_bytes.hpp>
 
 namespace sps {
 
-FlvDemuxer::FlvDemuxer(PIReader rd) : buf(max_len, 0)  {
-    this->rd = std::move(rd);
+static const int max_len = 1 * 1024 * 1024;
+
+FlvDemuxer::FlvDemuxer(PIReader rd) {
+    buf       = std::make_unique<AVBuffer>(max_len, true);
+    this->_rd = rd;
+    this->rd  = std::make_unique<SpsBytesReader>(_rd, buf);
 }
 
 error_t FlvDemuxer::read_header(PSpsAVPacket &buffer) {
-    auto ret = rd->read_fully(&buf[0], 9, nullptr);
+    auto ret = rd->acquire(9);
+
     if (ret != SUCCESS) {
         return ret;
     }
+    uint8_t* buf = this->buf->pos();
 
     if (buf[0] != 'F' || buf[1] != 'L' || buf[2] != 'V') {
         return ERROR_FLV_PROBE;
     }
 
-    // version buf[3]
+    // version buf[3] skip
 
     int flags = ((int) buf[4]) & (FLV_HEADER_FLAG_HASVIDEO | FLV_HEADER_FLAG_HASAUDIO); // flags
     // header_len buf[5...8]
 
     buffer = SpsAVPacket::create(SpsAVPacketType::AV_PKT_TYPE_HEADER,
                                 AV_STREAM_TYPE_NB,
-                                &buf[0], 9,
+                                buf, 9,
                                 0, 0, flags, 0);
     buffer->flags = buf[4];
+
+    rd->skip_bytes(9);
 
     return ret;
 }
@@ -60,62 +67,36 @@ error_t FlvDemuxer::read_header(PSpsAVPacket &buffer) {
 error_t FlvDemuxer::read_message(PSpsAVPacket& buffer) {
     const int flv_head_len = 15;
 
-    error_t ret = SUCCESS;
-    int nread = 0;
-    int len = max_len;
+    error_t  ret    = SUCCESS;
+    int      nread  = 0;
+    uint32_t previous_size = 0;
+    uint32_t pos           = 0;
+    uint32_t tag_type      = 0;
+    uint32_t data_size     = 0;
+    uint32_t timestamp     = 0;
+    uint32_t stream_id     = 0;
 
-    if (len < flv_head_len) {
+    if ((ret = rd->acquire(flv_head_len)) != SUCCESS) {
         return ERROR_FLV_BUFFER_OVERFLOW;
     }
+    previous_size = rd->read_int32(); // previous
+    tag_type      = rd->read_int8();  // tag_type
+    data_size     = rd->read_int24(); // data_size
+    timestamp     = rd->read_int24(); // timestamp low 24 bit
+    timestamp    |= ((uint32_t) rd->read_int8() << 24u); // high 8 bit
+    stream_id     = rd->read_int24(); // streamid
 
-    char *pos = &buf[0];
-    // 4 + 1 + 3 + 3 + 1 + 3 = 15
-    if ((ret = rd->read_fully(pos, 4)) != SUCCESS) {  // previous size
-        return ret;
-    }
-    pos += 4;
-
-    if ((ret = rd->read_fully(pos, 1)) != SUCCESS) {  // tag type
-        return ret;
-    }
-    pos += 1;
-
-    if ((ret = rd->read_fully(pos, 3)) != SUCCESS) {   // data size
-        return ret;
-    }
-    pos += 3;
-    uint32_t data_len = *pos | (*(pos-1) < 8) | (*(pos-2) < 16);
-
-    uint32_t timestamp;
-    if ((ret = rd->read_fully(pos, 4)) != SUCCESS) {  // tag timestamp
-        return ret;
-    }
-    pos += 4;
-
-    if ((ret = rd->read_fully(pos, 3)) != SUCCESS) {  // tag streamid
-        return ret;
-    }
-    pos += 3;
-
-    if (data_len + 15 > len) {
+    if ((ret = rd->acquire(data_size)) != SUCCESS) {
         return ERROR_MEM_OVERFLOW;
     }
 
-    if ((ret = rd->read_fully(pos, data_len)) != SUCCESS) {  // flv tag 读取
-        return ret;
-    }
-
-    nread = flv_head_len + data_len;
-
-//    buffer = std::make_shared<SpsAVPacket>(fmt,
-//                                           PacketType::HEADER,
-//                                           &buf[0], nread);
-
+    // TODO: FIXME
     buffer = SpsAVPacket::create(SpsAVPacketType::AV_PKT_DATA,
                                  AV_STREAM_TYPE_NB,
-                                 &buf[0], nread,
+                                 buf->pos(), data_size,
                                  0, 0);
 
+    rd->skip_bytes(data_size);
     return ret;
 }
 

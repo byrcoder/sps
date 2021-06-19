@@ -24,12 +24,12 @@ SOFTWARE.
 #ifndef SPS_STREAM_ENC_HPP
 #define SPS_STREAM_ENC_HPP
 
+#include <sps_avformat_packet.hpp>
 #include <sps_cache_buffer.hpp>
 #include <sps_io.hpp>
 #include <sps_typedef.hpp>
 #include <sps_url.hpp>
 #include <sps_url_protocol.hpp>
-#include "sps_avformat_packet.hpp"
 
 namespace sps {
 

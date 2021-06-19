@@ -29,6 +29,7 @@ SOFTWARE.
 #include <sps_avformat_dec.hpp>
 #include <sps_avformat_packet.hpp>
 #include <sps_io.hpp>
+#include <sps_io_bytes.hpp>
 
 namespace sps {
 
@@ -43,11 +44,9 @@ class FlvDemuxer : public IAVDemuxer {
     error_t probe(PSpsAVPacket& buffer)        override;
 
  private:
-    std::vector<char> buf;
-    PIReader rd;
-
- public:
-    static const int max_len = 1 * 1024 * 1024;
+    PAVBuffer buf;
+    PIReader  _rd;
+    PSpsBytesReader rd;
 };
 
 class FlvAVInputFormat : public IAVInputFormat {

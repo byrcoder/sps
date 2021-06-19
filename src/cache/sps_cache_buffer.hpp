@@ -33,7 +33,7 @@ class IBuffer {
     virtual ~IBuffer() = default;
 
  public:
-    virtual char *buffer() = 0;
+    virtual uint8_t *buffer() = 0;
 
     virtual int size() = 0;
 };
@@ -45,20 +45,20 @@ typedef std::shared_ptr<CharBuffer> PCharBuffer;
 
 class CharBuffer : public IBuffer {
  public:
-    static PCharBuffer copy(const char* buf, int len);
+    static PCharBuffer copy(uint8_t* buf, int len);
     // static  __unused PCharBuffer nocopy(char* buf, int len);
 
  public:
-    CharBuffer(const char* buf, int len);
+    CharBuffer(uint8_t* buf, int len);
     ~CharBuffer();
 
  public:
-    char* buffer() override      { return buf; }
+    uint8_t* buffer() override      { return buf; }
     int   size() override        { return len; }
 
  private:
-    char* buf = nullptr;
-    int   len = 0;
+    uint8_t* buf = nullptr;
+    int      len = 0;
 };
 
 }
