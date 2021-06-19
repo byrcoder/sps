@@ -35,17 +35,17 @@ namespace sps {
 
 class FlvDemuxer : public IAVDemuxer {
  public:
-    FlvDemuxer(PIReader rd);
+    explicit FlvDemuxer(PIReader rd);
 
  public:
     error_t read_header(PSpsAVPacket & buffer)  override;
-    error_t read_message(PSpsAVPacket& buffer) override;
+    error_t read_packet(PSpsAVPacket& buffer)   override;
     error_t read_tail(PSpsAVPacket& buffer)    override;
     error_t probe(PSpsAVPacket& buffer)        override;
 
  private:
     PAVBuffer buf;
-    PIReader  _rd;
+    PIReader  io;
     PSpsBytesReader rd;
 };
 
@@ -55,7 +55,6 @@ class FlvAVInputFormat : public IAVInputFormat {
 
  protected:
     PIAVDemuxer _create(PIReader s) override;
-
 };
 
 }
