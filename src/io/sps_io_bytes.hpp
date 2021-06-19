@@ -47,6 +47,7 @@ namespace sps {
 class AVBuffer {
  public:
     AVBuffer(size_t cap, bool rewindable);
+    AVBuffer(uint8_t* buf, size_t cap, bool rewindable);
     ~AVBuffer();
 
  public:
@@ -62,12 +63,18 @@ class AVBuffer {
     void       skip(size_t n);
     void       rewind();
 
+    void       append(size_t n);
+
+    void       clear();
  public:
     uint8_t*  buf;
     size_t    buf_cap;
     size_t    buf_ptr;
     size_t    buf_end;
     bool      rewindable;
+
+ private:
+    bool      own;
 };
 
 typedef std::unique_ptr<AVBuffer> PAVBuffer;
@@ -90,13 +97,35 @@ class SpsBytesReader {
     uint32_t read_int24();
     uint32_t read_int32();
 
-    error_t    acquire(uint32_t n);
+    error_t  acquire(uint32_t n);
 
  private:
     PIReader& io;
     PAVBuffer& buf;
 };
 typedef std::unique_ptr<SpsBytesReader> PSpsBytesReader;
+
+class SpsBytesWriter {
+ public:
+    SpsBytesWriter(PAVBuffer& buf);
+
+    error_t acquire(uint32_t n);
+
+    inline void write_int8(uint8_t n) {
+        *buf->pos() = n;
+        buf->append(1);
+    }
+
+    void    write_int16(uint16_t n);
+    void    write_int24(uint32_t n);
+    void    write_int32(uint32_t n);
+    void    write_bytes(uint8_t* data, size_t n);
+    void    skip(size_t n);
+
+
+ private:
+    PAVBuffer& buf;
+};
 
 }
 

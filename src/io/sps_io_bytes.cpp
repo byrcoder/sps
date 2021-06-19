@@ -34,10 +34,21 @@ AVBuffer::AVBuffer(size_t cap, bool rw) {
     buf_ptr = buf_end = 0;
     buf_cap = cap;
     rewindable = rw;
+    own        = true;
+}
+
+AVBuffer::AVBuffer(uint8_t *buf, size_t cap, bool rw) {
+    this->buf = buf;
+    buf_ptr = buf_end = 0;
+    this->buf_cap = cap;
+    rewindable    = rw;
+    own           = false;
 }
 
 AVBuffer::~AVBuffer() {
-    delete[] buf;
+    if (own) {
+        delete[] buf;
+    }
 }
 
 uint8_t* AVBuffer::buffer() {
@@ -47,7 +58,6 @@ uint8_t* AVBuffer::buffer() {
 uint8_t* AVBuffer::pos() {
     return buf + buf_ptr;
 }
-
 
 uint8_t* AVBuffer::end() {
     return buf + buf_end;
@@ -81,6 +91,14 @@ void AVBuffer::rewind() {
     memmove(buf, buf+buf_ptr, buf_end-buf_ptr);
     buf_end = buf_end - buf_ptr;
     buf_ptr = 0;
+}
+
+void AVBuffer::append(size_t n) {
+    buf_end += n;
+}
+
+void AVBuffer::clear() {
+    buf_ptr = buf_end = 0;
 }
 
 SpsBytesReader::SpsBytesReader(PIReader& io, PAVBuffer& buf): io(io), buf(buf) {
@@ -148,6 +166,37 @@ error_t SpsBytesReader::acquire(uint32_t n) {
 
     sp_debug("%s, size:%zu, n:%d", (char*) buf->pos(), buf->size(), n);
     return ret;
+}
+
+SpsBytesWriter::SpsBytesWriter(PAVBuffer& buf): buf(buf) {
+}
+
+error_t SpsBytesWriter::acquire(uint32_t n) {
+    return buf->remain() >= n ? SUCCESS : ERROR_IO_BUFFER_FULL;
+}
+
+void SpsBytesWriter::write_int16(uint16_t n) {
+    write_int8(n >> 8);
+    write_int8(n & 0XFF);
+}
+
+void SpsBytesWriter::write_int24(uint32_t n) {
+    write_int8(n >> 16);
+    write_int16(n & 0XFFFF);
+}
+
+void SpsBytesWriter::write_int32(uint32_t n) {
+    write_int8(n >> 24);
+    write_int24(n & 0XFFFFFF);
+}
+
+void SpsBytesWriter::write_bytes(uint8_t* data, size_t n) {
+    memcpy(buf->end(), data, n);
+    buf->append(n);
+}
+
+void SpsBytesWriter::skip(size_t n) {
+    buf->append(n);
 }
 
 }
