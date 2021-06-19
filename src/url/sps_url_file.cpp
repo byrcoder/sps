@@ -67,8 +67,18 @@ error_t FileURLProtocol::read_fully(void *buf, size_t size, ssize_t *nread) {
 }
 
 error_t FileURLProtocol::read(void *buf, size_t size, size_t &nread) {
+    if (fh.eof()) {
+        return ERROR_IO_EOF;
+    }
+
+    if (fh.fail()) {
+        return ERROR_FILE_READ;
+    }
+
     fh.read((char*) buf, size);
-    return fh.fail() ? ERROR_IO_EOF : SUCCESS;
+
+    nread = fh.gcount();
+    return SUCCESS;
 }
 
 error_t FileURLProtocol::read_line(std::string &line) {

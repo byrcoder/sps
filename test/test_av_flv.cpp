@@ -22,31 +22,5 @@ SOFTWARE.
 *****************************************************************************/
 
 //
-// Created by byrcoder on 2021/6/17.
+// Created by byrcoder on 2021/6/19.
 //
-
-#include <sps_avformat_packet.hpp>
-
-namespace sps {
-
-PSpsAVPacket SpsAVPacket::create(SpsMessageType msg_type, SpsAVStreamType stream_type,
-                                 SpsAVPacketType pkt_type,
-                                 uint8_t* buf, int len, int64_t dts, int64_t pts, int flags,
-                                 int codecid, int64_t duration) {
-    auto pkt = std::make_shared<SpsAVPacket> (buf, len);
-    pkt->msg_type    = msg_type;
-    pkt->stream_type = stream_type;
-    pkt->pkt_type    = pkt_type;
-
-    pkt->dts         = dts;
-    pkt->pts         = pts;
-    pkt->flags       = flags;
-    pkt->codecid     = codecid;
-    pkt->duration    = duration;
-    return pkt;
-}
-
-SpsAVPacket::SpsAVPacket(uint8_t *buf, int len) :  CharBuffer(buf, len) {
-}
-
-}

@@ -25,6 +25,7 @@ SOFTWARE.
 #include <sps_avformat_flvdec.hpp>
 #include <sps_avformat_packet.hpp>
 #include <sps_io_bytes.hpp>
+#include <log/sps_log.hpp>
 
 namespace sps {
 
@@ -32,8 +33,8 @@ static const int max_len = 1 * 1024 * 1024;
 
 FlvDemuxer::FlvDemuxer(PIReader rd) {
     buf       = std::make_unique<AVBuffer>(max_len, true);
-    this->_rd = rd;
-    this->rd  = std::make_unique<SpsBytesReader>(_rd, buf);
+    this->io  = std::move(rd);
+    this->rd  = std::make_unique<SpsBytesReader>(io, buf);
 }
 
 error_t FlvDemuxer::read_header(PSpsAVPacket &buffer) {
@@ -42,29 +43,31 @@ error_t FlvDemuxer::read_header(PSpsAVPacket &buffer) {
     if (ret != SUCCESS) {
         return ret;
     }
-    uint8_t* buf = this->buf->pos();
+    uint8_t* pos = this->buf->pos();
 
-    if (buf[0] != 'F' || buf[1] != 'L' || buf[2] != 'V') {
+    if (pos[0] != 'F' || pos[1] != 'L' || pos[2] != 'V') {
+        sp_error("Not flv head %.*s", 9, pos);
         return ERROR_FLV_PROBE;
     }
 
     // version buf[3] skip
 
-    int flags = ((int) buf[4]) & (FLV_HEADER_FLAG_HASVIDEO | FLV_HEADER_FLAG_HASAUDIO); // flags
+    int flags = pos[4] & (FLV_HEADER_FLAG_HASVIDEO | FLV_HEADER_FLAG_HASAUDIO); // flags
     // header_len buf[5...8]
 
-    buffer = SpsAVPacket::create(SpsAVPacketType::AV_PKT_TYPE_HEADER,
-                                AV_STREAM_TYPE_NB,
-                                buf, 9,
-                                0, 0, flags, 0);
-    buffer->flags = buf[4];
+    buffer = SpsAVPacket::create(SpsMessageType::AV_MESSAGE_HEADER,
+                                 AV_STREAM_TYPE_NB,
+                                 SpsAVPacketType {},
+                                 pos, 9,
+                                 0, 0, flags, 0);
+    buffer->flags = pos[4];
 
     rd->skip_bytes(9);
 
     return ret;
 }
 
-error_t FlvDemuxer::read_message(PSpsAVPacket& buffer) {
+error_t FlvDemuxer::read_packet(PSpsAVPacket& buffer) {
     const int flv_head_len = 15;
 
     error_t  ret    = SUCCESS;
@@ -72,31 +75,107 @@ error_t FlvDemuxer::read_message(PSpsAVPacket& buffer) {
     uint32_t previous_size = 0;
     uint32_t pos           = 0;
     uint32_t tag_type      = 0;
-    uint32_t data_size     = 0;
-    uint32_t timestamp     = 0;
+    int      data_size     = 0;
+    int64_t  dts           = 0;
+    int64_t  pts           = 0;
     uint32_t stream_id     = 0;
+    uint32_t flags         = 0;
+    uint32_t codecid       = 0;
+    int32_t  cts           = 0;
+    int32_t  ffmpeg_cts    = 0;
+    int      pkt_type      = 0;
 
     if ((ret = rd->acquire(flv_head_len)) != SUCCESS) {
-        return ERROR_FLV_BUFFER_OVERFLOW;
+        sp_error("flv head not enough %d", ret);
+        return ret;
     }
     previous_size = rd->read_int32(); // previous
     tag_type      = rd->read_int8();  // tag_type
     data_size     = rd->read_int24(); // data_size
-    timestamp     = rd->read_int24(); // timestamp low 24 bit
-    timestamp    |= ((uint32_t) rd->read_int8() << 24u); // high 8 bit
+    dts           = rd->read_int24(); // timestamp low 24 bit
+    dts          |= ((uint32_t) rd->read_int8() << 24u); // high 8 bit
     stream_id     = rd->read_int24(); // streamid
+    SpsAVStreamType stream_type = AV_STREAM_TYPE_NB;
 
     if ((ret = rd->acquire(data_size)) != SUCCESS) {
-        return ERROR_MEM_OVERFLOW;
+        sp_error("flv head not enough %d", ret);
+        return ret;
     }
 
-    // TODO: FIXME
-    buffer = SpsAVPacket::create(SpsAVPacketType::AV_PKT_DATA,
-                                 AV_STREAM_TYPE_NB,
+    sp_debug("flv tag head previous_size: %u, tag_type: %u, data_size: %u, "
+            "dts:%lld, stream_id: %u",
+            previous_size, tag_type, data_size,
+            dts, stream_type);
+
+    switch (tag_type) {
+        case 8:
+            stream_type = AV_STREAM_TYPE_AUDIO;
+            break;
+        case 9:
+            stream_type = AV_STREAM_TYPE_VIDEO;
+            break;
+        case 18:
+            stream_type = AV_STREAM_TYPE_SUBTITLE;
+            break;
+        default:
+            sp_error("unknown flag: %u", tag_type);
+            return ERROR_FLV_UNKNOWN_TAG_TYPE;
+    }
+
+    if (stream_type == AV_STREAM_TYPE_AUDIO) {
+        flags   = rd->read_int8();
+        // channels    = flags & 0x01    // (0. SndMomo 1. SndStero)
+        // sample_size = flags & 0x02    // (0. 8       1. 16)
+        // sample_rate = flags & 0x0c    // (0. 5.5k    1. 11k   2. 22k   3. 44k)
+        codecid = (flags & 0xf0) >> 4;      // (10. aac 14. mp3) high 4-bits
+
+        if (codecid != SpsAudioCodec::AAC) {
+            sp_error("unknown audio codecid: %d", codecid);
+            return ERROR_FLV_AUDIO_CODECID;
+        }
+        pkt_type    =    rd->read_int8(); // 0. sequence header 1. aac data
+        data_size   -=   2;
+        pts         = dts;
+    } else if(stream_type == AV_STREAM_TYPE_VIDEO) {
+        flags       = rd->read_int8();
+        uint8_t frame_type = flags & 0xf0 ;   // 1 keyframe 2. inner 3. h263 disposable 4.
+        codecid     = flags & 0x0f;           // low 4-bits
+
+        if (codecid != SpsVideoCodec::H264 && codecid != SpsVideoCodec::H265) {
+            sp_error("unknown video codecid: %d", codecid);
+            return ERROR_FLV_VIDEO_CODECID;
+        }
+        --data_size;
+
+        if (frame_type != 0x50) {
+            pkt_type = rd->read_int8(); // 0. avc sequence header 1. avc data 2. avc end data
+            cts = rd->read_int24();
+            ffmpeg_cts = (cts + 0xff800000) ^ 0xff800000;
+            pts = dts + ffmpeg_cts;
+            data_size = data_size - 4;
+        }
+        sp_debug("frametype: %2X, codecid: %2X, dts: %12lld, pts: %12lld, ffmpeg_cts: %11d, "
+                "data_size: %11u",
+                frame_type, codecid, dts, pts, ffmpeg_cts, data_size);
+    }
+
+    if (data_size <= 0) {
+        sp_error("data size is empty");
+        return ERROR_FLV_TAG;
+    }
+
+    buffer = SpsAVPacket::create(SpsMessageType::AV_MESSAGE_DATA,
+                                 stream_type,
+                                 SpsAVPacketType{pkt_type},
                                  buf->pos(), data_size,
-                                 0, 0);
+                                 dts, pts, flags, codecid);
 
     rd->skip_bytes(data_size);
+    sp_debug("packet stream: %u, pkt: %d, flag: %2X, data_size: %10.u, "
+            "dts: %11lld, pts: %11lld, cts: %11d, ffmpeg_cts: %11d",
+            stream_type, pkt_type, flags, data_size,
+            dts, pts, cts, ffmpeg_cts);
+
     return ret;
 }
 
@@ -105,10 +184,10 @@ error_t FlvDemuxer::read_tail(PSpsAVPacket& buffer) {
 }
 
 error_t FlvDemuxer::probe(PSpsAVPacket& buffer) {
-    auto buf = buffer->buffer();
+    auto pos = buffer->buffer();
     int  len = buffer->size();
 
-    if (len < 3 || buf[0] != 'F' || buf[1] != 'L' || buf[2] != 'V') {
+    if (len < 3 || pos[0] != 'F' || pos[1] != 'L' || pos[2] != 'V') {
         return ERROR_FLV_PROBE;
     }
     return SUCCESS;

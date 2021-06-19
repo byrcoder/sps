@@ -34,11 +34,11 @@ namespace sps {
 const int AV_PKT_FLAG_KEY       =   0x0001; ///< The packet contains a keyframe
 const int AV_PKT_FLAG_SEQUENCE  =   0x0002; ///< The packet contains a sequence header
 
-enum SpsAVPacketType {
-    AV_PKT_TYPE_HEADER,
-    AV_PKT_DATA,
-    AV_PKT_TAIL,
-    AV_PKT_NB,
+enum SpsMessageType {
+    AV_MESSAGE_HEADER,
+    AV_MESSAGE_DATA,
+    AV_MESSAGE_TAIL,
+    AV_MESSAGE_NB,
 };
 
 enum SpsAVStreamType {
@@ -49,19 +49,36 @@ enum SpsAVStreamType {
     AV_STREAM_TYPE_NB,
 };
 
+struct SpsAVPacketType {
+    int pkt_type;
+};
+
+enum SpsAudioCodec {
+    AAC = 10,
+    MP3 = 14,
+};
+
+enum SpsVideoCodec {
+    H264 = 7,  // AVC
+    H265 = 12, //
+};
+
+
 class SpsAVPacket;
 typedef std::shared_ptr<SpsAVPacket> PSpsAVPacket;
 // ffmpeg
 class SpsAVPacket : public CharBuffer {
  public:
     static PSpsAVPacket create(
-            SpsAVPacketType pkt_type,
+            SpsMessageType msg_type,
             SpsAVStreamType stream_type,
+            SpsAVPacketType pkt_type,
             uint8_t* buf,
             int len,
             int64_t dts,
             int64_t pts,
             int flags = 0,
+            int codecid = 0,
             int64_t duration = 0);
 
  public:
@@ -71,12 +88,14 @@ class SpsAVPacket : public CharBuffer {
     /**
      * avformat header/data/tail
      */
-    SpsAVPacketType pkt_type   = AV_PKT_NB;
+    SpsMessageType msg_type   = AV_MESSAGE_NB;
 
     /**
      * video/audio/metadata/
      */
     SpsAVStreamType stream_type  = AV_STREAM_TYPE_NB;
+
+    SpsAVPacketType     pkt_type = {};
 
     /**
      * Presentation timestamp in AVStream->time_base units; the time at which
@@ -105,6 +124,8 @@ class SpsAVPacket : public CharBuffer {
      * Equals next_pts - this_pts in presentation order.
      */
     int64_t duration = 0;
+
+    int     codecid = 0;
 };
 
 }

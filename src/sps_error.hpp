@@ -111,7 +111,10 @@ SOFTWARE.
 // flv 协议
 #define ERROR_FLV_PROBE                     3201
 #define ERROR_FLV_BUFFER_OVERFLOW           3202
-
+#define ERROR_FLV_TAG                       3203
+#define ERROR_FLV_AUDIO_CODECID             3204
+#define ERROR_FLV_VIDEO_CODECID             3205
+#define ERROR_FLV_UNKNOWN_TAG_TYPE          3206
 
 
 #endif // SPS_SPS_ERROR_HPP

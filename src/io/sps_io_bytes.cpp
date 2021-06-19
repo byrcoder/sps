@@ -24,10 +24,8 @@ SOFTWARE.
 //
 // Created by byrcoder on 2021/6/18.
 //
-#define SPS_HEAVY_LOG
 #include <sps_io_bytes.hpp>
 #include <log/sps_log.hpp>
-
 
 namespace sps {
 
@@ -141,6 +139,7 @@ error_t SpsBytesReader::acquire(uint32_t n) {
         ret = io->read(buf->end(), buf->remain(), nread);
 
         if (ret != SUCCESS) {
+            sp_error("fail increase buffer read ret: %d", ret);
             return ret;
         }
 

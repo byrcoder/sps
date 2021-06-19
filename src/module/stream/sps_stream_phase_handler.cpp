@@ -91,7 +91,7 @@ error_t StreamPhaseHandler::handler(HostPhaseCtx &ctx) {
     }
 
     do {
-        ret = dec->read_message(buffer);
+        ret = dec->read_packet(buffer);
 
         if (ret != SUCCESS) {
             sp_error("failed dec read message url protocol for ret:%d", ret);
