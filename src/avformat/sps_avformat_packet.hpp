@@ -57,7 +57,7 @@ class SpsAVPacket : public CharBuffer {
     static PSpsAVPacket create(
             SpsAVPacketType pkt_type,
             SpsAVStreamType stream_type,
-            const char* buf,
+            uint8_t* buf,
             int len,
             int64_t dts,
             int64_t pts,
@@ -65,7 +65,7 @@ class SpsAVPacket : public CharBuffer {
             int64_t duration = 0);
 
  public:
-    SpsAVPacket(const char* buf, int len);
+    SpsAVPacket(uint8_t* buf, int len);
 
  public:
     /**

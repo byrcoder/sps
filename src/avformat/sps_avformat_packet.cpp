@@ -30,7 +30,7 @@ SOFTWARE.
 namespace sps {
 
 PSpsAVPacket SpsAVPacket::create(SpsAVPacketType pkt_type, SpsAVStreamType stream_type,
-        const char *buf, int len, int64_t dts, int64_t pts, int flags, int64_t duration) {
+        uint8_t* buf, int len, int64_t dts, int64_t pts, int flags, int64_t duration) {
     auto pkt = std::make_shared<SpsAVPacket> (buf, len);
     pkt->pkt_type    = pkt_type;
     pkt->stream_type = stream_type;
@@ -41,7 +41,7 @@ PSpsAVPacket SpsAVPacket::create(SpsAVPacketType pkt_type, SpsAVStreamType strea
     return pkt;
 }
 
-SpsAVPacket::SpsAVPacket(const char *buf, int len) :  CharBuffer(buf, len) {
+SpsAVPacket::SpsAVPacket(uint8_t *buf, int len) :  CharBuffer(buf, len) {
 }
 
 }
