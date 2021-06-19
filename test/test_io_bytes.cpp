@@ -89,7 +89,7 @@ GTEST_TEST(IOBYTES, READ) {
     }
 }
 
-GTEST_TEST(IOBYTES, REWIND) {
+GTEST_TEST(IOBYTES, READ_REWIND) {
 
     std::string tmp(1024, '1') ;
 
@@ -116,7 +116,7 @@ GTEST_TEST(IOBYTES, REWIND) {
     }
 }
 
-GTEST_TEST(IOBYTES, NOREWIND) {
+GTEST_TEST(IOBYTES, READ_NOREWIND) {
 
     std::string tmp(1024, '1') ;
 
@@ -144,8 +144,37 @@ GTEST_TEST(IOBYTES, NOREWIND) {
 
     EXPECT_TRUE( memcmp((char*)tmp.c_str(), (char*) buffer->buffer(), tmp.size()) == 0);
     for (int i = 0; i < tmp.size(); ++i) {
-        sp_info("%d: %u, %u", i, tmp[i], *(buffer->buffer()+i));
+        sp_debug("%d: %u, %u", i, tmp[i], *(buffer->buffer()+i));
     }
 
     EXPECT_TRUE(bytes.acquire(1) != SUCCESS);
+}
+
+GTEST_TEST(IOBYTES, WRITE) {
+    uint8_t buf[16];
+
+    uint8_t to_read[] = {
+            0X01,
+            0X02, 0X03,
+            0X04, 0X05, 0X06,
+            0X07, 0X08, 0X09, 0XA0,
+            'a',  'b', 'c',   'd', 'e', 'f',
+            '\0',
+    };
+
+    auto av_buf = std::make_unique<sps::AVBuffer>(buf, sizeof(buf), false);
+    sps::SpsBytesWriter writer(av_buf);
+
+    EXPECT_TRUE(writer.acquire(sizeof(buf)) == SUCCESS);
+    EXPECT_TRUE(writer.acquire(sizeof(buf)+1) != SUCCESS);
+
+    writer.write_int8(0x01);
+    writer.write_int16(0x0203);
+    writer.write_int24(0x040506);
+    writer.write_int32(0x070809A0);
+    EXPECT_TRUE(writer.acquire(6) == SUCCESS);
+    writer.write_bytes((uint8_t*) "abcdef", 6);
+    EXPECT_TRUE(writer.acquire(1) != SUCCESS);
+    EXPECT_TRUE(av_buf->size() == 16);
+    EXPECT_TRUE(memcmp(to_read, av_buf->pos(), sizeof(buf)));
 }

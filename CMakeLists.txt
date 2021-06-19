@@ -163,7 +163,7 @@ if(ENABLE_UNITTESTS)
     add_executable(test_tmp
             ${SRC_LIST}
             ${HEAD_LIST}
-            test/test_config.cpp
+            test/test_av_flv.cpp
             test/test_main.cpp
             )
 

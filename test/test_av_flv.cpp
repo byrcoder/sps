@@ -24,3 +24,50 @@ SOFTWARE.
 //
 // Created by byrcoder on 2021/6/19.
 //
+#include <gtest/gtest.h>
+
+#include <sps_avformat_flvdec.hpp>
+#include <sps_url_file.hpp>
+#include <sps_log.hpp>
+
+extern const char* filename;
+
+namespace sps {
+
+error_t test_flv() {
+    auto file_protocol = std::make_shared<FileURLProtocol>();
+    auto ret = file_protocol->open(filename);
+
+    if (ret != SUCCESS) {
+        sp_error("open failed ret: %d, %s", ret, filename);
+        return ret;
+    }
+
+    FlvDemuxer flv_demuxer(file_protocol);
+
+    PSpsAVPacket pkt;
+
+    ret = flv_demuxer.read_header(pkt);
+    if (ret != SUCCESS) {
+        sp_error("fail open FLV HEADER ret: %d", ret);
+        return ret;
+    }
+
+    do {
+        pkt.reset();
+        ret = flv_demuxer.read_packet(pkt);
+
+        if (ret != SUCCESS) {
+            sp_error("fail FLV PACKET %d", ret);
+            break;
+        }
+    } while(true);
+
+    return ret == ERROR_IO_EOF ? SUCCESS : ret;
+}
+
+GTEST_TEST(FLV, DEMUX) {
+    EXPECT_TRUE(test_flv() == SUCCESS);
+}
+
+}

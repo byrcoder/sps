@@ -61,8 +61,11 @@ class IAVOutputFormat {
  public:
     virtual bool match(const char* ext) const;
 
+ protected:
+    virtual PIAVMuxer _create(PIWriter pw) const = 0;
+
  public:
-    virtual PIAVMuxer create(PIWriter pw) const = 0;
+    PIAVMuxer create2(PIWriter pw);
 
  public:
     const char* name;

@@ -127,7 +127,7 @@ error_t FlvDemuxer::read_packet(PSpsAVPacket& buffer) {
         // channels    = flags & 0x01    // (0. SndMomo 1. SndStero)
         // sample_size = flags & 0x02    // (0. 8       1. 16)
         // sample_rate = flags & 0x0c    // (0. 5.5k    1. 11k   2. 22k   3. 44k)
-        codecid = (flags & 0xf0) >> 4;      // (10. aac 14. mp3) high 4-bits
+        codecid = (flags & 0xf0) >> 4;   // (10. aac 14. mp3) high 4-bits
 
         if (codecid != SpsAudioCodec::AAC) {
             sp_error("unknown audio codecid: %d", codecid);

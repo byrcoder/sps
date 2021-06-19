@@ -13,10 +13,15 @@ extern "C" {
 
 auto& protocols = SingleInstance<sps::UrlProtocol>::get_instance();
 
+const char* filename = "media/third.flv";
+
 int main(int argc, char **argv) {
     protocols.reg(
             std::make_shared<sps::HttpURLProtocolFactory>()
     );
+    if (argc > 1) {
+        filename = argv[1];
+    }
     testing::InitGoogleTest(&argc, argv);
     st_init();
     return RUN_ALL_TESTS();

@@ -28,13 +28,31 @@ SOFTWARE.
 #define SPS_AVFORMAT_FLVENC_HPP
 
 #include <sps_avformat_enc.hpp>
+#include <sps_io.hpp>
+#include <sps_io_bytes.hpp>
 
 namespace sps {
 
 class FlvAVMuxer : public IAVMuxer {
  public:
+    FlvAVMuxer(PIWriter writer);
+ public:
+    error_t write_header(PSpsAVPacket& buffer) override;
+    error_t write_message(PSpsAVPacket& buffer) override;
+    error_t write_tail(PSpsAVPacket& buffer)    override;
 
+ private:
+    PIWriter  writer;
+    PAVBuffer tag_buffer;
+    uint32_t  previous_size;
+};
 
+class FlvAVOutputFormat : public IAVOutputFormat {
+ public:
+    FlvAVOutputFormat();
+
+ protected:
+    PIAVMuxer _create(PIWriter pw) const override;
 };
 
 }
