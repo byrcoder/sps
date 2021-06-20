@@ -26,7 +26,7 @@ SOFTWARE.
 
 #include <list>
 
-#include <sps_cache_buffer.hpp>
+#include <sps_avformat_packet.hpp>
 #include <sps_io.hpp>
 #include <sps_typedef.hpp>
 #include <sps_url.hpp>
@@ -36,26 +36,24 @@ namespace sps {
 
 class IAVInputFormat;
 
-class IAVDemuxer;
-typedef std::shared_ptr<IAVDemuxer> PIAVDemuxer;
-
 // stream demuxer for example flv/ts/mp4
 class IAVDemuxer {
  public:
     virtual ~IAVDemuxer() = default;
 
  public:
-    const IAVInputFormat* name();
+    const IAVInputFormat* name() { return fmt; }
 
  public:
-    virtual error_t read_header(PIBuffer& buffer)  = 0;
-    virtual error_t read_message(PIBuffer& buffer) = 0;
-    virtual error_t read_tail(PIBuffer& buffer)    = 0;
-    virtual error_t probe(PIBuffer& buffer)        = 0;
+    virtual error_t read_header(PSpsAVPacket & buffer)  = 0;
+    virtual error_t read_packet(PSpsAVPacket& buffer) = 0;
+    virtual error_t read_tail(PSpsAVPacket& buffer)    = 0;
+    virtual error_t probe(PSpsAVPacket& buffer)        = 0;
 
  public:
     const IAVInputFormat* fmt;
 };
+typedef std::shared_ptr<IAVDemuxer> PIAVDemuxer;
 
 // IAVInputFormat is the factory of IAVDemuxer
 class IAVInputFormat {
@@ -66,8 +64,11 @@ class IAVInputFormat {
  public:
     virtual bool match(const char* ext) const;
 
+ protected:
+    virtual PIAVDemuxer _create(PIReader p) = 0;
+
  public:
-    virtual PIAVDemuxer create(PIReader p) = 0;
+    PIAVDemuxer create2(PIReader p);
 
  public:
     const char* name;

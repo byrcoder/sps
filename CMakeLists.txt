@@ -127,7 +127,22 @@ file(GLOB SRC_LIST
         "${PROJECT_SOURCE_DIR}/src/url/*.cpp"
         )
 
-message("src: ${SRC_LIST}")
+file(GLOB SRC_TEST_LIST
+        "${PROJECT_SOURCE_DIR}/test/*.cpp")
+
+message("src: ${SRC_LIST}"  test:"${SRC_TEST_LIST}")
+
+
+
+# Add static and shared library target
+# add_library(spslib_static STATIC ${SRC_LIST})
+# add_library(spslib_shared SHARED ${SRC_LIST})
+
+if (SRT_DISABLED)
+    set(libs "libst.a libhttp_parser.a libgtest.a")
+else ()
+    set(libs "srt libst.a libhttp_parser.a")
+endif()
 
 add_executable(sps
         ${SRC_LIST}
@@ -135,45 +150,32 @@ add_executable(sps
         ${PROJECT_SOURCE_DIR}/src/main/sps_main_sps.cpp
         )
 
-TARGET_LINK_LIBRARIES(sps
-        srt
-        libst.a
-        libhttp_parser.a
-        )
+target_link_libraries(sps libst.a libhttp_parser.a libgtest.a)
 
 if(ENABLE_UNITTESTS)
 
     add_executable(test_all
             ${SRC_LIST}
             ${HEAD_LIST}
-            test/test_cache.cpp
-            test/test_co.cpp
-            test/test_http.cpp
-            test/test_config.cpp
-            test/test_url.cpp
-            test/test_main.cpp
+            ${SRC_TEST_LIST}
             )
 
     add_executable(test_tmp
             ${SRC_LIST}
             ${HEAD_LIST}
-            test/test_config.cpp
+            test/test_av_flv.cpp
             test/test_main.cpp
             )
 
 
-    TARGET_LINK_LIBRARIES(test_all
+    target_link_libraries(test_all
             libgtest.a
-            srt
-            libst.a
-            libhttp_parser.a
+            libst.a libhttp_parser.a libgtest.a
             )
 
-    TARGET_LINK_LIBRARIES(test_tmp
+    target_link_libraries(test_tmp
             libgtest.a
-            srt
-            libst.a
-            libhttp_parser.a
+            libst.a libhttp_parser.a libgtest.a
             )
 
     add_test(

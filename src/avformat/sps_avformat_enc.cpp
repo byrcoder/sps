@@ -26,6 +26,10 @@ SOFTWARE.
 
 namespace sps {
 
+const IAVOutputFormat * IAVMuxer::name() {
+    return fmt;
+}
+
 IAVOutputFormat::IAVOutputFormat(const char *name, const char *ext) {
     this->name = name;
     this->ext  = ext;
@@ -37,18 +41,26 @@ bool IAVOutputFormat::match(const char *e) const {
     return  memcmp(ext, e, std::max(n, m));
 }
 
-PIAVEncoder AVEncoderFactory::create(PIWriter p, PRequestUrl &url) {
+PIAVMuxer IAVOutputFormat::create2(PIWriter pw) {
+    auto muxer = _create(std::move(pw));
+    if (muxer) {
+        muxer->fmt = this;
+    }
+    return muxer;
+}
+
+PIAVMuxer AVEncoderFactory::create(PIWriter p, PRequestUrl &url) {
     auto& fmts = refs();
 
     for (auto& f : fmts) {
         if (f->match(url->get_ext())) {
-            return f->create(std::move(p));
+            return f->create2(std::move(p));
         }
     }
     return nullptr;
 }
 
-PIAVEncoder AVEncoderFactory::create(PIWriter p, const std::string &url) {
+PIAVMuxer AVEncoderFactory::create(PIWriter p, const std::string &url) {
     PRequestUrl purl = std::make_shared<RequestUrl>();
 
     if (purl->parse_url(url) != SUCCESS) {

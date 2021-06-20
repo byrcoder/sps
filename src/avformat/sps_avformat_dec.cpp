@@ -37,6 +37,14 @@ bool IAVInputFormat::match(const char *e) const {
     return  memcmp(ext, e, std::max(n, m));
 }
 
+PIAVDemuxer IAVInputFormat::create2(PIReader p) {
+    auto remuxer = _create(p);
+    if (remuxer) {
+        remuxer->fmt = this;
+    }
+    return remuxer;
+}
+
 PIAVDemuxer AVDemuxerFactory::probe(PIReader p, PRequestUrl& url) {
     return nullptr;
 }
@@ -46,7 +54,7 @@ PIAVDemuxer AVDemuxerFactory::create(PIReader p, PRequestUrl& url) {
 
     for (auto& f : fmts) {
         if (f->match(url->get_ext())) {
-            return f->create(std::move(p));
+            return f->create2(std::move(p));
         }
     }
     return probe(std::move(p), url);
