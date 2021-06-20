@@ -27,29 +27,48 @@ SOFTWARE.
 #include <gtest/gtest.h>
 
 #include <sps_avformat_flvdec.hpp>
+#include <sps_avformat_flvenc.hpp>
 #include <sps_url_file.hpp>
 #include <sps_log.hpp>
 
 extern const char* filename;
+extern const char* out_filename;
 
 namespace sps {
 
 error_t test_flv() {
-    auto file_protocol = std::make_shared<FileURLProtocol>();
-    auto ret = file_protocol->open(filename);
+    auto in_file = std::make_shared<FileURLProtocol>();
+    auto ret     = in_file->open(filename);
 
     if (ret != SUCCESS) {
-        sp_error("open failed ret: %d, %s", ret, filename);
+        sp_error("open input filename failed ret: %d, %s", ret, filename);
         return ret;
     }
 
-    FlvDemuxer flv_demuxer(file_protocol);
+    auto out_file = std::make_shared<FileURLProtocol>(true, false);
+    ret           = out_file->open(out_filename);
 
+    if (ret != SUCCESS) {
+        sp_error("open output filename failed ret: %d, %s", ret, out_filename);
+        return ret;
+    }
+
+    FlvDemuxer flv_demuxer(in_file);
     PSpsAVPacket pkt;
 
     ret = flv_demuxer.read_header(pkt);
     if (ret != SUCCESS) {
-        sp_error("fail open FLV HEADER ret: %d", ret);
+        sp_error("fail read FLV HEADER ret: %d", ret);
+        return ret;
+    }
+
+    FlvAVMuxer flv_muxer(out_file);
+    ret = flv_muxer.write_header(pkt);
+
+    pkt->debug();
+
+    if (ret != SUCCESS) {
+        sp_error("fail write FLV HEADER ret: %d", ret);
         return ret;
     }
 
@@ -58,9 +77,17 @@ error_t test_flv() {
         ret = flv_demuxer.read_packet(pkt);
 
         if (ret != SUCCESS) {
-            sp_error("fail FLV PACKET %d", ret);
+            sp_error("fail read FLV PACKET %d", ret);
             break;
         }
+        // pkt->debug();
+
+        ret = flv_muxer.write_message(pkt);
+        if (ret != SUCCESS) {
+            sp_error("fail write FLV PACKET %d", ret);
+            break;
+        }
+
     } while(true);
 
     return ret == ERROR_IO_EOF ? SUCCESS : ret;

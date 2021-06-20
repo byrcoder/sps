@@ -32,7 +32,8 @@ SOFTWARE.
 namespace sps{
 
 FlvAVMuxer::FlvAVMuxer(PIWriter writer) : writer(std::move(writer)){
-    tag_buffer    = std::make_unique<AVBuffer>(15, false);
+    // 4 previous + 11 tag_size + 10 tmp size
+    tag_buffer    = std::make_unique<AVBuffer>(15 + 4 + 10, false);
     previous_size = 0;
 }
 
@@ -51,6 +52,10 @@ error_t FlvAVMuxer::write_header(PSpsAVPacket& buffer) {
             sp_error("flv header not 9 size");
             return ERROR_FLV_PROBE;
         }
+        if ((ret = writer->write(buffer->buffer(), 9)) != SUCCESS) {
+            sp_error("writer flv header fail ret: %d", ret);
+            return ret;
+        }
     } else {
         if ((ret = writer->write((char *) flv_header, 9)) != SUCCESS) {
             sp_error("writer flv header fail ret: %d", ret);
@@ -63,10 +68,12 @@ error_t FlvAVMuxer::write_header(PSpsAVPacket& buffer) {
 
 error_t FlvAVMuxer::write_message(PSpsAVPacket& buffer) {
     tag_buffer->clear();
-    SpsBytesWriter io(tag_buffer);
+    SpsBytesWriter head_writer(tag_buffer);
 
-    error_t ret      = SUCCESS;
-    uint8_t tag_type = 0;
+    error_t  ret      = SUCCESS;
+    uint8_t  tag_type = 0;
+    uint32_t data_size    = buffer->size();
+    uint32_t tmp_previous = previous_size;
 
     switch (buffer->stream_type) {
         case AV_STREAM_TYPE_VIDEO:
@@ -82,12 +89,65 @@ error_t FlvAVMuxer::write_message(PSpsAVPacket& buffer) {
             sp_error("flv tag unknown %d", tag_type);
             return ERROR_FLV_UNKNOWN_TAG_TYPE;
     }
-    io.write_int8(tag_type); // tagtype
+    head_writer.write_int32(previous_size);        // previous size
+
+    head_writer.write_int8(tag_type);              // tagtype
     uint8_t* data_size_pos = tag_buffer->end();
-    io.skip(3);   // skip 3-bytes data size
-    io.write_int24(buffer->dts >> 8);  // low 3-bytes
-    io.write_int8(buffer->dts >> 24);  // high 1-bytes
-    io.write_int24(0); // stream_id
+    head_writer.skip(3);                        // skip 3-bytes data size
+    head_writer.write_int24(buffer->dts >> 8);  // low 3-bytes
+    head_writer.write_int8(buffer->dts >> 24);  // high 1-bytes
+    head_writer.write_int24(0); // stream_id
+
+    previous_size = 1 + 3 + 4 + 3;                 // 11 tag_size
+#define WRITE_DATA_SIZE(pos, n) \
+     *pos      = n >> 16;\
+     *(pos+1)  = (n & 0XFFFF) >> 8;\
+     *(pos+2)  = n & 0XFF;
+
+    if (buffer->stream_type == AV_STREAM_TYPE_SUBTITLE) {
+    } else if (buffer->stream_type == AV_STREAM_TYPE_AUDIO) {
+        uint8_t codecid = (buffer->flags & 0xf0) >> 4;   // (10. aac 14. mp3) high 4-bits
+        head_writer.write_int8(buffer->flags);
+        head_writer.write_int8(buffer->pkt_type.pkt_type);
+        data_size += 2;
+    } else if (buffer->stream_type == AV_STREAM_TYPE_VIDEO) {
+        uint8_t frame_type  = buffer->flags & 0xf0 ;   // 1 keyframe 2. inner 3. h263 disposable 4.
+        uint8_t codecid     = buffer->flags & 0x0f;    // low 4-bits
+        head_writer.write_int8(buffer->flags);
+
+        data_size += 1;
+        if (frame_type != 0x50) {
+            head_writer.write_int8(buffer->pkt_type.pkt_type); // 0. avc sequence header 1. avc data 2. avc end data
+            head_writer.write_int24(buffer->pts-buffer->dts);
+            data_size += 4;
+        }
+    } else {
+        ret = ERROR_FLV_UNKNOWN_TAG_TYPE;
+    }
+
+
+    WRITE_DATA_SIZE(data_size_pos, data_size)
+    ret = writer->write(tag_buffer->buffer(), tag_buffer->size());
+    if (ret != SUCCESS) {
+        sp_error("fail write tag head ret:%d", ret);
+        return ret;
+    }
+
+
+    ret = writer->write(buffer->buffer(), buffer->size());
+    if (ret != SUCCESS) {
+        sp_error("fail write tag data ret:%d", ret);
+        return ret;
+    }
+
+    sp_info("packet stream: %u, pkt: %d, flag: %2X, previous: %10u, data_size: %10.u, "
+            "dts: %11lld, pts: %11lld, cts: %11d",
+            buffer->stream_type, buffer->pkt_type.pkt_type, buffer->flags,
+            tmp_previous,
+            data_size,
+            buffer->dts, buffer->pts, (int) (buffer->pts-buffer->dts));
+
+    previous_size += data_size;
 
     return ret;
 }

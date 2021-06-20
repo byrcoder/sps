@@ -176,5 +176,9 @@ GTEST_TEST(IOBYTES, WRITE) {
     writer.write_bytes((uint8_t*) "abcdef", 6);
     EXPECT_TRUE(writer.acquire(1) != SUCCESS);
     EXPECT_TRUE(av_buf->size() == 16);
-    EXPECT_TRUE(memcmp(to_read, av_buf->pos(), sizeof(buf)));
+    EXPECT_TRUE(memcmp(to_read, av_buf->buffer(), sizeof(buf)) == 0);
+
+    for (int i = 0; i < sizeof(buf); ++i) {
+        // sp_info("%d. %2X, %2X", i, to_read[i], *(av_buf->buffer() + i));
+    }
 }

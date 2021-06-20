@@ -126,6 +126,9 @@ class SpsAVPacket : public CharBuffer {
     int64_t duration = 0;
 
     int     codecid = 0;
+
+ public:
+    void debug();
 };
 
 }
