@@ -94,8 +94,8 @@ error_t FlvAVMuxer::write_message(PSpsAVPacket& buffer) {
     head_writer.write_int8(tag_type);              // tagtype
     uint8_t* data_size_pos = tag_buffer->end();
     head_writer.skip(3);                        // skip 3-bytes data size
-    head_writer.write_int24(buffer->dts >> 8);  // low 3-bytes
-    head_writer.write_int8(buffer->dts >> 24);  // high 1-bytes
+    head_writer.write_int24(buffer->dts &  0x00FFFFFF);  // low 3-bytes
+    head_writer.write_int8((buffer->dts & 0xFF000000) >> 24);  // high 1-bytes
     head_writer.write_int24(0); // stream_id
 
     previous_size = 1 + 3 + 4 + 3;                 // 11 tag_size
@@ -140,12 +140,12 @@ error_t FlvAVMuxer::write_message(PSpsAVPacket& buffer) {
         return ret;
     }
 
-    sp_info("packet stream: %u, pkt: %d, flag: %2X, previous: %10u, data_size: %10.u, "
-            "dts: %11lld, pts: %11lld, cts: %11d",
-            buffer->stream_type, buffer->pkt_type.pkt_type, buffer->flags,
-            tmp_previous,
-            data_size,
-            buffer->dts, buffer->pts, (int) (buffer->pts-buffer->dts));
+    sp_debug("packet stream: %u, pkt: %d, flag: %2X, previous: %10u, data_size: %10.u, "
+             "dts: %11lld, pts: %11lld, cts: %11d",
+             buffer->stream_type, buffer->pkt_type.pkt_type, buffer->flags,
+             tmp_previous,
+             data_size,
+             buffer->dts, buffer->pts, (int) (buffer->pts - buffer->dts));
 
     previous_size += data_size;
 
