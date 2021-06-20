@@ -82,7 +82,6 @@ error_t FlvDemuxer::read_packet(PSpsAVPacket& buffer) {
     uint32_t flags         = 0;
     uint32_t codecid       = 0;
     int32_t  cts           = 0;
-    int32_t  ffmpeg_cts    = 0;
     int      pkt_type      = 0;
 
     if ((ret = rd->acquire(flv_head_len)) != SUCCESS) {
@@ -122,6 +121,9 @@ error_t FlvDemuxer::read_packet(PSpsAVPacket& buffer) {
             return ERROR_FLV_UNKNOWN_TAG_TYPE;
     }
 
+    sp_debug("packet stream: %u, pkt: %d, flag: %2X, previous: %10u, data_size: %10.u, ",
+            stream_type, pkt_type, flags, previous_size, data_size);
+
     if (stream_type == AV_STREAM_TYPE_AUDIO) {
         flags   = rd->read_int8();
         // channels    = flags & 0x01    // (0. SndMomo 1. SndStero)
@@ -150,13 +152,13 @@ error_t FlvDemuxer::read_packet(PSpsAVPacket& buffer) {
         if (frame_type != 0x50) {
             pkt_type = rd->read_int8(); // 0. avc sequence header 1. avc data 2. avc end data
             cts = rd->read_int24();
-            ffmpeg_cts = (cts + 0xff800000) ^ 0xff800000;
-            pts = dts + ffmpeg_cts;
+            cts = (cts + 0xff800000) ^ 0xff800000; // if cts < 0 convert to int32_t
+            pts = dts + cts;
             data_size = data_size - 4;
         }
-        sp_debug("frametype: %2X, codecid: %2X, dts: %12lld, pts: %12lld, ffmpeg_cts: %11d, "
+        sp_debug("frametype: %2X, codecid: %2X, dts: %12lld, pts: %12lld, cts: %11d, "
                 "data_size: %11u",
-                frame_type, codecid, dts, pts, ffmpeg_cts, data_size);
+                frame_type, codecid, dts, pts, cts, data_size);
     }
 
     if (data_size <= 0) {
@@ -171,10 +173,10 @@ error_t FlvDemuxer::read_packet(PSpsAVPacket& buffer) {
                                  dts, pts, flags, codecid);
 
     rd->skip_bytes(data_size);
-    sp_debug("packet stream: %u, pkt: %d, flag: %2X, data_size: %10.u, "
-            "dts: %11lld, pts: %11lld, cts: %11d, ffmpeg_cts: %11d",
-            stream_type, pkt_type, flags, data_size,
-            dts, pts, cts, ffmpeg_cts);
+    sp_info("packet stream: %u, pkt: %d, flag: %2X, previous: %10u, data_size: %10.u, "
+            "dts: %11lld, pts: %11lld, cts: %11d",
+            stream_type, pkt_type, flags, previous_size, data_size,
+            dts, pts, cts);
 
     return ret;
 }

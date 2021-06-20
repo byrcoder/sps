@@ -112,7 +112,7 @@ class SpsBytesWriter {
     error_t acquire(uint32_t n);
 
     inline void write_int8(uint8_t n) {
-        *buf->pos() = n;
+        *buf->end() = n;
         buf->append(1);
     }
 

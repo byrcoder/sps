@@ -13,7 +13,8 @@ extern "C" {
 
 auto& protocols = SingleInstance<sps::UrlProtocol>::get_instance();
 
-const char* filename = "media/third.flv";
+const char* filename     = "media/third.flv";
+const char* out_filename = "media/out.flv";
 
 int main(int argc, char **argv) {
     protocols.reg(
@@ -21,6 +22,10 @@ int main(int argc, char **argv) {
     );
     if (argc > 1) {
         filename = argv[1];
+    }
+
+    if (argc > 2) {
+        out_filename = argv[2];
     }
     testing::InitGoogleTest(&argc, argv);
     st_init();

@@ -25,8 +25,10 @@ SOFTWARE.
 
 namespace sps {
 
-FileURLProtocol::FileURLProtocol() {
+FileURLProtocol::FileURLProtocol(bool trunc , bool append) {
     line_num       = 0;
+    this->trunc    = trunc;
+    this->append   = append;
 }
 
 FileURLProtocol::~FileURLProtocol() {
@@ -42,7 +44,17 @@ error_t FileURLProtocol::open(PRequestUrl& url, Transport) {
 error_t FileURLProtocol::open(const std::string& filename) {
     this->filename = filename;
 
-    fh.open(filename.c_str(), std::ios::in | std::ios::out);
+    std::ios_base::openmode mode = std::fstream::in | std::fstream::out;
+
+    if (trunc) {
+        mode |= std::fstream::trunc;
+    }
+
+    if (append) {
+        mode |= std::fstream::app;
+    }
+
+    fh.open(filename.c_str(), mode);
 
     if (fh.is_open()) {
         return SUCCESS;
@@ -90,7 +102,6 @@ error_t FileURLProtocol::read_line(std::string &line) {
     if (fh.eof()) {
         return ERROR_IO_EOF;
     }
-
     return ERROR_FILE_READ;
 }
 

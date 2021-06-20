@@ -33,7 +33,7 @@ namespace sps {
 
 class FileURLProtocol : public IURLProtocol {
  public:
-    FileURLProtocol();
+    FileURLProtocol(bool trunc = false, bool append = false);
     ~FileURLProtocol() override;
 
  public:
@@ -70,9 +70,12 @@ class FileURLProtocol : public IURLProtocol {
     utime_t get_send_timeout() override            { return 0;   }
 
  private:
-    std::string filename;
-    std::fstream fh;
-    int line_num;
+    std::string   filename;
+    std::fstream  fh;
+    int           line_num;
+
+    bool          trunc;
+    bool          append;
 };
 
 class FileURLProtocolFactory : public IURLProtocolFactory {
