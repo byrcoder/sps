@@ -173,6 +173,7 @@ error_t FlvDemuxer::read_packet(PSpsAVPacket& buffer) {
                                  dts, pts, flags, codecid);
 
     rd->skip_bytes(data_size);
+
     sp_info("packet stream: %u, pkt: %d, flag: %2X, previous: %10u, data_size: %10.u, "
             "dts: %11lld, pts: %11lld, cts: %11d",
             stream_type, pkt_type, flags, previous_size, data_size,
