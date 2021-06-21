@@ -74,11 +74,11 @@ error_t ServerModule::install() {
     }
 
     if ((ret = sps::ICoFactory::get_instance().start(server))!= SUCCESS) {
-        sp_error("failed start http server ret:%d", ret);
+        sp_error("failed start server ret:%d", ret);
         return ret;
     }
 
-    sp_info("success http listen port: %d, reuse: %u, backlog: %d",
+    sp_info("success listen port: %d, reuse: %u, backlog: %d",
             server_conf->listen_port, server_conf->reuse_port, server_conf->backlog);
 
     servers.push_back(server);

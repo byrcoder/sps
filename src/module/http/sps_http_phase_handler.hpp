@@ -31,10 +31,6 @@ SOFTWARE.
 
 #include <io/sps_io_socket.hpp>
 
-
-#define SPS_HTTP_PHASE_CONTINUE 0
-#define SPS_HTTP_PHASE_SUCCESS_NO_CONTINUE 1
-
 namespace sps {
 
 // http头部解析
@@ -54,19 +50,6 @@ class Http404PhaseHandler : public IPhaseHandler, public Single<Http404PhaseHand
  public:
     error_t handler(HostPhaseCtx& ctx) override;
 };
-
-/**
- * work as nginx
- */
-class HttpPhaseHandler : public FifoRegisters<PIPhaseHandler> {
- public:
-    error_t handler(HostPhaseCtx& ctx);
-
- public:
-    HttpPhaseHandler();
-};
-
-typedef std::shared_ptr<HttpPhaseHandler> PHttpPhaseHandler;
 
 }
 

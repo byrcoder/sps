@@ -36,6 +36,9 @@ SOFTWARE.
 #include <sps_host_module.hpp>
 #include <sps_io_socket.hpp>
 
+#define SPS_PHASE_CONTINUE 0
+#define SPS_PHASE_SUCCESS_NO_CONTINUE 1
+
 namespace sps {
 
 struct HostPhaseCtx {
@@ -64,6 +67,19 @@ class IPhaseHandler {
 };
 
 typedef std::shared_ptr<IPhaseHandler> PIPhaseHandler;
+
+/**
+ * work as nginx
+ */
+class ServerPhaseHandler : public FifoRegisters<PIPhaseHandler> {
+ public:
+    error_t handler(HostPhaseCtx& ctx);
+
+ public:
+    ServerPhaseHandler();
+};
+
+typedef std::shared_ptr<ServerPhaseHandler> PServerPhaseHandler;
 
 }
 

@@ -99,6 +99,7 @@ SOFTWARE.
 #define ERROR_HOST_NOT_EXISTS               1800
 
 #define ERROR_UPSTREAM_NOT_FOUND            1900
+#define ERROR_RTMP_NOT_IMPL                 1901
 
 // stream 协议
 #define ERROR_STREAM_EOF                    3000

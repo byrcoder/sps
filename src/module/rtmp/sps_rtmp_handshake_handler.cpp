@@ -21,41 +21,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#include <sps_http_server.hpp>
+//
+// Created by byrcoder on 2021/6/22.
+//
 
-#include <sps_host_router_handler.hpp>
-#include <sps_http_proxy_phase_handler.hpp>
-#include <sps_http_socket.hpp>
-
-#include <sps_log.hpp>
+#include <sps_rtmp_handshake_handler.hpp>
 
 namespace sps {
 
-HttpConnectionHandler::HttpConnectionHandler(PSocket io, PServerPhaseHandler& handler) :
-        IConnectionHandler(std::move(io)), hd(handler) {
+RtmpHandshakeHandler::RtmpHandshakeHandler() : IPhaseHandler("rtmp-handshake-handler") {
 
 }
 
-error_t HttpConnectionHandler::handler() {
-    HostPhaseCtx ctx(nullptr, io);
-    do {
-        error_t ret = SUCCESS;
-
-        if ((ret = hd->handler(ctx)) != SUCCESS) {
-            return ret;
-        }
-        sp_trace("success handler ret %d", ret);
-    } while(true);
-
-    return SUCCESS;
-}
-
-HttpConnectionHandlerFactory::HttpConnectionHandlerFactory(PServerPhaseHandler hd) {
-    handler = std::move(hd);
-}
-
-PIConnectionHandler HttpConnectionHandlerFactory::create(PSocket io) {
-    return std::make_shared<HttpConnectionHandler>(io, handler);
+error_t RtmpHandshakeHandler::handler(HostPhaseCtx &ctx) {
+    return ERROR_RTMP_NOT_IMPL;
 }
 
 }

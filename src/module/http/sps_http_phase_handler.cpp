@@ -51,7 +51,7 @@ error_t HttpParsePhaseHandler::handler(HostPhaseCtx &ctx) {
     ctx.req = http_parser->get_request();
     sp_trace("request info %s, %s", ctx.req->host.c_str(), ctx.req->url.c_str());
 
-    return SPS_HTTP_PHASE_CONTINUE;
+    return SPS_PHASE_CONTINUE;
 }
 
 Http404PhaseHandler::Http404PhaseHandler() : IPhaseHandler("http-404-handler") {
@@ -73,36 +73,7 @@ error_t Http404PhaseHandler::handler(HostPhaseCtx& ctx) {
     auto ret =  http_socket->write_header();
 
     sp_trace("Response http 404 %d", ret);
-    return SPS_HTTP_PHASE_SUCCESS_NO_CONTINUE;
-}
-
-error_t HttpPhaseHandler::handler(HostPhaseCtx& ctx) {
-    error_t ret = SUCCESS;
-
-    auto& filters = refs();
-
-    if (filters.empty()) {
-        return SingleInstance<Http404PhaseHandler>::get_instance().handler(ctx);
-    }
-
-    for (auto& f : filters) {
-        ret = f->handler(ctx);
-        if (ret == SPS_HTTP_PHASE_SUCCESS_NO_CONTINUE) {
-            sp_debug("success %s handler", f->get_name());
-            return SUCCESS;
-        } else if (ret == SPS_HTTP_PHASE_CONTINUE) {
-            continue;
-        } else {
-            sp_error("failed handler ret:%d", ret);
-            return ret;
-        }
-    }
-
-    return ret;
-}
-
-HttpPhaseHandler::HttpPhaseHandler() {
-
+    return SPS_PHASE_SUCCESS_NO_CONTINUE;
 }
 
 }

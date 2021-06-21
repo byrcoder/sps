@@ -89,6 +89,19 @@ error_t FlvAVMuxer::write_message(PSpsAVPacket& buffer) {
             sp_error("flv tag unknown %d", tag_type);
             return ERROR_FLV_UNKNOWN_TAG_TYPE;
     }
+
+    if (buffer->stream_type == AV_STREAM_TYPE_VIDEO && filter_video) {
+        return ret;
+    }
+
+    if (buffer->stream_type == AV_STREAM_TYPE_AUDIO && filter_audio) {
+        return ret;
+    }
+
+    if (buffer->stream_type == AV_STREAM_TYPE_SUBTITLE && filter_metadata) {
+        return ret;
+    }
+
     head_writer.write_int32(previous_size);        // previous size
 
     head_writer.write_int8(tag_type);              // tagtype

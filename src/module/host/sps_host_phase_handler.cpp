@@ -22,3 +22,38 @@ SOFTWARE.
 *****************************************************************************/
 
 #include <sps_host_phase_handler.hpp>
+#include <sps_http_phase_handler.hpp>
+
+namespace sps {
+
+error_t ServerPhaseHandler::handler(HostPhaseCtx& ctx) {
+    error_t ret = SUCCESS;
+
+    auto& filters = refs();
+
+#if 0
+    if (filters.empty()) {
+        return SingleInstance<Http404PhaseHandler>::get_instance().handler(ctx);
+    }
+#endif
+
+    for (auto& f : filters) {
+        ret = f->handler(ctx);
+        if (ret == SPS_PHASE_SUCCESS_NO_CONTINUE) {
+            sp_debug("success %s handler", f->get_name());
+            return SUCCESS;
+        } else if (ret == SPS_PHASE_CONTINUE) {
+            continue;
+        } else {
+            sp_error("failed handler ret:%d", ret);
+            return ret;
+        }
+    }
+
+    return ret;
+}
+
+ServerPhaseHandler::ServerPhaseHandler() {
+}
+
+}
