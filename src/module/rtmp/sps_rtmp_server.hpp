@@ -21,41 +21,34 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#include <sps_http_server.hpp>
+#ifndef SPS_RTMP_SERVER_HPP
+#define SPS_RTMP_SERVER_HPP
 
-#include <sps_host_router_handler.hpp>
-#include <sps_http_proxy_phase_handler.hpp>
-#include <sps_http_socket.hpp>
-
-#include <sps_log.hpp>
+#include <sps_server.hpp>
+#include <sps_host_phase_handler.hpp>
 
 namespace sps {
 
-HttpConnectionHandler::HttpConnectionHandler(PSocket io, PServerPhaseHandler& handler) :
-        IConnectionHandler(std::move(io)), hd(handler) {
+class RtmpConnectionHandler : public IConnectionHandler {
+ public:
+    explicit RtmpConnectionHandler(PSocket io, PServerPhaseHandler& handler);
+
+ public:
+    error_t handler() override;
+
+ public:
+    PServerPhaseHandler& hd;
+};
+
+class RtmpConnectionHandlerFactory : public IConnectionHandlerFactory {
+ public:
+    explicit RtmpConnectionHandlerFactory(PServerPhaseHandler hd);
+    PIConnectionHandler create(PSocket io) override;
+
+ private:
+    PServerPhaseHandler handler;
+};
 
 }
 
-error_t HttpConnectionHandler::handler() {
-    HostPhaseCtx ctx(nullptr, io);
-    do {
-        error_t ret = SUCCESS;
-
-        if ((ret = hd->handler(ctx)) != SUCCESS) {
-            return ret;
-        }
-        sp_trace("success handler ret %d", ret);
-    } while(true);
-
-    return SUCCESS;
-}
-
-HttpConnectionHandlerFactory::HttpConnectionHandlerFactory(PServerPhaseHandler hd) {
-    handler = std::move(hd);
-}
-
-PIConnectionHandler HttpConnectionHandlerFactory::create(PSocket io) {
-    return std::make_shared<HttpConnectionHandler>(io, handler);
-}
-
-}
+#endif  // SPS_RTMP_SERVER_HPP

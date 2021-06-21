@@ -21,41 +21,55 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#include <sps_http_server.hpp>
+//
+// Created by byrcoder on 2021/6/22. rtmp work as http
+//
 
-#include <sps_host_router_handler.hpp>
-#include <sps_http_proxy_phase_handler.hpp>
-#include <sps_http_socket.hpp>
+#ifndef SPS_RTMP_MODULE_HPP
+#define SPS_RTMP_MODULE_HPP
 
-#include <sps_log.hpp>
+#include <sps_module.hpp>
+#include <sps_server_module.hpp>
 
 namespace sps {
 
-HttpConnectionHandler::HttpConnectionHandler(PSocket io, PServerPhaseHandler& handler) :
-        IConnectionHandler(std::move(io)), hd(handler) {
+using namespace std;
+
+struct RtmpConfCtx : public ConfCtx {
+    int       keepalive_timeout;
+    string    access_log;
+};
+
+#define OFFSET(x) offsetof(RtmpConfCtx, x)
+static const ConfigOption rtmp_options[] = {
+        {"keepalive_timeout",   "location name",    OFFSET(keepalive_timeout),     CONF_OPT_TYPE_INT,    { .str = "10" }, },
+        {"access_log",          "proxy pass",       OFFSET(access_log),            CONF_OPT_TYPE_STRING, { .str = "access.log" },   },
+        {"server",              "server sub module",       0,              CONF_OPT_TYPE_SUBMODULE, { .str = "" },   },
+
+        {nullptr }
+};
+#undef OFFSET
+
+class RtmpModule : public IModule {
+ public:
+    MODULE_CONSTRUCT(Rtmp, rtmp_options);
+
+    MODULE_CREATE_CTX(Rtmp);
+
+    error_t post_sub_module(PIModule sub) override;
+
+ public:
+    error_t install() override;
+
+ public:
+    std::list<PServerModule> server_modules;
+};
+
+typedef std::shared_ptr<RtmpModule> PRtmpModule;
+
+MODULE_FACTORY(Rtmp)
+class RtmpModuleFactory;
 
 }
 
-error_t HttpConnectionHandler::handler() {
-    HostPhaseCtx ctx(nullptr, io);
-    do {
-        error_t ret = SUCCESS;
-
-        if ((ret = hd->handler(ctx)) != SUCCESS) {
-            return ret;
-        }
-        sp_trace("success handler ret %d", ret);
-    } while(true);
-
-    return SUCCESS;
-}
-
-HttpConnectionHandlerFactory::HttpConnectionHandlerFactory(PServerPhaseHandler hd) {
-    handler = std::move(hd);
-}
-
-PIConnectionHandler HttpConnectionHandlerFactory::create(PSocket io) {
-    return std::make_shared<HttpConnectionHandler>(io, handler);
-}
-
-}
+#endif  // SPS_RTMP_MODULE_HPP

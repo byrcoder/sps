@@ -45,6 +45,11 @@ class FlvAVMuxer : public IAVMuxer {
     PIWriter  writer;
     PAVBuffer tag_buffer;
     uint32_t  previous_size;
+
+ public:
+    bool      filter_video    = true;
+    bool      filter_metadata = true;
+    bool      filter_audio    = false;
 };
 
 class FlvAVOutputFormat : public IAVOutputFormat {

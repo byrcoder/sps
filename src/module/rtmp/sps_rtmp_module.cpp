@@ -21,15 +21,20 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#include <sps_http_module.hpp>
-#include <sps_log.hpp>
-#include <module/host/sps_host_router_handler.hpp>
-#include "sps_http_server.hpp"
-#include "sps_http_adapter_phase_handler.hpp"
+//
+// Created by byrcoder on 2021/6/22.
+//
+
+#include <sps_host_router_handler.hpp>
+
+#include <sps_rtmp_module.hpp>
+#include <sps_rtmp_handler.hpp>
+#include <sps_rtmp_handshake_handler.hpp>
+#include <sps_rtmp_server.hpp>
 
 namespace sps {
 
-error_t HttpModule::post_sub_module(PIModule sub) {
+error_t RtmpModule::post_sub_module(PIModule sub) {
     if (sub->module_type == "server") {
         auto s = dynamic_pointer_cast<ServerModule>(sub);
         if (!s) {
@@ -46,28 +51,28 @@ error_t HttpModule::post_sub_module(PIModule sub) {
     return SUCCESS;
 }
 
-error_t HttpModule::install() {
+error_t RtmpModule::install() {
     error_t ret = SUCCESS;
 
     for (auto& s : server_modules) {
         auto handler     = std::make_shared<sps::ServerPhaseHandler>();
 
         // http header parser
-        handler->reg(std::make_shared<sps::HttpParsePhaseHandler>());
+        handler->reg(std::make_shared<sps::RtmpHandshakeHandler>());
 
         // host router -> do host handler or default return 404
         handler->reg(std::make_shared<sps::HostRouterPhaseHandler>(
                 s->hosts_router,
-                std::make_shared<sps::HttpAdapterPhaseHandler>(),
-                SingleInstance<sps::Http404PhaseHandler>::get_instance_share_ptr()));
+                std::make_shared<sps::RtmpServerHandler>(),
+                SingleInstance<sps::RtmpServer404Handler>::get_instance_share_ptr()));
 
-        s->pre_install(std::make_shared<HttpConnectionHandlerFactory>(handler));
+        s->pre_install(std::make_shared<RtmpConnectionHandlerFactory>(handler));
 
         if ((ret = s->install()) != SUCCESS) {
-            sp_error("failed install %s http server", s->module_name.c_str());
+            sp_error("failed install %s rtmp server", s->module_name.c_str());
             return ret;
         }
-        sp_info("success install %s http server listen", s->module_name.c_str());
+        sp_info("success install %s rtmp server listen", s->module_name.c_str());
     }
     return ret;
 }

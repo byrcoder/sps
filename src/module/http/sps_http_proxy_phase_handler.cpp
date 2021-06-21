@@ -98,7 +98,7 @@ error_t HttpProxyPhaseHandler::handler(HostPhaseCtx &ctx) {
     sp_trace("final response code:%d, ret:%ld, eof:%d, chunked:%d", http_rsp->status_code,
              ret, ret == ERROR_HTTP_RES_EOF, http_rsp->chunked);
 
-    return (ret == ERROR_HTTP_RES_EOF || ret == SUCCESS) ? SPS_HTTP_PHASE_SUCCESS_NO_CONTINUE : ret;
+    return (ret == ERROR_HTTP_RES_EOF || ret == SUCCESS) ? SPS_PHASE_SUCCESS_NO_CONTINUE : ret;
 }
 
 }
