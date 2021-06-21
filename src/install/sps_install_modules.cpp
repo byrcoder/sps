@@ -42,6 +42,8 @@ PIModuleFactory sps_modules[] = {
         MODULE_INSTANCE(Location),
         MODULE_INSTANCE(Stream),
 
+        MODULE_INSTANCE(Rtmp),
+
         MODULE_INSTANCE(UpStream),
         nullptr
 };

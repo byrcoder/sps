@@ -26,6 +26,7 @@ SOFTWARE.
 
 #include <sps_module.hpp>
 #include <sps_http_module.hpp>
+#include <sps_rtmp_module.hpp>
 
 #include <sps_upstream_module.hpp>
 
@@ -39,7 +40,8 @@ struct CoreConfCtx : public ConfCtx {
 static const ConfigOption core_options[] = {
         { "comment",  "comment", OFFSET(comment),        CONF_OPT_TYPE_STRING,    {.str = "core"} },
         { "upstream", "upstream submodule", 0,    CONF_OPT_TYPE_SUBMODULE, {.str = "upstream"} },
-        { "http",     "http submodule", 0,        CONF_OPT_TYPE_SUBMODULE, {.str = "upstream"} },
+        { "http",     "http submodule", 0,        CONF_OPT_TYPE_SUBMODULE, {.str = "http"} },
+        { "rtmp",     "rtmp submodule", 0,        CONF_OPT_TYPE_SUBMODULE, {.str = "rtmp"} },
         { nullptr }
 };
 #undef OFFSET
@@ -57,6 +59,7 @@ class CoreModule : public IModule {
 
  public:
     std::list<PHttpModule>      http_modules;
+    std::list<PRtmpModule>      rtmp_modules;   // TODO: FIXME RTMP & HTTP
     std::list<PUpStreamModule>  upstream_modules;
 };
 

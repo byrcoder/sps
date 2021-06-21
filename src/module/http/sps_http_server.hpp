@@ -32,22 +32,22 @@ namespace sps {
 
 class HttpConnectionHandler : public IConnectionHandler {
  public:
-    explicit HttpConnectionHandler(PSocket io, PHttpPhaseHandler& handler);
+    explicit HttpConnectionHandler(PSocket io, PServerPhaseHandler& handler);
 
  public:
     error_t handler() override;
 
  public:
-    PHttpPhaseHandler& hd;
+    PServerPhaseHandler& hd;
 };
 
 class HttpConnectionHandlerFactory : public IConnectionHandlerFactory {
  public:
-    explicit HttpConnectionHandlerFactory(PHttpPhaseHandler hd);
+    explicit HttpConnectionHandlerFactory(PServerPhaseHandler hd);
     PIConnectionHandler create(PSocket io) override;
 
  private:
-    PHttpPhaseHandler handler;
+    PServerPhaseHandler handler;
 };
 
 }

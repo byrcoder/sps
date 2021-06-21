@@ -140,7 +140,7 @@ error_t FlvDemuxer::read_packet(PSpsAVPacket& buffer) {
         pts         = dts;
     } else if(stream_type == AV_STREAM_TYPE_VIDEO) {
         flags       = rd->read_int8();
-        uint8_t frame_type = flags & 0xf0 ;   // 1 keyframe 2. inner 3. h263 disposable 4.
+        uint8_t frame_type = flags & 0xf0 ;   // 1 keyframe 2. inner 3. h263 disposable 4. 5. frame info or order frame
         codecid     = flags & 0x0f;           // low 4-bits
 
         if (codecid != SpsVideoCodec::H264 && codecid != SpsVideoCodec::H265) {

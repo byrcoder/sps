@@ -43,6 +43,14 @@ error_t CoreModule::post_sub_module(PIModule sub) {
             return ERROR_MODULE_TYPE_NOT_MATCH;
         }
         upstream_modules.push_back(up);
+    } else if (sub->module_type == "rtmp") {
+        auto hm = std::dynamic_pointer_cast<RtmpModule>(sub);
+        if (!hm) {
+            sp_error("core sub module not rtmp %s,%s. %s",
+                     sub->module_type.c_str(), sub->module_name.c_str(), typeid(sub.get()).name());
+            return ERROR_MODULE_TYPE_NOT_MATCH;
+        }
+        rtmp_modules.push_back(hm);
     } else {
         sp_error("core not found sub module type %s", sub->module_type.c_str());
         return ERROR_MODULE_TYPE_NOT_MATCH;
@@ -56,6 +64,12 @@ error_t CoreModule::install()  {
 
     for (auto& h :  http_modules) {
         if ((ret = h->install()) != SUCCESS) {
+            return ret;
+        }
+    }
+
+    for (auto& r :  rtmp_modules) {
+        if ((ret = r->install()) != SUCCESS) {
             return ret;
         }
     }
