@@ -66,11 +66,6 @@ LibRTMPHooks::LibRTMPHooks(PSocket io) {
     RTMP_Init(rtmp);
     RTMP_Init_Hook(rtmp, &hook);
 
-    tmp = rtmp;
-    sp_info("rtmp is rtmp: %p", tmp);
-    sp_info("rtmp->hook: %p", tmp->hook);
-
-    tmp->hook = &hook;
     sp_info("self->hook: %p", &hook);
     sp_info("rtmp->hook: %p", tmp->hook);
 
@@ -160,6 +155,77 @@ int LibRTMPHooks::RTMP_Socket(RTMP *r) {
 
     // ignore
     return -1;
+}
+
+bool RTMPPacketDecoder::is_set_chunked_size(int pkt_type) {
+    return pkt_type == RTMP_PACKET_TYPE_CHUNK_SIZE;
+}
+
+bool RTMPPacketDecoder::is_abort_message(int pkt_type) {
+    return pkt_type == RTMP_PACKET_TYPE_ABORT_STREAM;
+}
+
+bool RTMPPacketDecoder::is_ack(int pkt_type) {
+    return pkt_type == RTMP_PACKET_TYPE_ACK;
+}
+
+bool RTMPPacketDecoder::is_user_control(int pkt_type) {
+    return pkt_type == RTMP_PACKET_TYPE_USER_CONTROL;
+}
+
+bool RTMPPacketDecoder::is_ack_win_size(int pkt_type) {
+    return pkt_type == RTMP_PACKET_TYPE_WIN_ACK_SIZE;
+}
+
+bool RTMPPacketDecoder::is_set_peer_bandwidth(int pkt_type) {
+    return pkt_type == RTMP_PACKET_TYPE_SET_PEER_BANDWIDTH;
+}
+
+bool RTMPPacketDecoder::is_command(int pkt_type) {
+    return pkt_type == RTMP_PACKET_TYPE_AMF0_DATA ||
+            pkt_type == RTMP_PACKET_TYPE_AMF0_CMD ||
+            pkt_type == RTMP_PACKET_TYPE_AMF3_DATA ||
+            pkt_type == RTMP_PACKET_TYPE_AMF3_CMD;
+}
+
+error_t RTMPPacketDecoder::decode(RTMPPacket &packet, PIRTMPPacket &result) {
+    int pkt_type = packet.m_packetType;
+    error_t ret  = SUCCESS;
+
+    switch (pkt_type) {
+        case RTMP_PACKET_TYPE_SET_CHUNK_SIZE:
+
+            break;
+        case RTMP_PACKET_TYPE_ABORT_STREAM:
+
+            break;
+        case RTMP_PACKET_TYPE_ACK:
+
+            break;
+        case RTMP_PACKET_TYPE_USER_CONTROL:
+
+            break;
+        case RTMP_PACKET_TYPE_WIN_ACK_SIZE:
+
+            break;
+        case RTMP_PACKET_TYPE_SET_PEER_BANDWIDTH:
+
+            break;
+        case RTMP_PACKET_TYPE_AMF0_DATA:
+        case RTMP_PACKET_TYPE_AMF0_CMD:
+        case RTMP_PACKET_TYPE_AMF3_DATA:
+        case RTMP_PACKET_TYPE_AMF3_CMD:
+
+            break;
+        case RTMP_PACKET_TYPE_VIDEOS:
+        case RTMP_PACKET_TYPE_AUDIOS:
+
+            break;
+        default:
+            sp_warn("ignore pkt_type: %d", pkt_type);
+            return SUCCESS;
+    }
+    return ret;
 }
 
 }

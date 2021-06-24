@@ -3,7 +3,13 @@
 function cmake_project() {
     TMP_TARGET_DIR=$1
     TMP_BUILD_DIR=$2
-    cd ${TMP_TARGET_DIR} && cmake ${TMP_TARGET_DIR} -DENABLE_ENCRYPTION=OFF -DENABLE_UNITTESTS=OFF && make && cd -
+    TMP_BUILD_FLAG=""
+    if [ $# -gt 3 ] ;
+    then
+      TMP_BUILD_FLAG=$3
+    fi
+
+    cd ${TMP_TARGET_DIR} && cmake ${TMP_TARGET_DIR} -DENABLE_ENCRYPTION=OFF -DENABLE_UNITTESTS=OFF && make ${TMP_BUILD_FLAG} && cd -
     ret=$?;  if [[ $ret -ne 0 ]]; then echo "build srt failed, ret=$ret"; exit $ret; fi
 
     ln -s ${TMP_TARGET_DIR} ${TMP_BUILD_DIR}
@@ -63,3 +69,17 @@ HTTP_TARGET_DIR=${WORK_DIR}/3rdparty/http-parser
 makefile_project ${HTTP_TARGET_DIR} ${BUILD_HTTP} "package"
 echo "======build http-parser success==="
 
+echo "=====building rtmpdump============"
+RTMPDUMP_DIR=${WORK_DIR}/3rdparty/rtmpdump
+
+RTMPDUMP_CRYPTO="CRYPTO=  SHARED="
+RTMPDUMP_SYS=" "
+
+if [ $OSX = YES ]; then
+    RTMPDUMP_SYS="SYS=darwin"
+fi
+
+RTMPDUMP_FLAGS=" ${RTMPDUMP_CRYPTO} ${RTMPDUMP_SYS}"
+echo "rtmpdump flag ${RTMPDUMP_FLAGS}"
+makefile_project ${RTMPDUMP_DIR} ${BUILD_RTMPDUMP} "${RTMPDUMP_FLAGS}"
+echo "=====build rtmpdump success============"
