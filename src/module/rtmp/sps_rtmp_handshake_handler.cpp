@@ -49,7 +49,14 @@ error_t RtmpHandshakeHandler::handler(HostPhaseCtx &ctx) {
     {
         if (!RTMPPacket_IsReady(&packet))
             continue;
-        sp_info("rtmp packet %u", packet.m_packetType);
+        sp_info("rtmp packet head_type: %u, m_packetType: %u, "
+                "m_hasAbsTimestamp: %u, m_nChannel: %d, "
+                "m_nTimeStamp: %u, m_nInfoField2: %d, "
+                "m_nBodySize: %u, m_nBytesRead: %u",
+                packet.m_headerType, packet.m_packetType,
+                packet.m_hasAbsTimestamp, packet.m_nChannel,
+                packet.m_nTimeStamp, packet.m_nInfoField2,
+                packet.m_nBodySize, packet.m_nBytesRead);
         RTMPPacket_Free(&packet);
     }
     sp_error("rtmp final ret: %d", rt->hk->get_error());
