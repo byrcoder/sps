@@ -24,8 +24,9 @@ SOFTWARE.
 #ifndef SPS_RTMP_SERVER_HPP
 #define SPS_RTMP_SERVER_HPP
 
-#include <sps_server.hpp>
 #include <sps_host_phase_handler.hpp>
+#include <sps_rtmp_librtmp.hpp>
+#include <sps_server.hpp>
 
 namespace sps {
 
@@ -38,6 +39,7 @@ class RtmpConnectionHandler : public IConnectionHandler {
 
  public:
     PServerPhaseHandler& hd;
+    std::unique_ptr<LibRTMPHooks> hk;
 };
 
 class RtmpConnectionHandlerFactory : public IConnectionHandlerFactory {

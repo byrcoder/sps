@@ -29,11 +29,6 @@ SOFTWARE.
 
 namespace sps {
 
-HostPhaseCtx::HostPhaseCtx(PRequestUrl r, PSocket s) {
-    req      = std::move(r);
-    socket   = std::move(s);
-}
-
 HttpParsePhaseHandler::HttpParsePhaseHandler() : IPhaseHandler("http-parser-handler") {
 }
 

@@ -52,7 +52,7 @@ class IConnectionHandler: public ICoHandler, public std::enable_shared_from_this
  public:
     void on_stop() override;
 
- protected:
+ public:
     PSocket io;
 };
 typedef std::shared_ptr<IConnectionHandler> PIConnectionHandler;

@@ -100,6 +100,8 @@ SOFTWARE.
 
 #define ERROR_UPSTREAM_NOT_FOUND            1900
 #define ERROR_RTMP_NOT_IMPL                 1901
+#define ERROR_RTMP_NOT_CONNECT              1902
+#define ERROR_RTMP_HANDSHAKE                1903
 
 // stream 协议
 #define ERROR_STREAM_EOF                    3000

@@ -21,40 +21,53 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-//
-// Created by byrcoder on 2021/6/22.
-//
+#ifndef SPS_RTMP_LIBRTMP_HPP
+#define SPS_RTMP_LIBRTMP_HPP
 
-#include <sps_rtmp_server.hpp>
+#include <rtmp.h>
+#include <sps_io_socket.hpp>
 
 namespace sps {
 
+void librtmp_init_once();
 
-RtmpConnectionHandler::RtmpConnectionHandler(PSocket io, PServerPhaseHandler& handler) :
-        IConnectionHandler(std::move(io)), hd(handler) {
-    hk = std::make_unique<LibRTMPHooks>(this->io);
+class LibRTMPHooks {
+ public:
+    LibRTMPHooks(PSocket io);
+    ~LibRTMPHooks();
+
+ public:
+    RTMP* get_rtmp() { return rtmp; }
+
+ public:
+    error_t  get_error() { return error; }
+
+ private:
+    PSocket   skt;
+    RTMP*     rtmp;
+    RTMP_HOOK hook;
+    error_t   error;
+
+ public:
+    // connect
+    static int RTMP_Connect(RTMP *r, RTMPPacket *cp); // RTMP_CONNECT, FALSE=0 TRUE=1
+    static int RTMP_TLS_Accept(RTMP *r, void *ctx);
+
+    // send ret < 0 fail, n byte return ok
+    static int RTMPSockBuf_Send(RTMPSockBuf *sb, const char *buf, int len);
+
+    // read
+    // return -1 error, n nbyte return success
+    static int RTMPSockBuf_Fill(RTMPSockBuf *sb, char* buf, int nb_bytes);
+
+    // close
+    static int RTMPSockBuf_Close(RTMPSockBuf *sb);
+
+    // search
+    static int RTMP_IsConnected(RTMP *r);
+    static int RTMP_Socket(RTMP *r);
+};
+
 }
 
-error_t RtmpConnectionHandler::handler() {
-    HostPhaseCtx ctx(nullptr, io, this);
-    do {
-        error_t ret = SUCCESS;
-
-        if ((ret = hd->handler(ctx)) != SUCCESS) {
-            return ret;
-        }
-        sp_trace("success handler ret %d", ret);
-    } while(true);
-
-    return SUCCESS;
-}
-
-RtmpConnectionHandlerFactory::RtmpConnectionHandlerFactory(PServerPhaseHandler hd) {
-    handler = std::move(hd);
-}
-
-PIConnectionHandler RtmpConnectionHandlerFactory::create(PSocket io) {
-    return std::make_shared<RtmpConnectionHandler>(io, handler);
-}
-
-}
+#endif  // SPS_RTMP_LIBRTMP_HPP

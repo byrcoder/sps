@@ -26,6 +26,7 @@ SOFTWARE.
 //
 
 #include <sps_rtmp_handshake_handler.hpp>
+#include <sps_rtmp_server.hpp>
 
 namespace sps {
 
@@ -34,7 +35,26 @@ RtmpHandshakeHandler::RtmpHandshakeHandler() : IPhaseHandler("rtmp-handshake-han
 }
 
 error_t RtmpHandshakeHandler::handler(HostPhaseCtx &ctx) {
-    return ERROR_RTMP_NOT_IMPL;
+    RtmpConnectionHandler* rt = dynamic_cast<RtmpConnectionHandler*>(ctx.conn);
+    if (RTMP_Serve(rt->hk->get_rtmp()) == FALSE) {
+        sp_error("rtmp shandshake failed "
+                 "rt->hook: %p, "
+                 "socket_buf->rtmp: %p", rt->hk->get_rtmp()->hook,
+                rt->hk->get_rtmp()->m_sb.rtmp);
+        return ERROR_RTMP_HANDSHAKE;
+    }
+
+    RTMPPacket packet = { 0 };
+    while (RTMP_ReadPacket(rt->hk->get_rtmp(), &packet) == TRUE)
+    {
+        if (!RTMPPacket_IsReady(&packet))
+            continue;
+        sp_info("rtmp packet %u", packet.m_packetType);
+        RTMPPacket_Free(&packet);
+    }
+    sp_error("rtmp final ret: %d", rt->hk->get_error());
+
+    return rt->hk->get_error();
 }
 
 }
