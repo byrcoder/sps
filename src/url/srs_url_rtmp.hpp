@@ -21,40 +21,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-//
-// Created by byrcoder on 2021/6/22.
-//
-
-#include <sps_rtmp_server.hpp>
+#ifndef SRS_URL_RTMP_HPP
+#define SRS_URL_RTMP_HPP
 
 namespace sps {
 
-
-RtmpConnectionHandler::RtmpConnectionHandler(PSocket io, PServerPhaseHandler& handler) :
-        IConnectionHandler(std::move(io)), hd(handler) {
-    hk = std::make_unique<LibRTMPHooks>(this->io);
 }
 
-error_t RtmpConnectionHandler::handler() {
-    HostPhaseCtx ctx(nullptr, io, this);
-    do {
-        error_t ret = SUCCESS;
-
-        if ((ret = hd->handler(ctx)) != SUCCESS) {
-            return ret;
-        }
-        sp_trace("success handler ret %d", ret);
-    } while(true);
-
-    return SUCCESS;
-}
-
-RtmpConnectionHandlerFactory::RtmpConnectionHandlerFactory(PServerPhaseHandler hd) {
-    handler = std::move(hd);
-}
-
-PIConnectionHandler RtmpConnectionHandlerFactory::create(PSocket io) {
-    return std::make_shared<RtmpConnectionHandler>(io, handler);
-}
-
-}
+#endif  // SRS_URL_RTMP_HPP

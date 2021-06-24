@@ -37,7 +37,7 @@ HttpConnectionHandler::HttpConnectionHandler(PSocket io, PServerPhaseHandler& ha
 }
 
 error_t HttpConnectionHandler::handler() {
-    HostPhaseCtx ctx(nullptr, io);
+    HostPhaseCtx ctx(nullptr, io, this);
     do {
         error_t ret = SUCCESS;
 

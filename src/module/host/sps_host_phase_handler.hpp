@@ -35,6 +35,7 @@ SOFTWARE.
 #include <sps_url.hpp>
 #include <sps_host_module.hpp>
 #include <sps_io_socket.hpp>
+#include <sps_server.hpp>
 
 #define SPS_PHASE_CONTINUE 0
 #define SPS_PHASE_SUCCESS_NO_CONTINUE 1
@@ -42,8 +43,9 @@ SOFTWARE.
 namespace sps {
 
 struct HostPhaseCtx {
-    HostPhaseCtx(PRequestUrl r, PSocket s);
+    HostPhaseCtx(PRequestUrl r, PSocket s, IConnectionHandler* conn);
 
+    IConnectionHandler* conn;
     PRequestUrl req;
     PSocket     socket;
     std::string ip;
