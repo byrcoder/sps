@@ -38,6 +38,8 @@ struct ServerConfCtx : public ConfCtx {
     std::string    transport;     // tcp/udp/srt
     bool           reuse_port;
     int            backlog;
+    utime_t        recv_timeout;
+    utime_t        send_timeout;
 };
 
 #define OFFSET(x) offsetof(ServerConfCtx, x)
@@ -45,6 +47,11 @@ static const ConfigOption server_options[] = {
         {"listen_port",     "listen port",      OFFSET(listen_port),  CONF_OPT_TYPE_INT,      { .str = "80" }, },
         {"server_name",     "proxy pass",       OFFSET(server_name),  CONF_OPT_TYPE_STRING,   { .str = "" }, },
         {"transport",       "transport",        OFFSET(transport),    CONF_OPT_TYPE_STRING,   { .str = "tcp" }, },
+        {"transport",       "transport",        OFFSET(transport),    CONF_OPT_TYPE_STRING,   { .str = "tcp" }, },
+        {"recv_timeout",    "recv_timeout",     OFFSET(recv_timeout), CONF_OPT_TYPE_UINT64,   { .str = "-1" }, },
+        {"send_timeout",    "send_timeout",     OFFSET(send_timeout), CONF_OPT_TYPE_UINT64,   { .str = "-1" }, },
+
+
         {"reuse_port",      "reuse_port",       OFFSET(reuse_port),             CONF_OPT_TYPE_BOOL,   { .str = "off" }, },
         {"backlog",         "backlog",          OFFSET(backlog),             CONF_OPT_TYPE_INT,   { .str = "1024" }, },
         {"host",            "host sub module",       0,             CONF_OPT_TYPE_SUBMODULE,   { .str = "" }, },
@@ -64,12 +71,12 @@ class ServerModule : public IModule {
     error_t install() override;
 
  public:
-    error_t pre_install(PIConnectionHandlerFactory factory);
+    error_t pre_install(PIConnHandlerFactory factory);
 
  public:
     PHostModulesRouter hosts_router = std::make_shared<HostModulesRouter>();
  private:
-    PIConnectionHandlerFactory socket_handler;
+    PIConnHandlerFactory socket_handler;
 
  public:
     static std::vector<PServer> servers;

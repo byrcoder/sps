@@ -36,7 +36,7 @@ StreamPhaseHandler::StreamPhaseHandler() : IPhaseHandler("stream-handler"){
 
 }
 
-error_t StreamPhaseHandler::handler(HostPhaseCtx &ctx) {
+error_t StreamPhaseHandler::handler(ConnContext &ctx) {
     auto    stream_ctx = std::static_pointer_cast<StreamConfCtx>(ctx.host->stream_module->conf);
     error_t ret        = SUCCESS;
 

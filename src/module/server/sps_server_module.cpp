@@ -59,7 +59,7 @@ error_t ServerModule::install() {
         t = Transport::SRT;
     }
 #endif
-    ret = server->init(socket_handler, t);
+    ret = server->init(socket_handler, t, server_conf->send_timeout, server_conf->recv_timeout);
 
     if (ret != SUCCESS) {
         sp_error("fail install transport %u", t);
@@ -85,7 +85,7 @@ error_t ServerModule::install() {
     return ret;
 }
 
-error_t ServerModule::pre_install(PIConnectionHandlerFactory factory) {
+error_t ServerModule::pre_install(PIConnHandlerFactory factory) {
     this->socket_handler = factory;
     return SUCCESS;
 }

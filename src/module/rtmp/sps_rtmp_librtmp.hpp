@@ -1,3 +1,4 @@
+#include <iso646.h>
 /*****************************************************************************
 MIT License
 Copyright (c) 2021 byrcoder
@@ -25,7 +26,14 @@ SOFTWARE.
 #define SPS_RTMP_LIBRTMP_HPP
 
 #include <rtmp.h>
+
+#include <cstring>
+
 #include <sps_io_socket.hpp>
+
+#define AMF_VAL_STRING(c) { .av_val = (char*) c, .av_len = (int) strlen(c)}
+#define AMF_CONST_VAL_STRING(c) { .av_val = (char*) c, .av_len = (int) sizeof(c) -1}
+#define AMF_INIT_VAL_STRING(av, c) av = AMF_VAL_STRING(c)
 
 #define RTMP_PACKET_TYPE_SET_CHUNK_SIZE                 0x01
 #define RTMP_PACKET_TYPE_ABORT_STREAM                   0x02
@@ -37,13 +45,13 @@ SOFTWARE.
 #define RTMP_PACKET_TYPE_AUDIOS                          0x08
 #define RTMP_PACKET_TYPE_VIDEOS                          0x09
 
-// amf0
-#define RTMP_PACKET_TYPE_AMF0_DATA           15
-#define RTMP_PACKET_TYPE_AMF0_CMD            17
-
 // amf3
-#define RTMP_PACKET_TYPE_AMF3_DATA           18
-#define RTMP_PACKET_TYPE_AMF3_CMD            20
+#define RTMP_PACKET_TYPE_AMF3_DATA           0x0F   // 15
+#define RTMP_PACKET_TYPE_AMF3_CMD            0x11   // 17
+
+// amf0
+#define RTMP_PACKET_TYPE_AMF0_DATA           0x12  // 18
+#define RTMP_PACKET_TYPE_AMF0_CMD            0x14  // 20
 
 namespace sps {
 
@@ -186,12 +194,33 @@ namespace sps {
  * message-type = [15, 17] amf0 data and cmd, [18, 20] amf3 data and cmd
  *
  */
-
 void librtmp_init_once();
+
+// prop check valid
+error_t get_amf_prop(AMFObjectProperty* prop, AMFObject** obj);
+error_t get_amf_prop(AMFObjectProperty* prop, AVal* val);
+error_t get_amf_prop(AMFObjectProperty* prop, double* num);
+
+error_t get_amf_object(AMFObject* obj, const char* name, AMFObject** obj_val);
+error_t get_amf_string(AMFObject* obj, const char* name, AVal* str_val);
+error_t get_amf_num(AMFObject* obj, const char* name, double* num);
+
+bool    equal_val(AVal* src, const char* c);
+
+class WrapRtmpPacket {
+ public:
+    ~WrapRtmpPacket();
+
+ public:
+    void reset();
+
+ public:
+    RTMPPacket packet {0};
+};
 
 class LibRTMPHooks {
  public:
-    LibRTMPHooks(PSocket io);
+    explicit LibRTMPHooks(PSocket io);
     ~LibRTMPHooks();
 
  public:
@@ -200,10 +229,22 @@ class LibRTMPHooks {
  public:
     error_t  get_error() { return error; }
 
+    error_t  server_handshake();
+
+    // chunked id = 2
+    error_t  server_bandwidth();
+    error_t  send_set_chunked_size();
+
+    // chunked id = 3
+    error_t  send_connect_result(double transid);
+    error_t  send_result(double transid, double id);
+    error_t  recv_packet(WrapRtmpPacket& packet);
+    error_t  send_packet(RTMPPacket& packet, bool queue);
+
  private:
     PSocket   skt;
     RTMP*     rtmp;
-    RTMP_HOOK hook;
+    RTMP_HOOK hook{0};
     error_t   error;
 
  public:
@@ -226,23 +267,82 @@ class LibRTMPHooks {
     static int RTMP_Socket(RTMP *r);
 };
 
-class IRTMPPacket {
+class IRtmpPacket {
  public:
-    virtual ~IRTMPPacket() = default;
-};
-typedef std::unique_ptr<IRTMPPacket> PIRTMPPacket;
+    virtual ~IRtmpPacket() = default;
 
-class RTMPPacketDecoder {
  public:
-    static bool    is_set_chunked_size(int pkt_type);
+    virtual error_t decode(WrapRtmpPacket& packet) = 0;
+    error_t encode(WrapRtmpPacket& packet);
+};
+typedef std::unique_ptr<IRtmpPacket> PIRTMPPacket;
+
+class AmfRtmpPacket : public IRtmpPacket {
+ public:
+    AmfRtmpPacket();
+    ~AmfRtmpPacket();
+
+ public:
+    error_t decode(WrapRtmpPacket& packet);
+
+ public:
+    error_t convert_self(PIRTMPPacket& result);
+
+ public:
+    AMFObject amf_object {0};
+};
+
+class CommandRtmpPacket : public AmfRtmpPacket {
+ public:
+    error_t decode(WrapRtmpPacket& packet);
+
+ public:
+    error_t from(AMFObject& amf_object);
+
+    virtual error_t invoke_from(AMFObject& amf_object);
+
+ public:
+    AVal        name = {0, 0};
+    double      transaction_id = 0;
+    AMFObject*  object         = 0;
+};
+
+class ConnectRtmpPacket : public CommandRtmpPacket {
+ public:
+    error_t invoke_from(AMFObject& amf_object) override;
+
+ public:
+    AVal        tc_url    = {0, 0 };
+    AVal        app       = {0, 0};
+    AVal        flash_ver = {0, 0};
+};
+
+class CreateStreamRtmpPacket : public CommandRtmpPacket {
+ public:
+    error_t invoke_from(AMFObject& amf_object) override;
+};
+
+class PlayRtmpPacket : public CommandRtmpPacket {
+ public:
+    error_t invoke_from(AMFObject& amf_object) override;
+
+ public:
+    std::string stream_params;
+};
+
+class RtmpPacketDecoder {
+ public:
+    __unused static bool    is_set_chunked_size(int pkt_type);
     static bool    is_abort_message(int pkt_type);
     static bool    is_ack(int pkt_type);
     static bool    is_user_control(int pkt_type);
     static bool    is_ack_win_size(int pkt_type);
     static bool    is_set_peer_bandwidth(int pkt_type);
     static bool    is_command(int pkt_type);
+    static bool    is_amf0_command(int pkt_type);
+    static bool    is_amf3_command(int pkt_type);
 
-    static error_t decode(RTMPPacket& packet, PIRTMPPacket& result);
+    static error_t decode(WrapRtmpPacket& packet, PIRTMPPacket& result);
 };
 
 }

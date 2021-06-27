@@ -21,28 +21,66 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-//
-// Created by byrcoder on 2021/6/22.
-//
+#ifndef SPS_RTMP_SERVER_HANDLER_HPP
+#define SPS_RTMP_SERVER_HANDLER_HPP
 
-#include <sps_rtmp_handler.hpp>
+#include <sps_host_phase_handler.hpp>
+#include <sps_rtmp_librtmp.hpp>
+#include <librtmp/rtmp.h>
 
 namespace sps {
 
-// TODO: IMPL
-RtmpServerHandler::RtmpServerHandler() : IPhaseHandler("rtmp-server") {
+// rtmp handler
+class RtmpServerHandler : public IPhaseHandler {
+ public:
+    RtmpServerHandler();
+
+ public:
+    error_t handler(ConnContext &ctx) override;
+};
+
+class RtmpServer404Handler : public IPhaseHandler {
+ public:
+    RtmpServer404Handler();
+
+ public:
+    error_t handler(ConnContext &ctx) override;
+};
+
+// rtmp handshake and connect
+class RtmpPrepareHandler : public IPhaseHandler {
+ public:
+    RtmpPrepareHandler();
+
+ public:
+    error_t handler(ConnContext& ctx) override;
+};
+
+// rtmp server handshake
+class RtmpServerHandshake {
+ public:
+    explicit RtmpServerHandshake(LibRTMPHooks* r);
+    error_t handshake();
+
+ private:
+    LibRTMPHooks*     hook;
+};
+
+// rtmp server connect
+class RtmpPreRequest {
+ public:
+    RtmpPreRequest(LibRTMPHooks* r);
+
+ public:
+    error_t connect();
+
+ public:
+    LibRTMPHooks*      hook;
+    std::string       tc_url;
+    std::string       stream_params;
+    double            txn;
+};
+
 }
 
-error_t RtmpServerHandler::handler(HostPhaseCtx &ctx) {
-    return ERROR_RTMP_NOT_IMPL;
-}
-
-RtmpServer404Handler::RtmpServer404Handler() : IPhaseHandler("rtmp-404-handler") {
-}
-
-error_t RtmpServer404Handler::handler(HostPhaseCtx &ctx) {
-    sp_error("host not found host: %s", ctx.req->get_host());
-    return ERROR_UPSTREAM_NOT_FOUND;
-}
-
-}
+#endif  // SPS_RTMP_SERVER_HANDLER_HPP

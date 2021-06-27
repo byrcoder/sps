@@ -57,12 +57,15 @@ include_directories(${PROJECT_SOURCE_DIR}/3rdparty/state-threads/
         ${PROJECT_SOURCE_DIR}/3rdparty/srt/
         ${PROJECT_SOURCE_DIR}/3rdparty/gtest/googletest/include/
         ${PROJECT_SOURCE_DIR}/3rdparty/http-parser/
+        ${PROJECT_SOURCE_DIR}/3rdparty/rtmpdump/
+        ${PROJECT_SOURCE_DIR}/3rdparty/rtmpdump/librtmp
         )
 
 link_directories(3rdparty/state-threads/obj
                  3rdparty/srt/
                  3rdparty/gtest/lib
                  3rdparty/http-parser
+                 3rdparty/rtmpdump/librtmp
         )
 
 include_directories(
@@ -141,9 +144,9 @@ message("src: ${SRC_LIST}"  test:"${SRC_TEST_LIST}")
 # add_library(spslib_shared SHARED ${SRC_LIST})
 
 if (SRT_DISABLED)
-    set(libs "libst.a libhttp_parser.a libgtest.a")
+    set(libs "libst.a libhttp_parser.a libgtest.a librtmp.a")
 else ()
-    set(libs "srt libst.a libhttp_parser.a")
+    set(libs "srt libst.a libhttp_parser.a librtmp.a")
 endif()
 
 add_executable(sps
@@ -152,7 +155,7 @@ add_executable(sps
         ${PROJECT_SOURCE_DIR}/src/main/sps_main_sps.cpp
         )
 
-target_link_libraries(sps libst.a libhttp_parser.a libgtest.a)
+target_link_libraries(sps libst.a libhttp_parser.a libgtest.a librtmp.a)
 
 if(ENABLE_UNITTESTS)
 
@@ -172,12 +175,12 @@ if(ENABLE_UNITTESTS)
 
     target_link_libraries(test_all
             libgtest.a
-            libst.a libhttp_parser.a libgtest.a
+            libst.a libhttp_parser.a libgtest.a librtmp.a
             )
 
     target_link_libraries(test_tmp
             libgtest.a
-            libst.a libhttp_parser.a libgtest.a
+            libst.a libhttp_parser.a libgtest.a  librtmp.a
             )
 
     add_test(

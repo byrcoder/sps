@@ -66,7 +66,7 @@ class Socket : public IReaderWriter {
     error_t read_fully(void* buf, size_t size, ssize_t* nread) override { return io->read_fully(buf, size, nread); }
     error_t read(void* buf, size_t size, size_t& nread) override        { return io->read(buf, size, nread);    }
 
-    void    set_recv_timeout(utime_t tm) override {    io->set_send_timeout(tm);      }
+    void    set_recv_timeout(utime_t tm) override {    io->set_recv_timeout(tm);      }
     utime_t get_recv_timeout() override           {    return io->get_recv_timeout(); }
     bool    seekable() override                   {    return io->seekable();         }
 

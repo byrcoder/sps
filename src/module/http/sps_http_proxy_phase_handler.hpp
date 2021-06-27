@@ -39,7 +39,7 @@ class HttpProxyPhaseHandler : public IPhaseHandler {
     explicit HttpProxyPhaseHandler();
 
  public:
-    error_t handler(HostPhaseCtx& ctx) override;
+    error_t handler(ConnContext& ctx) override;
 };
 
 }
