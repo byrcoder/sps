@@ -32,42 +32,42 @@ SOFTWARE.
 
 namespace sps {
 
-class IConnectionHandler;
-typedef std::shared_ptr<IConnectionHandler> PIConnectionHandler;
+class IConnHandler;
+typedef std::shared_ptr<IConnHandler> PIConnHandler;
 
 /**
  * the assemble for all connections
  */
-class ConnectionManager : public Registers<ConnectionManager, PIConnectionHandler> {
+class ConnManager : public Registers<ConnManager, PIConnHandler> {
 
 };
 
 /**
  * this work for every connection
  */
-class IConnectionHandler: public ICoHandler, public std::enable_shared_from_this<IConnectionHandler> {
+class IConnHandler: public ICoHandler, public std::enable_shared_from_this<IConnHandler> {
  public:
-    explicit IConnectionHandler(PSocket io);
+    explicit IConnHandler(PSocket io);
 
  public:
     void on_stop() override;
 
- protected:
+ public:
     PSocket io;
 };
-typedef std::shared_ptr<IConnectionHandler> PIConnectionHandler;
+typedef std::shared_ptr<IConnHandler> PIConnHandler;
 
 /**
  * every kind connection-handler has a factory
  */
-class IConnectionHandlerFactory {
+class IConnHandlerFactory {
  public:
-    ~IConnectionHandlerFactory() = default;
+    ~IConnHandlerFactory() = default;
 
  public:
-    virtual PIConnectionHandler create(std::shared_ptr<Socket> io) = 0;
+    virtual PIConnHandler create(std::shared_ptr<Socket> io) = 0;
 };
-typedef std::shared_ptr<IConnectionHandlerFactory> PIConnectionHandlerFactory;
+typedef std::shared_ptr<IConnHandlerFactory> PIConnHandlerFactory;
 
 /**
  * 一个server必须实现listener, handler factory 和 handler
@@ -78,7 +78,8 @@ class Server : public ICoHandler {
     ~Server() override = default;
 
  public:
-    error_t init(PIConnectionHandlerFactory factory, Transport transport);
+    error_t init(PIConnHandlerFactory factory, Transport transport,
+                 utime_t send_timeout, utime_t  rcv_timeout);
     error_t listen(std::string ip, int port, bool reuse_port = true, int backlog = 1024);
 
  public:
@@ -86,8 +87,10 @@ class Server : public ICoHandler {
     error_t handler() override;
 
  protected:
-    PIConnectionHandlerFactory factory;
+    PIConnHandlerFactory       factory;
     PIServerSocket             server_socket;
+    utime_t                    recv_timeout = -1;
+    utime_t                    send_timeout = -1;
     Transport                  tran;
 };
 typedef std::shared_ptr<Server> PServer;

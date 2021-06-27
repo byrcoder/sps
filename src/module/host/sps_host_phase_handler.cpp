@@ -26,7 +26,13 @@ SOFTWARE.
 
 namespace sps {
 
-error_t ServerPhaseHandler::handler(HostPhaseCtx& ctx) {
+ConnContext::ConnContext(PRequestUrl r, PSocket s, IConnHandler* conn) {
+    this->conn = conn;
+    req        = std::move(r);
+    socket     = std::move(s);
+}
+
+error_t ServerPhaseHandler::handler(ConnContext& ctx) {
     error_t ret = SUCCESS;
 
     auto& filters = refs();

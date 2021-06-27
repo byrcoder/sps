@@ -39,7 +39,7 @@ class HttpParsePhaseHandler : public IPhaseHandler {
     HttpParsePhaseHandler();
 
  public:
-    error_t handler(HostPhaseCtx& ctx) override;
+    error_t handler(ConnContext& ctx) override;
 };
 
 // 404 响应
@@ -48,7 +48,7 @@ class Http404PhaseHandler : public IPhaseHandler, public Single<Http404PhaseHand
     Http404PhaseHandler();
 
  public:
-    error_t handler(HostPhaseCtx& ctx) override;
+    error_t handler(ConnContext& ctx) override;
 };
 
 }

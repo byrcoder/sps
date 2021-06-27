@@ -30,9 +30,9 @@ SOFTWARE.
 
 namespace sps {
 
-class HttpConnectionHandler : public IConnectionHandler {
+class HttpConnHandler : public IConnHandler {
  public:
-    explicit HttpConnectionHandler(PSocket io, PServerPhaseHandler& handler);
+    explicit HttpConnHandler(PSocket io, PServerPhaseHandler& handler);
 
  public:
     error_t handler() override;
@@ -41,10 +41,10 @@ class HttpConnectionHandler : public IConnectionHandler {
     PServerPhaseHandler& hd;
 };
 
-class HttpConnectionHandlerFactory : public IConnectionHandlerFactory {
+class HttpConnHandlerFactory : public IConnHandlerFactory {
  public:
-    explicit HttpConnectionHandlerFactory(PServerPhaseHandler hd);
-    PIConnectionHandler create(PSocket io) override;
+    explicit HttpConnHandlerFactory(PServerPhaseHandler hd);
+    PIConnHandler create(PSocket io) override;
 
  private:
     PServerPhaseHandler handler;

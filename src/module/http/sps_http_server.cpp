@@ -31,13 +31,13 @@ SOFTWARE.
 
 namespace sps {
 
-HttpConnectionHandler::HttpConnectionHandler(PSocket io, PServerPhaseHandler& handler) :
-        IConnectionHandler(std::move(io)), hd(handler) {
+HttpConnHandler::HttpConnHandler(PSocket io, PServerPhaseHandler& handler) :
+        IConnHandler(std::move(io)), hd(handler) {
 
 }
 
-error_t HttpConnectionHandler::handler() {
-    HostPhaseCtx ctx(nullptr, io);
+error_t HttpConnHandler::handler() {
+    ConnContext ctx(nullptr, io, this);
     do {
         error_t ret = SUCCESS;
 
@@ -50,12 +50,12 @@ error_t HttpConnectionHandler::handler() {
     return SUCCESS;
 }
 
-HttpConnectionHandlerFactory::HttpConnectionHandlerFactory(PServerPhaseHandler hd) {
+HttpConnHandlerFactory::HttpConnHandlerFactory(PServerPhaseHandler hd) {
     handler = std::move(hd);
 }
 
-PIConnectionHandler HttpConnectionHandlerFactory::create(PSocket io) {
-    return std::make_shared<HttpConnectionHandler>(io, handler);
+PIConnHandler HttpConnHandlerFactory::create(PSocket io) {
+    return std::make_shared<HttpConnHandler>(io, handler);
 }
 
 }

@@ -34,7 +34,7 @@ HttpAdapterPhaseHandler::HttpAdapterPhaseHandler() : IPhaseHandler("adapter-hand
     stream_handler = std::make_unique<StreamPhaseHandler>();
 }
 
-error_t HttpAdapterPhaseHandler::handler(HostPhaseCtx &ctx) {
+error_t HttpAdapterPhaseHandler::handler(ConnContext &ctx) {
     if (ctx.host->stream_module) {
         return stream_handler->handler(ctx);
     } else {

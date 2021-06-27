@@ -6,6 +6,7 @@ BUILD_SRT=${BUILD_DIR}/srt
 BUILD_ST=${BUILD_DIR}/st
 BUILD_GTEST=${BUILD_DIR}/gtest
 BUILD_HTTP=${BUILD_DIR}/http-parser
+BUILD_RTMPDUMP=${BUILD_DIR}/rtmpdump
 
 mkdir -p ${BUILD_DIR}
 

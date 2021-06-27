@@ -29,15 +29,10 @@ SOFTWARE.
 
 namespace sps {
 
-HostPhaseCtx::HostPhaseCtx(PRequestUrl r, PSocket s) {
-    req      = std::move(r);
-    socket   = std::move(s);
-}
-
 HttpParsePhaseHandler::HttpParsePhaseHandler() : IPhaseHandler("http-parser-handler") {
 }
 
-error_t HttpParsePhaseHandler::handler(HostPhaseCtx &ctx) {
+error_t HttpParsePhaseHandler::handler(ConnContext &ctx) {
     auto http_parser = std::make_shared<HttpParser>();
     error_t ret = SUCCESS;
 
@@ -58,7 +53,7 @@ Http404PhaseHandler::Http404PhaseHandler() : IPhaseHandler("http-404-handler") {
 
 }
 
-error_t Http404PhaseHandler::handler(HostPhaseCtx& ctx) {
+error_t Http404PhaseHandler::handler(ConnContext& ctx) {
     auto socket = ctx.socket;
     PHttpResponseSocket http_socket = std::make_shared<HttpResponseSocket>(socket,
             socket->get_cip(), socket->get_port());

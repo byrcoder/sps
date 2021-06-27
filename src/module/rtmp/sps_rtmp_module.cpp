@@ -28,8 +28,8 @@ SOFTWARE.
 #include <sps_host_router_handler.hpp>
 
 #include <sps_rtmp_module.hpp>
-#include <sps_rtmp_handler.hpp>
-#include <sps_rtmp_handshake_handler.hpp>
+#include <sps_rtmp_server_handler.hpp>
+#include <sps_rtmp_server_handler.hpp>
 #include <sps_rtmp_server.hpp>
 
 namespace sps {
@@ -58,7 +58,7 @@ error_t RtmpModule::install() {
         auto handler     = std::make_shared<sps::ServerPhaseHandler>();
 
         // http header parser
-        handler->reg(std::make_shared<sps::RtmpHandshakeHandler>());
+        handler->reg(std::make_shared<sps::RtmpPrepareHandler>());
 
         // host router -> do host handler or default return 404
         handler->reg(std::make_shared<sps::HostRouterPhaseHandler>(
@@ -66,7 +66,7 @@ error_t RtmpModule::install() {
                 std::make_shared<sps::RtmpServerHandler>(),
                 SingleInstance<sps::RtmpServer404Handler>::get_instance_share_ptr()));
 
-        s->pre_install(std::make_shared<RtmpConnectionHandlerFactory>(handler));
+        s->pre_install(std::make_shared<RtmpConnHandlerFactory>(handler));
 
         if ((ret = s->install()) != SUCCESS) {
             sp_error("failed install %s rtmp server", s->module_name.c_str());

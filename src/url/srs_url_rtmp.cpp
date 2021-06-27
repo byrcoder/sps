@@ -22,27 +22,5 @@ SOFTWARE.
 *****************************************************************************/
 
 //
-// Created by byrcoder on 2021/6/22.
+// Created by byrcoder on 2021/6/24.
 //
-
-#include <sps_rtmp_handler.hpp>
-
-namespace sps {
-
-// TODO: IMPL
-RtmpServerHandler::RtmpServerHandler() : IPhaseHandler("rtmp-server") {
-}
-
-error_t RtmpServerHandler::handler(HostPhaseCtx &ctx) {
-    return ERROR_RTMP_NOT_IMPL;
-}
-
-RtmpServer404Handler::RtmpServer404Handler() : IPhaseHandler("rtmp-404-handler") {
-}
-
-error_t RtmpServer404Handler::handler(HostPhaseCtx &ctx) {
-    sp_error("host not found host: %s", ctx.req->get_host());
-    return ERROR_UPSTREAM_NOT_FOUND;
-}
-
-}

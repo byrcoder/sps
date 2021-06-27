@@ -35,20 +35,26 @@ SOFTWARE.
 #include <sps_url.hpp>
 #include <sps_host_module.hpp>
 #include <sps_io_socket.hpp>
+#include <sps_server.hpp>
 
 #define SPS_PHASE_CONTINUE 0
 #define SPS_PHASE_SUCCESS_NO_CONTINUE 1
 
 namespace sps {
 
-struct HostPhaseCtx {
-    HostPhaseCtx(PRequestUrl r, PSocket s);
+/**
+ * server conn context
+ */
+struct ConnContext {
+    ConnContext(PRequestUrl r, PSocket s, IConnHandler* conn);
 
-    PRequestUrl req;
-    PSocket     socket;
-    std::string ip;
-    int         port;
-    PHostModule host;
+    IConnHandler* conn; // rtmp or http conn
+    PRequestUrl   req;  // client request. eg: http://github.com/byrcoder
+    PSocket       socket; // client socket
+
+    std::string ip;       // client ip
+    int         port;     // client port
+    PHostModule host;     // router host module
 };
 
 /**
@@ -60,20 +66,19 @@ class IPhaseHandler {
     const char* get_name() { return name; }
 
  public:
-    virtual error_t handler(HostPhaseCtx& ctx) = 0;
+    virtual error_t handler(ConnContext& ctx) = 0;
 
  private:
     const char* name;
 };
-
 typedef std::shared_ptr<IPhaseHandler> PIPhaseHandler;
 
 /**
- * work as nginx
+ * work as nginx http phase
  */
 class ServerPhaseHandler : public FifoRegisters<PIPhaseHandler> {
  public:
-    error_t handler(HostPhaseCtx& ctx);
+    error_t handler(ConnContext& ctx);
 
  public:
     ServerPhaseHandler();
@@ -82,6 +87,5 @@ class ServerPhaseHandler : public FifoRegisters<PIPhaseHandler> {
 typedef std::shared_ptr<ServerPhaseHandler> PServerPhaseHandler;
 
 }
-
 
 #endif  // SPS_HOST_PHASE_HANDLER_HPP

@@ -24,26 +24,28 @@ SOFTWARE.
 #ifndef SPS_RTMP_SERVER_HPP
 #define SPS_RTMP_SERVER_HPP
 
-#include <sps_server.hpp>
 #include <sps_host_phase_handler.hpp>
+#include <sps_rtmp_librtmp.hpp>
+#include <sps_server.hpp>
 
 namespace sps {
 
-class RtmpConnectionHandler : public IConnectionHandler {
+class RtmpConnHandler : public IConnHandler {
  public:
-    explicit RtmpConnectionHandler(PSocket io, PServerPhaseHandler& handler);
+    explicit RtmpConnHandler(PSocket io, PServerPhaseHandler& handler);
 
  public:
     error_t handler() override;
 
  public:
     PServerPhaseHandler& hd;
+    std::unique_ptr<LibRTMPHooks> hk;
 };
 
-class RtmpConnectionHandlerFactory : public IConnectionHandlerFactory {
+class RtmpConnHandlerFactory : public IConnHandlerFactory {
  public:
-    explicit RtmpConnectionHandlerFactory(PServerPhaseHandler hd);
-    PIConnectionHandler create(PSocket io) override;
+    explicit RtmpConnHandlerFactory(PServerPhaseHandler hd);
+    PIConnHandler create(PSocket io) override;
 
  private:
     PServerPhaseHandler handler;

@@ -21,10 +21,12 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_RTMP_HANDLER_HPP
-#define SPS_RTMP_HANDLER_HPP
+#ifndef SPS_RTMP_SERVER_HANDLER_HPP
+#define SPS_RTMP_SERVER_HANDLER_HPP
 
 #include <sps_host_phase_handler.hpp>
+#include <sps_rtmp_librtmp.hpp>
+#include <librtmp/rtmp.h>
 
 namespace sps {
 
@@ -34,7 +36,7 @@ class RtmpServerHandler : public IPhaseHandler {
     RtmpServerHandler();
 
  public:
-    error_t handler(HostPhaseCtx &ctx) override;
+    error_t handler(ConnContext &ctx) override;
 };
 
 class RtmpServer404Handler : public IPhaseHandler {
@@ -42,9 +44,43 @@ class RtmpServer404Handler : public IPhaseHandler {
     RtmpServer404Handler();
 
  public:
-    error_t handler(HostPhaseCtx &ctx) override;
+    error_t handler(ConnContext &ctx) override;
+};
+
+// rtmp handshake and connect
+class RtmpPrepareHandler : public IPhaseHandler {
+ public:
+    RtmpPrepareHandler();
+
+ public:
+    error_t handler(ConnContext& ctx) override;
+};
+
+// rtmp server handshake
+class RtmpServerHandshake {
+ public:
+    explicit RtmpServerHandshake(LibRTMPHooks* r);
+    error_t handshake();
+
+ private:
+    LibRTMPHooks*     hook;
+};
+
+// rtmp server connect
+class RtmpPreRequest {
+ public:
+    RtmpPreRequest(LibRTMPHooks* r);
+
+ public:
+    error_t connect();
+
+ public:
+    LibRTMPHooks*      hook;
+    std::string       tc_url;
+    std::string       stream_params;
+    double            txn;
 };
 
 }
 
-#endif  // SPS_RTMP_HANDLER_HPP
+#endif  // SPS_RTMP_SERVER_HANDLER_HPP

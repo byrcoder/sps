@@ -21,22 +21,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_RTMP_HANDSHAKE_HANDLER_HPP
-#define SPS_RTMP_HANDSHAKE_HANDLER_HPP
-
-#include <sps_host_phase_handler.hpp>
+#ifndef SRS_URL_RTMP_HPP
+#define SRS_URL_RTMP_HPP
 
 namespace sps {
 
-// rtmp handshake and connect
-class RtmpHandshakeHandler : public IPhaseHandler {
- public:
-    RtmpHandshakeHandler();
-
- public:
-    error_t handler(HostPhaseCtx& ctx) override;
-};
-
 }
 
-#endif  // SPS_RTMP_HANDSHAKE_HANDLER_HPP
+#endif  // SRS_URL_RTMP_HPP

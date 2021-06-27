@@ -33,11 +33,15 @@ HostRouterPhaseHandler::HostRouterPhaseHandler(PHostModulesRouter router,
     this->not_found_handler = std::move(not_found_handler);
 }
 
-error_t HostRouterPhaseHandler::handler(HostPhaseCtx &ctx) {
-    ctx.host = router->find_host(ctx.req->host);
+error_t HostRouterPhaseHandler::handler(ConnContext &ctx) {
+    if (!ctx.req) {
+        sp_error("host is empty");
+    } else {
+        ctx.host = router->find_host(ctx.req->host);
+    }
 
     if (!ctx.host) {
-        sp_error("Not found host:%s", ctx.req->host.c_str());
+        sp_error("Not found host:%s", ctx.req ? ctx.req->host.c_str() : "");
         if (not_found_handler) {
             return not_found_handler->handler(ctx);
         }
