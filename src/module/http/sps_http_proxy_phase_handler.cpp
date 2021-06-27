@@ -39,7 +39,7 @@ namespace sps {
 HttpProxyPhaseHandler::HttpProxyPhaseHandler() : IPhaseHandler("http-router-handler") {
 }
 
-error_t HttpProxyPhaseHandler::handler(HostPhaseCtx &ctx) {
+error_t HttpProxyPhaseHandler::handler(ConnContext &ctx) {
     auto& host_ctx       = ctx.host;
     auto  host_conf     = std::static_pointer_cast<HostConfCtx>(host_ctx->conf);
     auto  proxy_req     = std::make_shared<RequestUrl>(*ctx.req);

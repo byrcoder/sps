@@ -30,9 +30,9 @@ SOFTWARE.
 
 namespace sps {
 
-class RtmpConnectionHandler : public IConnectionHandler {
+class RtmpConnHandler : public IConnHandler {
  public:
-    explicit RtmpConnectionHandler(PSocket io, PServerPhaseHandler& handler);
+    explicit RtmpConnHandler(PSocket io, PServerPhaseHandler& handler);
 
  public:
     error_t handler() override;
@@ -42,10 +42,10 @@ class RtmpConnectionHandler : public IConnectionHandler {
     std::unique_ptr<LibRTMPHooks> hk;
 };
 
-class RtmpConnectionHandlerFactory : public IConnectionHandlerFactory {
+class RtmpConnHandlerFactory : public IConnHandlerFactory {
  public:
-    explicit RtmpConnectionHandlerFactory(PServerPhaseHandler hd);
-    PIConnectionHandler create(PSocket io) override;
+    explicit RtmpConnHandlerFactory(PServerPhaseHandler hd);
+    PIConnHandler create(PSocket io) override;
 
  private:
     PServerPhaseHandler handler;

@@ -26,17 +26,21 @@ SOFTWARE.
 
 namespace sps {
 
-IConnectionHandler::IConnectionHandler(PSocket io) {
+IConnHandler::IConnHandler(PSocket io) {
     this->io = std::move(io);
 }
 
-void IConnectionHandler::on_stop() {
-    SingleInstance<ConnectionManager>::get_instance().cancel(shared_from_this());
+void IConnHandler::on_stop() {
+    SingleInstance<ConnManager>::get_instance().cancel(shared_from_this());
 }
 
-error_t Server::init(PIConnectionHandlerFactory f, Transport transport) {
+error_t Server::init(PIConnHandlerFactory f, Transport transport,
+                     utime_t send_timeout, utime_t rcv_timeout) {
     factory         = std::move(f);
     tran            = transport;
+
+    this->recv_timeout   = rcv_timeout;
+    this->send_timeout   = send_timeout;
     return SUCCESS;
 }
 
@@ -50,14 +54,17 @@ error_t Server::accept() {
         auto io = server_socket->accept();
         auto h  = factory->create(io);
 
-        sp_debug("success accept new client");
+        io->set_recv_timeout(recv_timeout);
+        io->set_send_timeout(send_timeout);
+        sp_info("success accept new client rcv_timeout: %llu, "
+                "send_timeout :%llu", recv_timeout, send_timeout);
 
         if (ICoFactory::get_instance().start(h) != SUCCESS) {
             sp_error("failed start handler");
             continue;
         }
 
-        SingleInstance<ConnectionManager>::get_instance().reg(h);
+        SingleInstance<ConnManager>::get_instance().reg(h);
     } while(true);
 
     return SUCCESS;

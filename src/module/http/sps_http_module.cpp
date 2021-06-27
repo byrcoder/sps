@@ -61,7 +61,7 @@ error_t HttpModule::install() {
                 std::make_shared<sps::HttpAdapterPhaseHandler>(),
                 SingleInstance<sps::Http404PhaseHandler>::get_instance_share_ptr()));
 
-        s->pre_install(std::make_shared<HttpConnectionHandlerFactory>(handler));
+        s->pre_install(std::make_shared<HttpConnHandlerFactory>(handler));
 
         if ((ret = s->install()) != SUCCESS) {
             sp_error("failed install %s http server", s->module_name.c_str());

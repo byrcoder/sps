@@ -29,14 +29,13 @@ SOFTWARE.
 
 namespace sps {
 
-
-RtmpConnectionHandler::RtmpConnectionHandler(PSocket io, PServerPhaseHandler& handler) :
-        IConnectionHandler(std::move(io)), hd(handler) {
+RtmpConnHandler::RtmpConnHandler(PSocket io, PServerPhaseHandler& handler) :
+        IConnHandler(std::move(io)), hd(handler) {
     hk = std::make_unique<LibRTMPHooks>(this->io);
 }
 
-error_t RtmpConnectionHandler::handler() {
-    HostPhaseCtx ctx(nullptr, io, this);
+error_t RtmpConnHandler::handler() {
+    ConnContext ctx(nullptr, io, this);
     do {
         error_t ret = SUCCESS;
 
@@ -49,12 +48,12 @@ error_t RtmpConnectionHandler::handler() {
     return SUCCESS;
 }
 
-RtmpConnectionHandlerFactory::RtmpConnectionHandlerFactory(PServerPhaseHandler hd) {
+RtmpConnHandlerFactory::RtmpConnHandlerFactory(PServerPhaseHandler hd) {
     handler = std::move(hd);
 }
 
-PIConnectionHandler RtmpConnectionHandlerFactory::create(PSocket io) {
-    return std::make_shared<RtmpConnectionHandler>(io, handler);
+PIConnHandler RtmpConnHandlerFactory::create(PSocket io) {
+    return std::make_shared<RtmpConnHandler>(io, handler);
 }
 
 }

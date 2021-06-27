@@ -102,6 +102,10 @@ SOFTWARE.
 #define ERROR_RTMP_NOT_IMPL                 1901
 #define ERROR_RTMP_NOT_CONNECT              1902
 #define ERROR_RTMP_HANDSHAKE                1903
+#define ERROR_RTMP_AMF_DECODE               1904
+#define ERROR_RTMP_AMF_CMD_CONVERT          1905
+#define ERROR_RTMP_AMF_PROP_NOT_FOUND       1906
+#define ERROR_RTMP_AMF_PROP_TYPE            1907
 
 // stream 协议
 #define ERROR_STREAM_EOF                    3000
