@@ -39,4 +39,4 @@ IConditionFactory & IConditionFactory::get_instance() {
     return f;
 }
 
-}
+}  // namespace sps

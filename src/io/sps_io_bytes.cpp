@@ -163,7 +163,7 @@ error_t SpsBytesReader::acquire(uint32_t n) {
         }
 
         buf->buf_end += nread;
-    } while(buf->size() < n);
+    } while (buf->size() < n);
 
     sp_debug("%s, size:%zu, n:%d", (char*) buf->pos(), buf->size(), n);
     return ret;
@@ -200,4 +200,4 @@ void SpsBytesWriter::skip(size_t n) {
     buf->append(n);
 }
 
-}
+}  // namespace sps

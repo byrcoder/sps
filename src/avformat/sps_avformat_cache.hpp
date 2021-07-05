@@ -24,6 +24,8 @@ SOFTWARE.
 #ifndef SPS_AVFORMAT_CACHE_HPP
 #define SPS_AVFORMAT_CACHE_HPP
 
+#include <list>
+
 #include <sps_cache.hpp>
 #include <sps_avformat_packet.hpp>
 
@@ -45,7 +47,7 @@ class AVGopCacheStream : public CacheStream<PAVPacket> {
 // subscriber dump from gop cache and subscribe AVGopCacheStream
 class AVDumpCacheStream : public CacheStream<PAVPacket> {
  public:
-    AVDumpCacheStream(utime_t recv_timeout);
+    explicit AVDumpCacheStream(utime_t recv_timeout);
 
  public:
     int dump(std::list<PAVPacket>& vpb, bool /** remove **/) override;
@@ -54,6 +56,6 @@ class AVDumpCacheStream : public CacheStream<PAVPacket> {
     utime_t recv_timeout;
 };
 
-}
+}  // namespace sps
 
 #endif  // SPS_AVFORMAT_CACHE_HPP

@@ -21,11 +21,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#include <sps_avformat_flv.hpp>
 #include <sps_avformat_flvdec.hpp>
+
+#include <memory>
+#include <utility>
+
+#include <sps_avformat_flv.hpp>
 #include <sps_avformat_packet.hpp>
 #include <sps_io_bytes.hpp>
-#include <log/sps_log.hpp>
+#include <sps_log.hpp>
 
 namespace sps {
 
@@ -50,7 +54,8 @@ error_t FlvDemuxer::read_header(PSpsAVPacket &buffer) {
 
     // version buf[3] skip
 
-    int flags = pos[4] & (FLV_HEADER_FLAG_HASVIDEO | FLV_HEADER_FLAG_HASAUDIO); // flags
+    // flags
+    int flags = pos[4] & (FLV_HEADER_FLAG_HASVIDEO | FLV_HEADER_FLAG_HASAUDIO);
     // header_len buf[5...8]
 
     buffer = SpsAVPacket::create(SpsMessageType::AV_MESSAGE_HEADER,
@@ -86,12 +91,12 @@ error_t FlvDemuxer::read_packet(PSpsAVPacket& buffer) {
         sp_error("flv head not enough %d", ret);
         return ret;
     }
-    previous_size = rd->read_int32(); // previous
-    tag_type      = rd->read_int8();  // tag_type
-    data_size     = rd->read_int24(); // data_size
-    dts           = rd->read_int24(); // timestamp low 24 bit
-    dts          |= ((uint32_t) rd->read_int8() << 24u); // high 8 bit
-    stream_id     = rd->read_int24(); // streamid
+    previous_size = rd->read_int32();  // previous
+    tag_type      = rd->read_int8();   // tag_type
+    data_size     = rd->read_int24();  // data_size
+    dts           = rd->read_int24();  // timestamp low 24 bit
+    dts          |= ((uint32_t) rd->read_int8() << 24u);  // high 8 bit
+    stream_id     = rd->read_int24();  // streamid
     SpsAVStreamType stream_type = AV_STREAM_TYPE_NB;
 
     if ((ret = rd->acquire(data_size)) != SUCCESS) {
@@ -119,27 +124,30 @@ error_t FlvDemuxer::read_packet(PSpsAVPacket& buffer) {
             return ERROR_FLV_UNKNOWN_TAG_TYPE;
     }
 
-    sp_debug("packet stream: %u, pkt: %d, flag: %2X, previous: %10u, data_size: %10.u, ",
+    sp_debug("packet stream: %u, pkt: %d, flag: %2X, "
+             "previous: %10u, data_size: %10.u, ",
             stream_type, pkt_type, flags, previous_size, data_size);
 
     if (stream_type == AV_STREAM_TYPE_AUDIO) {
         flags   = rd->read_int8();
         // channels    = flags & 0x01    // (0. SndMomo 1. SndStero)
         // sample_size = flags & 0x02    // (0. 8       1. 16)
-        // sample_rate = flags & 0x0c    // (0. 5.5k    1. 11k   2. 22k   3. 44k)
+        // sample_rate = flags & 0x0c    // (0. 5.5k  1. 11k   2. 22k   3. 44k)
         codecid = (flags & 0xf0) >> 4;   // (10. aac 14. mp3) high 4-bits
 
         if (codecid != SpsAudioCodec::AAC) {
             sp_error("unknown audio codecid: %d", codecid);
             return ERROR_FLV_AUDIO_CODECID;
         }
-        pkt_type    =    rd->read_int8(); // 0. sequence header 1. aac data
+        pkt_type    =    rd->read_int8();  // 0. sequence header 1. aac data
         data_size   -=   2;
         pts         = dts;
-    } else if(stream_type == AV_STREAM_TYPE_VIDEO) {
+    } else if (stream_type == AV_STREAM_TYPE_VIDEO) {
         flags       = rd->read_int8();
-        uint8_t frame_type = flags & 0xf0 ;   // 1 keyframe 2. inner 3. h263 disposable 4. 5. frame info or order frame
-        codecid     = flags & 0x0f;           // low 4-bits
+
+        // 1 keyframe 2. inner 3. h263 disposable 4.5. frame info or order frame
+        uint8_t frame_type = flags & 0xf0;
+        codecid     = flags & 0x0f;  // low 4-bits
 
         if (codecid != SpsVideoCodec::H264 && codecid != SpsVideoCodec::H265) {
             sp_error("unknown video codecid: %d", codecid);
@@ -148,14 +156,18 @@ error_t FlvDemuxer::read_packet(PSpsAVPacket& buffer) {
         --data_size;
 
         if (frame_type != 0x50) {
-            pkt_type = rd->read_int8(); // 0. avc sequence header 1. avc data 2. avc end data
+            // 0. avc sequence header 1. avc data 2. avc end data
+            pkt_type = rd->read_int8();
+
             cts = rd->read_int24();
-            cts = (cts + 0xff800000) ^ 0xff800000; // if cts < 0 convert to int32_t
+            // if cts < 0 convert to int32_t
+            cts = (cts + 0xff800000) ^ 0xff800000;
+
             pts = dts + cts;
             data_size = data_size - 4;
         }
-        sp_debug("frametype: %2X, codecid: %2X, dts: %12lld, pts: %12lld, cts: %11d, "
-                "data_size: %11u",
+        sp_debug("frametype: %2X, codecid: %2X, dts: %12lld, "
+                 "pts: %12lld, cts: %11d, data_size: %11u",
                 frame_type, codecid, dts, pts, cts, data_size);
     }
 
@@ -172,8 +184,8 @@ error_t FlvDemuxer::read_packet(PSpsAVPacket& buffer) {
 
     rd->skip_bytes(data_size);
 
-    sp_info("packet stream: %u, pkt: %d, flag: %2X, previous: %10u, data_size: %10.u, "
-            "dts: %11lld, pts: %11lld, cts: %11d",
+    sp_info("packet stream: %u, pkt: %d, flag: %2X, previous: %10u, "
+            "data_size: %10.u, dts: %11lld, pts: %11lld, cts: %11d",
             stream_type, pkt_type, flags, previous_size, data_size,
             dts, pts, cts);
 
@@ -194,4 +206,4 @@ error_t FlvDemuxer::probe(PSpsAVPacket& buffer) {
     return SUCCESS;
 }
 
-}
+}  // namespace sps

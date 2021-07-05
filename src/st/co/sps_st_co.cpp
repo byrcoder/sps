@@ -22,7 +22,10 @@ SOFTWARE.
 *****************************************************************************/
 
 #include <sps_st_co.hpp>
+
 #include <public.h>
+
+#include <memory>
 
 namespace sps {
 
@@ -31,7 +34,8 @@ STCo::STCo(PWICoHandler h) {
 }
 
 error_t STCo::start() {
-    if ((trd = (st_thread_t) st_thread_create(main_co, this, 0, 0)) == nullptr) {
+    if ((trd = (st_thread_t) st_thread_create(main_co, this,
+            0, 0)) == nullptr) {
         return ERROR_CO_CREATE;
     }
     return SUCCESS;
@@ -63,4 +67,4 @@ PICo STCoFactory::_start(PICoHandler handler) const {
     return co;
 }
 
-}
+}  // namespace sps

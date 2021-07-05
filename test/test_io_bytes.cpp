@@ -30,6 +30,8 @@ SOFTWARE.
 #include <sps_io_memory.hpp>
 #include <sps_log.hpp>
 
+using namespace sps;
+
 GTEST_TEST(IOBYTES, READ) {
     uint8_t buf[] = {
             0X01,

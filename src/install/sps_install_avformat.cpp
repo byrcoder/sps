@@ -53,4 +53,4 @@ PIAVOutputFormat av_output_formats[] = {
         nullptr,
 };
 
-}
+}  // namespace sps

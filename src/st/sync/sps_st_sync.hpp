@@ -26,6 +26,8 @@ SOFTWARE.
 
 #include <sps_sync.hpp>
 
+#include <memory>
+
 namespace sps {
 
 class StCondition : public ICondition {
@@ -34,8 +36,13 @@ class StCondition : public ICondition {
     ~StCondition() override   {         st_cond_destroy(cond);  }
 
  private:
-    int wait(utime_t timeout) override {   return st_cond_timedwait(cond, timeout);   }
-    int signal() override              {   return st_cond_broadcast(cond);            }
+    int wait(utime_t timeout) override {
+        return st_cond_timedwait(cond, timeout);
+    }
+
+    int signal() override  {
+        return st_cond_broadcast(cond);
+    }
 
  private:
     st_cond_t cond;
@@ -43,9 +50,11 @@ class StCondition : public ICondition {
 
 class StConditionFactory : public IConditionFactory {
  public:
-    PCondition create_condition() override   { return std::make_shared<StCondition>(); }
+    PCondition create_condition() override {
+        return std::make_shared<StCondition>();
+    }
 };
 
-}
+}  // namespace sps
 
 #endif  // SPS_ST_SYNC_HPP

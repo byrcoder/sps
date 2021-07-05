@@ -45,8 +45,8 @@ typedef std::shared_ptr<CharBuffer> PCharBuffer;
 
 class CharBuffer : public IBuffer {
  public:
-    static PCharBuffer copy(uint8_t* buf, uint32_t len, uint32_t head_len = 0);
-    // static  __unused PCharBuffer nocopy(char* buf, int len);
+    static PCharBuffer deep_copy(uint8_t* buf, uint32_t len,
+                                 uint32_t head_len = 0);
 
  public:
     CharBuffer(uint8_t* buf, uint32_t len, uint32_t head_len = 0);
@@ -64,6 +64,6 @@ class CharBuffer : public IBuffer {
     uint32_t head_len = 0;
 };
 
-}
+}  // namespace sps
 
 #endif  // SPS_CACHE_BUFFER_HPP

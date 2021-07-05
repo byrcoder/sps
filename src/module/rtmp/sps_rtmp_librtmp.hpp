@@ -313,6 +313,7 @@ class RtmpHook {
     static int SPS_RTMP_IsConnected(RTMP *r);
     static int SPS_RTMP_Socket(RTMP *r);
 };
+typedef std::shared_ptr<RtmpHook> PRtmpHook;
 
 }
 

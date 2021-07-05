@@ -35,7 +35,7 @@ namespace sps {
 
 class FlvAVMuxer : public IAVMuxer {
  public:
-    FlvAVMuxer(PIWriter writer);
+    explicit FlvAVMuxer(PIWriter writer);
 
  public:
     error_t write_header(PSpsAVPacket& buffer) override;
@@ -55,6 +55,6 @@ class FlvAVMuxer : public IAVMuxer {
 
 AVOutputFormat(Flv, "flv", "flv");
 
-}
+}  // namespace sps
 
 #endif  // SPS_AVFORMAT_FLVENC_HPP

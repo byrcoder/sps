@@ -32,34 +32,39 @@ SOFTWARE.
 #define SPS_IO_HPP
 
 #include <memory>
+#include <string>
 
 #include <sps_typedef.hpp>
 
 #define SPS_IO_NO_TIMEOUT -1
+
+namespace sps {
 
 class IReader {
  public:
     virtual ~IReader() = default;
 
  public:
-    virtual void    set_recv_timeout(utime_t tm) = 0;
+    virtual void set_recv_timeout(utime_t tm) = 0;
+
     virtual utime_t get_recv_timeout() = 0;
-    virtual bool    seekable()  { return false; }
+
+    virtual bool seekable() { return false; }
 
  public:
     /**
      * read fixed size bytes
      */
-    virtual error_t read_fully(void* buf, size_t size, ssize_t* nread = nullptr) = 0;
+    virtual error_t read_fully(void *buf, size_t size, ssize_t *nread = nullptr) = 0;
 
     /**
      * read bytes no more than size
      */
-    virtual error_t read(void* buf, size_t size, size_t& nread) = 0;
+    virtual error_t read(void *buf, size_t size, size_t &nread) = 0;
 
-    virtual error_t read_line(std::string& line) { throw "not impl"; }
+    virtual error_t read_line(std::string &line) { throw "not impl"; }
 
-    virtual error_t cur_line_num()  { return 0; }
+    virtual error_t cur_line_num() { return 0; }
 };
 
 class IWriter {
@@ -68,20 +73,24 @@ class IWriter {
 
  public:
     virtual void set_send_timeout(utime_t tm) = 0;
+
     virtual utime_t get_send_timeout() = 0;
 
  public:
-    virtual error_t write(void* buf, size_t size) = 0;
+    virtual error_t write(void *buf, size_t size) = 0;
 };
 
 class IReaderWriter : virtual public IReader, virtual public IWriter {
  public:
     IReaderWriter() = default;
+
     ~IReaderWriter() override = default;
 };
 
 typedef std::shared_ptr<IReader> PIReader;
 typedef std::shared_ptr<IWriter> PIWriter;
 typedef std::shared_ptr<IReaderWriter> PIReaderWriter;
+
+}  // namespace sps
 
 #endif  // SPS_IO_HPP

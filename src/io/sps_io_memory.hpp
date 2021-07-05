@@ -24,6 +24,8 @@ SOFTWARE.
 #ifndef SPS_IO_MEMORY_HPP
 #define SPS_IO_MEMORY_HPP
 
+#include <string>
+
 #include <sps_io.hpp>
 #include <sps_typedef.hpp>
 
@@ -60,6 +62,6 @@ class MemoryReaderWriter : public IReaderWriter {
     int      line_num;
 };
 
-}
+}  // namespace sps
 
 #endif  // SPS_IO_MEMORY_HPP

@@ -48,4 +48,4 @@ PIModuleFactory sps_modules[] = {
         nullptr
 };
 
-}
+}  // namespace sps

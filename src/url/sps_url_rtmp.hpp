@@ -24,6 +24,8 @@ SOFTWARE.
 #ifndef SPS_URL_RTMP_HPP
 #define SPS_URL_RTMP_HPP
 
+#include <memory>
+
 #include <sps_rtmp_librtmp.hpp>
 #include <sps_url_protocol.hpp>
 
@@ -31,9 +33,9 @@ namespace sps {
 
 class RtmpUrlProtocol : public IURLProtocol {
  public:
-    explicit RtmpUrlProtocol() = default;
+    RtmpUrlProtocol() = default;
 
-    explicit RtmpUrlProtocol(std::shared_ptr<RtmpHook> hk);
+    explicit RtmpUrlProtocol(PRtmpHook hk);
 
  public:
     error_t open(PRequestUrl& url, Transport p) override;
@@ -46,7 +48,7 @@ class RtmpUrlProtocol : public IURLProtocol {
     error_t write(WrapRtmpPacket& packet);
 
  public:
-    PResponse response() override ;
+    PResponse response() override;
 
  private:
     std::shared_ptr<RtmpHook> hk;
@@ -62,6 +64,6 @@ class RtmpURLProtocolFactory : public IURLProtocolFactory {
     PIURLProtocol create(PRequestUrl url) override;
 };
 
-}
+}  // namespace sps
 
 #endif  // SPS_URL_RTMP_HPP

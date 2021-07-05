@@ -31,7 +31,7 @@ namespace sps {
 
 class RtmpAVMuxer : public IAVMuxer {
  public:
-    RtmpAVMuxer(PIWriter writer);
+    explicit RtmpAVMuxer(PIWriter writer);
 
  public:
     error_t write_header(PSpsAVPacket& buffer) override;
@@ -49,6 +49,6 @@ class RtmpAVMuxer : public IAVMuxer {
 
 AVOutputFormat(Rtmp, "rtmp", "-");
 
-}
+}  // namespace sps
 
 #endif  // SPS_AVFORMAT_RTMPENC_HPP

@@ -21,12 +21,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_ST_NET_TCP_HPP
-#define SPS_ST_NET_TCP_HPP
+#ifndef SPS_ST_IO_TCP_HPP
+#define SPS_ST_IO_TCP_HPP
 
-extern "C" {
 #include <public.h>
-};
 
 #include <string>
 
@@ -114,6 +112,6 @@ class StServerSocket : public IServerSocket {
     st_netfd_t  server_fd;
 };
 
-}
+}  // namespace sps
 
-#endif  // SPS_ST_NET_TCP_HPP
+#endif  // SPS_ST_IO_TCP_HPP

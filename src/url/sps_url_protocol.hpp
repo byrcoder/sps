@@ -38,6 +38,9 @@ SOFTWARE.
 #ifndef SPS_URL_PROTOCOL_HPP
 #define SPS_URL_PROTOCOL_HPP
 
+#include <string>
+#include <memory>
+
 #include <sps_url.hpp>
 #include <sps_io_socket.hpp>
 
@@ -80,6 +83,6 @@ class UrlProtocol : public Registers<UrlProtocol, PIURLProtocolFactory> {
     PIURLProtocol create(const std::string& url);
 };
 
-}
+}  // namespace sps
 
 #endif  // SPS_URL_PROTOCOL_HPP

@@ -51,6 +51,6 @@ class FlvDemuxer : public IAVDemuxer {
 
 AVInputFormat(Flv, "flv", "flv");
 
-}
+}  // namespace sps
 
-#endif // SPS_STREAM_FLVDEC_HPP
+#endif  // SPS_STREAM_FLVDEC_HPP

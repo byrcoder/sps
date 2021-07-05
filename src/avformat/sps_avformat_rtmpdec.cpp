@@ -26,6 +26,9 @@ SOFTWARE.
 //
 
 #include <sps_avformat_rtmpdec.hpp>
+
+#include <memory>
+
 #include <sps_io_memory.hpp>
 #include <sps_log.hpp>
 
@@ -48,7 +51,8 @@ error_t RtmpDemuxer::read_packet(PSpsAVPacket& buffer) {
     error_t ret = SUCCESS;
 
     uint8_t flag       = 0;
-    uint8_t frame_type = 0;   // 1 keyframe 2. inner 3. h263 disposable 4. 5. frame info or order frame
+    // 1 keyframe 2. inner 3. h263 disposable 4. 5. frame info or order frame
+    uint8_t frame_type = 0;
     uint8_t codecid    = 0;           // low 4-bits
     size_t  data_size  = 0;
     uint8_t pkt_type   = 0;
@@ -66,7 +70,8 @@ error_t RtmpDemuxer::read_packet(PSpsAVPacket& buffer) {
             return ret;
         }
 
-        auto av_buffer = std::make_unique<AVBuffer>(packet.data(), packet.size(), packet.size(), true);
+        auto av_buffer = std::make_unique<AVBuffer>(
+                packet.data(), packet.size(), packet.size(), true);
         PIReader null_reader;
         SpsBytesReader stream(null_reader, av_buffer);
 
@@ -78,16 +83,22 @@ error_t RtmpDemuxer::read_packet(PSpsAVPacket& buffer) {
 
         if (packet.is_video()) {
             if ((ret = stream.acquire(1)) != SUCCESS) {
-                sp_error("fail too short rtmp video %lu, ret %d", packet.size(), ret);
+                sp_error("fail too short rtmp video %lu, ret %d",
+                          packet.size(), ret);
                 return ret;
             }
 
             flag        = stream.read_int8();
-            frame_type  = *packet.data() & 0xf0 ;   // 0x10=keyframe 0x20=inner 0x30=h263 disposable 4. 5. frame info or order frame
+            // 0x10. keyframe
+            // 0x20. inner
+            // 0x30. h263 disposable
+            // 0x40. 0x50. frame info or order frame
+            frame_type  = *packet.data() & 0xf0;
             codecid     = *packet.data() & 0x0f;    // low 4-bits
             stream_type = AV_STREAM_TYPE_VIDEO;
 
-            if (codecid != SpsVideoCodec::H264 && codecid != SpsVideoCodec::H265) {
+            if (codecid != SpsVideoCodec::H264
+                    && codecid != SpsVideoCodec::H265) {
                 sp_error("unknown video codecid: %d", codecid);
                 return ERROR_FLV_VIDEO_CODECID;
             }
@@ -95,13 +106,17 @@ error_t RtmpDemuxer::read_packet(PSpsAVPacket& buffer) {
 
             if (frame_type != 0x50) {
                 if ((ret = stream.acquire(4)) != SUCCESS) {
-                    sp_error("fail too short rtmp video %lu, ret %d", packet.size(), ret);
+                    sp_error("fail too short rtmp video %lu, ret %d",
+                              packet.size(), ret);
                     return ret;
                 }
 
-                pkt_type = stream.read_int8(); // 0. avc sequence header 1. avc data 2. avc end data
+                // 0. avc sequence header 1. avc data 2. avc end data
+                pkt_type = stream.read_int8();
                 cts      = stream.read_int24();
-                cts      = (cts + 0xff800000) ^ 0xff800000; // if cts < 0 convert to int32_t
+
+                // if cts < 0 convert to int32_t
+                cts      = (cts + 0xff800000) ^ 0xff800000;
                 pts      = dts + cts;
                 data_size = data_size - 4;
             }
@@ -121,14 +136,15 @@ error_t RtmpDemuxer::read_packet(PSpsAVPacket& buffer) {
             break;
         } else if (packet.is_audio()) {
             if ((ret = stream.acquire(1)) != SUCCESS) {
-                sp_error("fail too short rtmp audio %lu, ret %d", packet.size(), ret);
+                sp_error("fail too short rtmp audio %lu, ret %d",
+                          packet.size(), ret);
                 return ret;
             }
 
             flag   = stream.read_int8();
             // channels    = flags & 0x01    // (0. SndMomo 1. SndStero)
             // sample_size = flags & 0x02    // (0. 8       1. 16)
-            // sample_rate = flags & 0x0c    // (0. 5.5k    1. 11k   2. 22k   3. 44k)
+            // sample_rate = flags & 0x0c    // (0. 5.5k 1. 11k  2. 22k 3. 44k)
             codecid = (flag & 0xf0) >> 4;   // (10. aac 14. mp3) high 4-bits
             stream_type = AV_STREAM_TYPE_AUDIO;
 
@@ -136,7 +152,9 @@ error_t RtmpDemuxer::read_packet(PSpsAVPacket& buffer) {
                 sp_error("unknown audio codecid: %d", codecid);
                 return ERROR_FLV_AUDIO_CODECID;
             }
-            pkt_type    =    stream.read_int8(); // 0. sequence header 1. aac data
+
+            // 0. sequence header 1. aac data
+            pkt_type    =    stream.read_int8();
             data_size   -=   2;
             pts         =    dts;
 
@@ -159,8 +177,7 @@ error_t RtmpDemuxer::read_packet(PSpsAVPacket& buffer) {
         } else {
             sp_info("skip pkt type %d", packet.packet.m_packetType);
         }
-
-    } while(true);
+    } while (true);
 
     sp_debug("packet stream: %u, pkt: %d, flag: %2X, data_size: %10.lu, "
             "dts: %11lld, pts: %11lld, cts: %11d",
@@ -178,4 +195,4 @@ error_t RtmpDemuxer::probe(PSpsAVPacket &buffer) {
     return ERROR_RTMP_NOT_IMPL;
 }
 
-}
+}  // namespace sps

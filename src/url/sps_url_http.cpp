@@ -22,16 +22,22 @@ SOFTWARE.
 *****************************************************************************/
 
 #include <sps_url_http.hpp>
+
 #include <sps_http_parser.hpp>
 #include <sps_io_socket.hpp>
 #include <sps_log.hpp>
-#include <string>
+
+#include <algorithm>
+#include <list>
+#include <memory>
 #include <sstream>
+#include <string>
 
 namespace sps {
 
-std::string http_request(const std::string& method, const std::string& url, const std::string& host,
-                    const std::string& data, std::list<RequestHeader>* headers) {
+std::string http_request(const std::string& method, const std::string& url,
+                         const std::string& host, const std::string& data,
+                         std::list<RequestHeader>* headers) {
     std::stringstream ss;
     ss  << method << " " << url << " HTTP/1.1" << CRCN
         << "Host: " << host << CRCN;
@@ -49,11 +55,12 @@ std::string http_request(const std::string& method, const std::string& url, cons
     return ss.str();
 }
 
-// TODO: FIX ME
+// TODO(byrcoder): FIX ME
 error_t HttpUrlProtocol::open(PRequestUrl& url, Transport tp) {
-    error_t        ret   = SUCCESS;
-    std::string    ip    = (url->get_ip().empty()) ? (url->get_host()) : (url->get_ip());
-    Transport      p     = (tp == Transport::DEFAULT ? Transport::TCP : tp);
+    error_t     ret = SUCCESS;
+    std::string ip  = (url->get_ip().empty()) ?
+                            (url->get_host()) : (url->get_ip());
+    Transport   p   = (tp == Transport::DEFAULT ? Transport::TCP : tp);
 
     auto socket = SingleInstance<ClientSocketFactory>::get_instance().create_ss(
                     p, ip, url->get_port(), url->get_timeout());
@@ -64,7 +71,8 @@ error_t HttpUrlProtocol::open(PRequestUrl& url, Transport tp) {
         return ERROR_HTTP_SOCKET_CONNECT;
     }
 
-    auto req = http_request(url->method, url->url, url->host, "", &url->headers);
+    auto req = http_request(url->method, url->url, url->host, "",
+                            &url->headers);
 
     if ((ret = socket->write((char*) req.c_str(), req.size())) != SUCCESS) {
         sp_error("failed write to %s:%d, ret: %d -> %s.", ip.c_str(),
@@ -72,7 +80,8 @@ error_t HttpUrlProtocol::open(PRequestUrl& url, Transport tp) {
         return ret;
     }
 
-    sp_trace("success open %s:%d -> request %s.", ip.c_str(), url->get_port(), req.c_str());
+    sp_trace("success open %s:%d -> request %s.", ip.c_str(),
+              url->get_port(), req.c_str());
 
     HttpParser parser;
     if ((ret = parser.parse_header(socket, HttpType::RESPONSE)) <= 0) {
@@ -139,7 +148,7 @@ error_t HttpUrlProtocol::read_chunked_length() {
     do {
         ret = get_io()->read(tmp_buf+i, 1, nr);
         ++i;
-    } while(ret == SUCCESS && tmp_buf[i-1] != '\n' && i < sizeof(tmp_buf)-1);
+    } while (ret == SUCCESS && tmp_buf[i-1] != '\n' && i < sizeof(tmp_buf)-1);
 
     if (ret != SUCCESS) {
         return ret;
@@ -154,15 +163,16 @@ error_t HttpUrlProtocol::read_chunked_length() {
         return ERROR_HTTP_CHUNKED_INVALID;
     }
 
-    tmp_buf[i-2] = '\0'; // \r
+    tmp_buf[i-2] = '\0';  // \r
 
     nb_chunked_left = nb_chunked_size = std::strtoul(tmp_buf, nullptr, 16);
 
     sp_debug("read chunked length %lu", nb_chunked_size);
-    return ret; // SUCCESS
+    return ret;  // SUCCESS
 }
 
-error_t HttpUrlProtocol::read_chunked_data(void *buf, size_t size, size_t& nread) {
+error_t HttpUrlProtocol::read_chunked_data(void *buf, size_t size,
+                                           size_t& nread) {
     size         = std::min(nb_chunked_left, size);
     error_t ret  =  SUCCESS;
 
@@ -170,7 +180,7 @@ error_t HttpUrlProtocol::read_chunked_data(void *buf, size_t size, size_t& nread
         ret = get_io()->read_fully(buf, size, (ssize_t *) &nread);
     }
 
-    nb_chunked_left -= nread; // ignore ret
+    nb_chunked_left -= nread;  // ignore ret
 
     sp_debug("read chunked data ret:%d, nread:%lu", ret, nread);
 
@@ -198,12 +208,12 @@ PResponse HttpUrlProtocol::response() {
     return rsp;
 }
 
-HttpURLProtocolFactory::HttpURLProtocolFactory() : IURLProtocolFactory("http", DEFAULT) {
-
+HttpURLProtocolFactory::HttpURLProtocolFactory()
+    : IURLProtocolFactory("http", DEFAULT) {
 }
 
 PIURLProtocol HttpURLProtocolFactory::create(PRequestUrl url) {
     return std::make_shared<HttpUrlProtocol>();
 }
 
-}
+}  // namespace sps

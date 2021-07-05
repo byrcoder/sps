@@ -24,16 +24,17 @@ SOFTWARE.
 #ifndef SPS_NET_FILE_HPP
 #define SPS_NET_FILE_HPP
 
+#include <fstream>
+#include <memory>
 #include <string>
 
 #include <sps_url_protocol.hpp>
-#include <fstream>
 
 namespace sps {
 
 class FileURLProtocol : public IURLProtocol {
  public:
-    FileURLProtocol(bool trunc = false, bool append = false);
+    explicit FileURLProtocol(bool trunc = false, bool append = false);
     ~FileURLProtocol() override;
 
  public:
@@ -86,6 +87,6 @@ class FileURLProtocolFactory : public IURLProtocolFactory {
 };
 typedef std::shared_ptr<FileURLProtocolFactory> PFileUrlProtocolFactory;
 
-}
+}  // namespace sps
 
-#endif //SPS_NET_FILE_HPP
+#endif  // SPS_NET_FILE_HPP

@@ -22,6 +22,7 @@ SOFTWARE.
 *****************************************************************************/
 
 #include <sps_co.hpp>
+#include <utility>
 #include <sps_st_co.hpp>
 
 namespace sps {
@@ -41,4 +42,4 @@ ICoFactory& ICoFactory::get_instance() {
     return f;
 }
 
-}
+}  // namespace sps

@@ -26,24 +26,30 @@ SOFTWARE.
 //
 
 #include <sps_url_rtmp.hpp>
+
+#include <string>
+#include <utility>
+
 #include <sps_log.hpp>
 
 namespace sps {
 
-RtmpUrlProtocol::RtmpUrlProtocol(std::shared_ptr<RtmpHook> hk) {
+RtmpUrlProtocol::RtmpUrlProtocol(PRtmpHook hk) {
     this->hk = std::move(hk);
 }
 
 error_t RtmpUrlProtocol::open(PRequestUrl &url, Transport tp) {
     error_t        ret   = SUCCESS;
     Transport      p     = (tp == Transport::DEFAULT ? Transport::TCP : tp);
-    std::string    ip    = (url->get_ip().empty()) ? (url->get_host()) : (url->get_ip());
+    std::string    ip    = (url->get_ip().empty()) ?
+                                (url->get_host()) : (url->get_ip());
 
-    auto socket = SingleInstance<ClientSocketFactory>::get_instance().create_ss(
-            p, ip, url->get_port(), url->get_timeout());
+    auto socket = SingleInstance<ClientSocketFactory>::get_instance().
+            create_ss(p, ip, url->get_port(), url->get_timeout());
 
     if (!socket) {
-        sp_error("failed connect %s:%d, type: %d", ip.c_str(), url->get_port(), p);
+        sp_error("failed connect %s:%d, type: %d",
+                  ip.c_str(), url->get_port(), p);
         return ERROR_HTTP_SOCKET_CONNECT;
     }
 
@@ -51,7 +57,8 @@ error_t RtmpUrlProtocol::open(PRequestUrl &url, Transport tp) {
     hk = std::make_shared<RtmpHook>(socket);
     ret = hk->client_connect(full_url, url->params, false);
 
-    sp_info("rtmp open %s?%s ret %d", full_url.c_str(), url->params.c_str(), ret);
+    sp_info("rtmp open %s?%s ret %d", full_url.c_str(),
+             url->params.c_str(), ret);
     return ret;
 }
 
@@ -63,7 +70,6 @@ error_t RtmpUrlProtocol::read(void *buf, size_t size, size_t &nread) {
         sp_error("recv packet failed ret %d", ret);
         return ret;
     }
-
 
     return ret;
 }
@@ -92,11 +98,12 @@ PResponse RtmpUrlProtocol::response() {
     return nullptr;
 }
 
-RtmpURLProtocolFactory::RtmpURLProtocolFactory(): IURLProtocolFactory("rtmp", DEFAULT) {
+RtmpURLProtocolFactory::RtmpURLProtocolFactory()
+    : IURLProtocolFactory("rtmp", DEFAULT) {
 }
 
 PIURLProtocol RtmpURLProtocolFactory::create(PRequestUrl url) {
     return std::make_shared<RtmpUrlProtocol>();
 }
 
-}
+}  // namespace sps

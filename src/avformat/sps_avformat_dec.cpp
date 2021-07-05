@@ -22,6 +22,9 @@ SOFTWARE.
 *****************************************************************************/
 
 #include <sps_avformat_dec.hpp>
+
+#include <algorithm>
+
 #include <sps_log.hpp>
 
 namespace sps {

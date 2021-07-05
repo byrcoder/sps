@@ -126,7 +126,9 @@ class ICache {
 
 template<class T>
 class InfiniteCache : public ICache<T> {
+ public:
     typedef typename ICacheStream<T>::PICacheStream PICacheStream;
+
  public:
     PICacheStream get(const std::string& name) override {
         auto it = css.find(name);
@@ -152,6 +154,6 @@ class InfiniteCache : public ICache<T> {
     std::map<std::string, PICacheStream> css;
 };
 
-}
+}  // namespace sps
 
 #endif  // SPS_CACHE_HPP

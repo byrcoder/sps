@@ -26,15 +26,13 @@ SOFTWARE.
 
 #include <sps_co.hpp>
 
-extern "C" {
 #include <public.h>
-};
 
 namespace sps {
 
 class STCo : public ICo {
  public:
-    STCo(PWICoHandler h);
+    explicit STCo(PWICoHandler h);
     error_t start() override;
 
  public:
@@ -52,6 +50,6 @@ class STCoFactory : public ICoFactory {
     PICo _start(PICoHandler handler) const override;
 };
 
-}
+}  // namespace sps
 
 #endif  // SPS_ST_CO_HPP

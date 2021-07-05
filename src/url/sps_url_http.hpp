@@ -34,7 +34,8 @@ namespace sps {
 
 class HttpUrlProtocol : public IURLProtocol {
  public:
-    explicit HttpUrlProtocol() = default;
+    HttpUrlProtocol() = default;
+
  public:
     error_t open(PRequestUrl& url, Transport p) override;
 
@@ -71,6 +72,6 @@ class HttpURLProtocolFactory : public IURLProtocolFactory {
     PIURLProtocol create(PRequestUrl url);
 };
 
-}
+}  // namespace sps
 
 #endif  // SPS_URL_HTTP_HPP

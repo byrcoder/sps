@@ -26,18 +26,17 @@ SOFTWARE.
 
 #include <list>
 #include <map>
+#include <memory>
 #include <set>
 
 #include <sps_error.hpp>
 
 #ifndef __unused
-
 #define __unused __attribute__((unused))
-
 #endif
 
 typedef int error_t;
-typedef unsigned long long utime_t;
+typedef uint64_t utime_t;
 
 template<class T>
 class SingleInstance {
@@ -61,7 +60,7 @@ class Single {
     virtual ~Single() = default;
     Single() = default;
  private:
-    Single(Single& ) = default;
+    Single(Single&) = default;
 };
 
 template<class T, class S>
@@ -123,4 +122,4 @@ class FifoRegisters  {
     std::list<S> objs;
 };
 
-#endif // SPS_SPS_TYPEDEF_HPP
+#endif  // SPS_SPS_TYPEDEF_HPP

@@ -50,6 +50,6 @@ class RtmpDemuxer : public IAVDemuxer {
 
 AVInputFormat(Rtmp, "rtmp", "-")
 
-}
+}  // namespace sps
 
 #endif  // SPS_AVFORMAT_RTMP_HPP

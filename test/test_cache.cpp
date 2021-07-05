@@ -32,10 +32,10 @@ GTEST_TEST(CACHE, CREATE) {
     cs1->sub(sub_cs3);
 
     std::string message1 = "message1";
-    cs1->put(sps::CharBuffer::copy((uint8_t*) message1.c_str(), message1.size()));
+    cs1->put(sps::CharBuffer::deep_copy((uint8_t*) message1.c_str(), message1.size()));
 
     std::string message2 = "message22";
-    cs1->put(sps::CharBuffer::copy((uint8_t*) message2.c_str(), message2.size()));
+    cs1->put(sps::CharBuffer::deep_copy((uint8_t*) message2.c_str(), message2.size()));
 
     std::list<sps::PIBuffer> dumps;
     sub_cs2->dump(dumps, false);

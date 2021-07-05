@@ -24,6 +24,10 @@ SOFTWARE.
 #ifndef SPS_STREAM_ENC_HPP
 #define SPS_STREAM_ENC_HPP
 
+#include <string>
+#include <memory>
+#include <utility>
+
 #include <sps_avformat_packet.hpp>
 #include <sps_cache_buffer.hpp>
 #include <sps_io.hpp>
@@ -86,13 +90,15 @@ class AVEncoderFactory : public Registers<AVEncoderFactory, PIAVOutputFormat> {
 
 #define AVOutputFormat(Name, name, ext) \
     class Name##AVOutputFormat : public IAVOutputFormat { \
-        public: \
-            Name##AVOutputFormat() : IAVOutputFormat(name, ext) { } \
+     public: \
+        Name##AVOutputFormat() : IAVOutputFormat(name, ext) { } \
             \
-        public: \
-            PIAVMuxer _create(PIWriter pw) const { return std::make_shared<Name##AVMuxer>(std::move(pw));} \
+     public: \
+        PIAVMuxer _create(PIWriter pw) const { \
+            return std::make_shared<Name##AVMuxer>(std::move(pw)); \
+        } \
     }; \
 
-}
+}  // namespace sps
 
 #endif  // SPS_STREAM_ENC_HPP

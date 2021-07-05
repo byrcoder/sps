@@ -25,6 +25,9 @@ SOFTWARE.
 #define SPS_AVFORMAT_DEC_HPP
 
 #include <list>
+#include <memory>
+#include <string>
+#include <utility>
 
 #include <sps_avformat_packet.hpp>
 #include <sps_io.hpp>
@@ -83,7 +86,7 @@ class AVDemuxerFactory : public Registers<AVDemuxerFactory, PIAVInputFormat> {
     AVDemuxerFactory() = default;
 
  public:
-    // TODO: to impl probe media format
+    // TODO(byrcoder): to impl probe media format
     virtual PIAVDemuxer probe(PIReader p, PRequestUrl& url);
 
  public:
@@ -93,13 +96,15 @@ class AVDemuxerFactory : public Registers<AVDemuxerFactory, PIAVInputFormat> {
 
 #define AVInputFormat(Name, name, ext) \
     class Name##AVInputFormat : public IAVInputFormat { \
-        public: \
-            Name##AVInputFormat() : IAVInputFormat(name, ext) { } \
+     public: \
+        Name##AVInputFormat() : IAVInputFormat(name, ext) { } \
             \
-        public: \
-            PIAVDemuxer _create(PIReader p) override { return std::make_shared<Name##Demuxer>(std::move(p)); } \
+     public: \
+        PIAVDemuxer _create(PIReader p) override { \
+            return std::make_shared<Name##Demuxer>(std::move(p)); \
+        } \
     }; \
 
-}
+}  // namespace sps
 
 #endif  // SPS_AVFORMAT_DEC_HPP

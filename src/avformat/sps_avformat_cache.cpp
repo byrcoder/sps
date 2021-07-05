@@ -42,12 +42,12 @@ error_t AVGopCacheStream::put(PAVPacket pb) {
         sp_info("new script dts %.12lld", pb->dts);
         script = pb;
     }  else if (pb->is_keyframe()) {
-        pbs.clear(); // new keyframe
+        pbs.clear();  // new keyframe
         pbs.push_back(pb);
         sp_info("new keyframe dts %.12lld", pb->dts);
     } else {
         if (!pbs.empty()) {
-            pbs.push_back(pb); // in case no keyframe
+            pbs.push_back(pb);  // in case no keyframe
         }
     }
 
@@ -86,4 +86,4 @@ int AVDumpCacheStream::dump(std::list<PAVPacket> &vpb, bool) {
     return CacheStream::dump(vpb, true);
 }
 
-}
+}  // namespace sps

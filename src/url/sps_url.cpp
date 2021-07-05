@@ -36,7 +36,7 @@ RequestHeader::RequestHeader(const std::string &key, const std::string &value) {
     this->value = value;
 }
 
-error_t RequestUrl::from(const std::string &url, std::shared_ptr<RequestUrl> &req) {
+error_t RequestUrl::from(const std::string &url, PRequestUrl &req) {
     req = std::make_shared<RequestUrl>();
     return req->parse_url(url);
 }
@@ -49,29 +49,34 @@ error_t RequestUrl::parse_url(const std::string& url) {
         return -1;
     }
 
-    if (u.field_set & (1 << UF_SCHEMA))
-        schema = url.substr(u.field_data[UF_SCHEMA].off, u.field_data[UF_SCHEMA].len);
+    if (u.field_set & (1 << UF_SCHEMA)) {
+        schema = url.substr(u.field_data[UF_SCHEMA].off,
+                            u.field_data[UF_SCHEMA].len);
+    }
 
     if (u.field_set & (1 << UF_PORT)) {
         port = u.port;
-    }
-    else if (schema == "http") {
+    } else if (schema == "http") {
         port = 80;
     } else if (schema == "rtmp") {
         port = 1935;
     } else {
         sp_warn("not found default port for schema:%s", schema.c_str());
-        port = 0; // unknown port
+        port = 0;  // unknown port
     }
 
-    if (u.field_set & (1 << UF_HOST))
+    if (u.field_set & (1 << UF_HOST)) {
         host = url.substr(u.field_data[UF_HOST].off, u.field_data[UF_HOST].len);
+    }
 
-    if (u.field_set & (1 << UF_PATH))
+    if (u.field_set & (1 << UF_PATH)) {
         path = url.substr(u.field_data[UF_PATH].off, u.field_data[UF_PATH].len);
+    }
 
-    if (u.field_set & (1 << UF_QUERY))
-        params = url.substr(u.field_data[UF_QUERY].off, u.field_data[UF_QUERY].len);
+    if (u.field_set & (1 << UF_QUERY)) {
+        params = url.substr(u.field_data[UF_QUERY].off,
+                            u.field_data[UF_QUERY].len);
+    }
 
     auto off_pre = 0;
 
@@ -86,17 +91,18 @@ error_t RequestUrl::parse_url(const std::string& url) {
         if (off_value == std::string::npos) {
             value   =  params.substr(off_pre);
             pp.push_back(RequestHeader(key, value));
-            sp_debug("%lu, &:%u, [%s]=[%s], final:%u", off_key, -1, key.c_str(), value.c_str(), off_pre);
+            sp_debug("%lu, &:%u, [%s]=[%s], final:%u", off_key, -1,
+                     key.c_str(), value.c_str(), off_pre);
             break;
         }
 
         value = params.substr(off_pre, off_value - off_pre);
         off_pre = off_value + 1;
 
-        sp_debug("%lu, &:%lu, [%s]=[%s], final:%u", off_key, off_value, key.c_str(), value.c_str(), off_pre);
+        sp_debug("%lu, &:%lu, [%s]=[%s], final:%u", off_key, off_value,
+                 key.c_str(), value.c_str(), off_pre);
         pp.push_back(RequestParam(key, value));
-
-    } while(true);
+    } while (true);
 
     auto n = path.rfind(".");
     if (n != std::string::npos) {
@@ -188,4 +194,4 @@ std::string RequestUrl::get_ip() {
     return ip;
 }
 
-}
+}  // namespace sps

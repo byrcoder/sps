@@ -26,21 +26,24 @@ SOFTWARE.
 //
 
 #include <sps_avformat_rtmpenc.hpp>
-#include <sps_rtmp_librtmp.hpp>
+
+#include <utility>
+
 #include <sps_log.hpp>
-#include <sps_sync.hpp>
+#include <sps_rtmp_librtmp.hpp>
 
 namespace sps  {
 
 RtmpAVMuxer::RtmpAVMuxer(PIWriter writer) {
-    this->writer = std::dynamic_pointer_cast<RtmpUrlProtocol>(std::move(writer));
+    this->writer = std::dynamic_pointer_cast<RtmpUrlProtocol>(
+            std::move(writer));
 }
 
 error_t RtmpAVMuxer::write_header(PSpsAVPacket& buffer) {
     return SUCCESS;
 }
 
-// TODO: FIXME
+// TODO(byrcoder): FIXME
 error_t RtmpAVMuxer::write_message(PSpsAVPacket& buffer) {
     WrapRtmpPacket packet(false);
     auto& pkt = packet.packet;
@@ -60,8 +63,8 @@ error_t RtmpAVMuxer::write_message(PSpsAVPacket& buffer) {
 
         pkt.m_nChannel   = 4;
 
-        sp_info("rtmp encode script stream pkt: 0x%2X, flag: %2X, data_size: %10.d, "
-                 "dts: %11d, pts: %1d, cts: %1d",
+        sp_info("rtmp encode script stream pkt: 0x%2X, flag: %2X, "
+                "data_size: %10.d, dts: %11d, pts: %1d, cts: %1d",
                 pkt.m_packetType, 0, pkt.m_nBodySize,
                 pkt.m_nTimeStamp, 0, 0);
 
@@ -75,12 +78,13 @@ error_t RtmpAVMuxer::write_message(PSpsAVPacket& buffer) {
             return ERROR_RTMP_HEAD_TOO_SHORT;
         }
 
-        *--pkt.m_body  = buffer->is_audio_sequence_header() ? 0 : 1; // 0. sequence header 1. aac data
+        // 0. sequence header 1. aac data
+        *--pkt.m_body  = buffer->is_audio_sequence_header() ? 0 : 1;
         *--pkt.m_body = buffer->flags;
         pkt.m_nBodySize += 2;
 
-        sp_debug("rtmp encode audio stream pkt: %d, flag: %2X, data_size: %10.d(%d), "
-                "dts: %11d, pts: %lld, cts: %lld",
+        sp_debug("rtmp encode audio stream pkt: %d, flag: %2X, "
+                 "data_size: %10.d(%d), dts: %11d, pts: %lld, cts: %lld",
                 pkt.m_packetType, 0, pkt.m_nBodySize, buffer->size(),
                 pkt.m_nTimeStamp, buffer->dts, buffer->dts);
 
@@ -89,7 +93,10 @@ error_t RtmpAVMuxer::write_message(PSpsAVPacket& buffer) {
         pkt.m_headerType = RTMP_PACKET_SIZE_LARGE;
         pkt.m_nChannel = 6;
 
-        uint8_t frame_type  = buffer->flags & 0xf0 ;   // 0x10=keyframe 0x20=inner 0x30=h263 disposable 4. 5. frame info or order frame
+        // 0x10. keyframe
+        // 0x20. inner
+        // 0x30. h263 disposable 0x40. 0x50. frame info or order frame
+        uint8_t frame_type  = buffer->flags & 0xf0;
 
         if (head_len < 5) {
             sp_error("rtmp head len %d < 5", head_len);
@@ -98,7 +105,8 @@ error_t RtmpAVMuxer::write_message(PSpsAVPacket& buffer) {
 
         if (frame_type != 0x50) {
             int32_t cts = buffer->pts - buffer->dts;
-            cts         = (cts + 0xff800000) ^ 0xff800000; // if cts < 0 convert to int32_t
+            // if cts < 0 convert to int32_t
+            cts         = (cts + 0xff800000) ^ 0xff800000;
 
             *(--pkt.m_body) = cts & 0x0f;
             *(--pkt.m_body) = cts & 0xf0;
@@ -112,22 +120,22 @@ error_t RtmpAVMuxer::write_message(PSpsAVPacket& buffer) {
         pkt.m_nBodySize += 1;
 
         if (buffer->is_keyframe()) {
-            sp_info("rtmp encode video stream pkt: %d, flag: %2X, data_size: %10.d (%d), "
-                     "dts: %11d, pts: %lld, cts: %lld",
-                     pkt.m_packetType, buffer->flags, pkt.m_nBodySize, buffer->size(),
-                     pkt.m_nTimeStamp, buffer->dts, buffer->pts - buffer->dts);
+            sp_info("rtmp encode video stream pkt: %d, flag: %2X, "
+                    "data_size: %10.d (%d), dts: %11d, pts: %lld, cts: %lld",
+                     pkt.m_packetType, buffer->flags, pkt.m_nBodySize,
+                     buffer->size(), pkt.m_nTimeStamp, buffer->dts,
+                     buffer->pts - buffer->dts);
         }
     } else {
         sp_warn("unknown message type %d", buffer->stream_type);
         return SUCCESS;
     }
 
-
     if ((ret = writer->write(packet)) != SUCCESS) {
         sp_error("fail write rtmp packet ret %d", ret);
         return ret;
     }
-    
+
     return SUCCESS;
 }
 
@@ -135,4 +143,4 @@ error_t RtmpAVMuxer::write_tail(PSpsAVPacket& buffer) {
     return SUCCESS;
 }
 
-}
+}  // namespace sps

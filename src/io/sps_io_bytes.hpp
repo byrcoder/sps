@@ -28,6 +28,7 @@ SOFTWARE.
 #define SPS_IO_BYTES_HPP
 
 #include <sps_io.hpp>
+#include <memory>
 
 namespace sps {
 
@@ -67,6 +68,7 @@ class AVBuffer {
     void       append(size_t n);
 
     void       clear();
+
  public:
     uint8_t*  buf;
     size_t    buf_cap;
@@ -108,7 +110,7 @@ typedef std::unique_ptr<SpsBytesReader> PSpsBytesReader;
 
 class SpsBytesWriter {
  public:
-    SpsBytesWriter(PAVBuffer& buf);
+    explicit SpsBytesWriter(PAVBuffer& buf);
 
     error_t acquire(uint32_t n);
 
@@ -128,6 +130,6 @@ class SpsBytesWriter {
     PAVBuffer& buf;
 };
 
-}
+}  // namespace sps
 
 #endif  // SPS_IO_BYTES_HPP

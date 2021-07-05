@@ -27,14 +27,18 @@ SOFTWARE.
 #ifndef SPS_AVFORMAT_PACKET_HPP
 #define SPS_AVFORMAT_PACKET_HPP
 
+#include <memory>
+
 #include <sps_cache_buffer.hpp>
 
 namespace sps {
 
 #define FLV_HEAD_TAG_SIZE 20
 
-const int AV_PKT_FLAG_KEY       =   0x0001; ///< The packet contains a keyframe
-const int AV_PKT_FLAG_SEQUENCE  =   0x0002; ///< The packet contains a sequence header
+// The packet contains a keyframe
+const int AV_PKT_FLAG_KEY       =   0x0001;
+// The packet contains a sequence header
+const int AV_PKT_FLAG_SEQUENCE  =   0x0002;
 
 enum SpsMessageType {
     AV_MESSAGE_HEADER,
@@ -69,8 +73,8 @@ enum SpsAudioCodec {
 };
 
 enum SpsVideoCodec {
-    H264 = 7,  // AVC
-    H265 = 12, //
+    H264 = 7,   // AVC
+    H265 = 12,  // H265
 };
 
 
@@ -151,6 +155,6 @@ class SpsAVPacket : public CharBuffer {
 };
 typedef std::shared_ptr<SpsAVPacket> PAVPacket;
 
-}
+}  // namespace sps
 
 #endif  // SPS_AVFORMAT_PACKET_HPP

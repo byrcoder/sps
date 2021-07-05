@@ -132,4 +132,4 @@ SOFTWARE.
 #define ERROR_FLV_UNKNOWN_TAG_TYPE          3206
 
 
-#endif // SPS_SPS_ERROR_HPP
+#endif  // SPS_SPS_ERROR_HPP

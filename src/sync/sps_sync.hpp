@@ -24,10 +24,11 @@ SOFTWARE.
 #ifndef SPS_SYNC_HPP
 #define SPS_SYNC_HPP
 
+#include <public.h>  // st
+
 #include <memory>
 #include <set>
 
-#include <public.h> // st
 #include <sps_typedef.hpp>
 #include <sps_log.hpp>
 
@@ -67,21 +68,31 @@ class IConditionFactory {
 template <class T>
 class Subscriber {
  public:
-    Subscriber()     {  cond = IConditionFactory::get_instance().create_condition(); }
+    Subscriber() {
+        cond = IConditionFactory::get_instance().create_condition();
+    }
 
  public:
     int wait(utime_t timeout)      {  return cond->wait(timeout); }
-    int on_event(T& obj)           {  do_event(obj); cond->signal();  return SUCCESS; }
-    virtual int do_event(T& obj)   {  return SUCCESS;        }
+
+    int on_event(T& obj)  {
+        do_event(obj);
+        cond->signal();
+        return SUCCESS;
+    }
+
+    virtual int do_event(T& obj)   {
+        return SUCCESS;
+    }
 
  protected:
     PCondition cond;
 };
 
 template <class T>
-struct WeakPtrLessThan
-{
-    bool operator() ( const std::weak_ptr<T>& lhs, const std::weak_ptr<T>& rhs) const {
+struct WeakPtrLessThan {
+    bool operator()(const std::weak_ptr<T>& lhs,
+                   const std::weak_ptr<T>& rhs) const {
         auto lptr = lhs.lock(), rptr = rhs.lock();
         if (!rptr) return false;  // nothing after expired pointer
         if (!lptr) return true;   // every not expired after expired pointer
@@ -116,10 +127,10 @@ class Publisher {
     }
 
  private:
-    std::set<std::weak_ptr<Subscriber<T>>, WeakPtrLessThan<Subscriber<T>> > subs;
+    std::set<std::weak_ptr<Subscriber<T>>,
+            WeakPtrLessThan<Subscriber<T>> > subs;
 };
 
-}
-
+}  // namespace sps
 
 #endif  // SPS_SYNC_HPP

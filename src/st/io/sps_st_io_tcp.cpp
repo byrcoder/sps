@@ -28,7 +28,7 @@ SOFTWARE.
 #include <netdb.h>
 #include <string.h>
 
-#include <string>
+#include <memory>
 
 #include <sps_log.hpp>
 
@@ -108,7 +108,8 @@ error_t st_tcp_listen(const std::string& server, int port,
     addr.sin_port          =   htons(port);
 
     if (::bind(fileno, (struct sockaddr*) &addr, sizeof(addr)) == -1) {
-        sp_error("bind addr %s:%d failed, fileno:%d", server.c_str(), port, fileno);
+        sp_error("bind addr %s:%d failed, fileno:%d",
+                  server.c_str(), port, fileno);
         ret = ERROR_SOCKET_BIND;
         goto failed;
     }
@@ -125,7 +126,8 @@ failed:
     return ret;
 }
 
-error_t st_tcp_connect(const std::string& server, int port, utime_t tm, st_netfd_t* fd) {
+error_t st_tcp_connect(const std::string& server, int port,
+                       utime_t tm, st_netfd_t* fd) {
     error_t ret     = SUCCESS;
     *fd             = nullptr;
     st_netfd_t stfd = nullptr;
@@ -148,7 +150,8 @@ error_t st_tcp_connect(const std::string& server, int port, utime_t tm, st_netfd
     addr.sin_port = htons(port);
     addr.sin_addr.s_addr = inet_addr(ip.c_str());
 
-    if (st_connect(stfd, (const struct sockaddr*) &addr, (int) sizeof(addr), tm) == -1) {
+    if (st_connect(stfd, (const struct sockaddr*) &addr, (int) sizeof(addr),
+                   tm) == -1) {
         ret = ERROR_ST_CONNECT;
         goto failed;
     }
@@ -163,7 +166,8 @@ error_t st_tcp_connect(const std::string& server, int port, utime_t tm, st_netfd
     return ret;
 }
 
-st_netfd_t st_tcp_accept(st_netfd_t stfd, struct sockaddr *addr, int *addrlen, utime_t timeout) {
+st_netfd_t st_tcp_accept(st_netfd_t stfd, struct sockaddr *addr, int *addrlen,
+                         utime_t timeout) {
     return st_accept(stfd, addr, addrlen, timeout);
 }
 
@@ -171,7 +175,8 @@ error_t st_tcp_read(st_netfd_t stfd, void *buf, size_t nbyte, utime_t timeout) {
     return st_read(stfd, buf, nbyte, timeout);
 }
 
-error_t st_tcp_write(st_netfd_t stfd,  void *buf, size_t nbyte, utime_t timeout) {
+error_t st_tcp_write(st_netfd_t stfd,  void *buf, size_t nbyte,
+                     utime_t timeout) {
     return st_write(stfd, buf, nbyte, timeout);
 }
 
@@ -308,14 +313,17 @@ StServerSocket::~StServerSocket()  {
     if (server_fd) st_tcp_close(server_fd);
 }
 
-error_t StServerSocket::listen(std::string sip, int sport, bool reuse_sport, int back_log) {
+error_t StServerSocket::listen(std::string sip, int sport, bool reuse_sport,
+                               int back_log) {
     error_t ret = st_tcp_listen(sip, sport, back_log, server_fd, reuse_sport);
 
     if (ret != SUCCESS) {
-        sp_error("failed listen %s:%d, %d, %s", sip.c_str(), sport, back_log, reuse_sport ? "true" : "false");
+        sp_error("failed listen %s:%d, %d, %s", sip.c_str(), sport, back_log,
+                  reuse_sport ? "true" : "false");
         return ret;
     }
-    sp_trace("success listen %s:%d, backlog: %d, reuse: %u", sip.c_str(), sport, back_log, reuse_sport);
+    sp_trace("success listen %s:%d, backlog: %d, reuse: %u", sip.c_str(),
+              sport, back_log, reuse_sport);
 
     this->backlog    = back_log;
     this->reuse_port = reuse_sport;
@@ -330,13 +338,15 @@ PSocket StServerSocket::accept() {
 
     char buf[INET6_ADDRSTRLEN];
     memset(buf, 0, sizeof(buf));
-    auto cfd = st_tcp_accept(server_fd, (struct sockaddr*) &addr, &len, ST_UTIME_NO_TIMEOUT);
+    auto cfd = st_tcp_accept(server_fd, (struct sockaddr*) &addr,
+                             &len, ST_UTIME_NO_TIMEOUT);
 
     if (inet_ntop(addr.sin_family, &addr.sin_addr, buf, sizeof(buf)) == NULL) {
-        buf[0] = '\0'; // 防止内存写乱
+        buf[0] = '\0';  // 防止内存写乱
     }
 
-    sp_trace("accept client %s:%u, cfd:%d, from %s:%d", std::string(buf, INET6_ADDRSTRLEN).c_str(),
+    sp_trace("accept client %s:%u, cfd:%d, from %s:%d",
+              std::string(buf, INET6_ADDRSTRLEN).c_str(),
              ntohs(addr.sin_port),
              st_tcp_fd(cfd), ip.c_str(), port);
 
@@ -344,4 +354,4 @@ PSocket StServerSocket::accept() {
     return std::make_shared<Socket>(io, std::string(buf), ntohs(addr.sin_port));
 }
 
-}
+}  // namespace sps

@@ -117,12 +117,12 @@ error_t FileURLProtocol::write(void *buf, size_t size) {
     return SUCCESS;
 }
 
-FileURLProtocolFactory::FileURLProtocolFactory() : IURLProtocolFactory("file", FILE) {
-
+FileURLProtocolFactory::FileURLProtocolFactory() :
+    IURLProtocolFactory("file", FILE) {
 }
 
 PIURLProtocol FileURLProtocolFactory::create(PRequestUrl url) {
     return std::make_shared<FileURLProtocol>();
 }
 
-}
+}  // namespace sps

@@ -26,19 +26,23 @@ SOFTWARE.
 //
 
 #include <sps_avformat_flvenc.hpp>
+
+#include <memory>
+#include <utility>
+
 #include <sps_io_bytes.hpp>
 #include <log/sps_log.hpp>
 
-namespace sps{
+namespace sps {
 
-FlvAVMuxer::FlvAVMuxer(PIWriter writer) : writer(std::move(writer)){
+FlvAVMuxer::FlvAVMuxer(PIWriter writer) : writer(std::move(writer)) {
     // 4 previous + 11 tag_size + 10 tmp size
     tag_buffer    = std::make_unique<AVBuffer>(15 + 4 + 10, false);
     previous_size = 0;
 }
 
 error_t FlvAVMuxer::write_header(PSpsAVPacket& buffer) {
-    static const uint8_t flv_header [] = {
+    static const uint8_t flv_header[] = {
             'F', 'L', 'V',
             0x01,  // version
             0x05,     // FLV_HEADER_FLAG_HASVIDEO | FLV_HEADER_FLAG_HASAUDIO
@@ -109,7 +113,7 @@ error_t FlvAVMuxer::write_message(PSpsAVPacket& buffer) {
     head_writer.skip(3);                        // skip 3-bytes data size
     head_writer.write_int24(buffer->dts &  0x00FFFFFF);  // low 3-bytes
     head_writer.write_int8((buffer->dts & 0xFF000000) >> 24);  // high 1-bytes
-    head_writer.write_int24(0); // stream_id
+    head_writer.write_int24(0);  // stream_id
 
     previous_size = 1 + 3 + 4 + 3;                 // 11 tag_size
 #define WRITE_DATA_SIZE(pos, n) \
@@ -119,18 +123,22 @@ error_t FlvAVMuxer::write_message(PSpsAVPacket& buffer) {
 
     if (buffer->stream_type == AV_STREAM_TYPE_SUBTITLE) {
     } else if (buffer->stream_type == AV_STREAM_TYPE_AUDIO) {
-        uint8_t codecid = (buffer->flags & 0xf0) >> 4;   // (10. aac 14. mp3) high 4-bits
+        // (10. aac 14. mp3) high 4-bits
+        uint8_t codecid = (buffer->flags & 0xf0) >> 4;
+
         head_writer.write_int8(buffer->flags);
         head_writer.write_int8(buffer->pkt_type.pkt_type);
         data_size += 2;
     } else if (buffer->stream_type == AV_STREAM_TYPE_VIDEO) {
-        uint8_t frame_type  = buffer->flags & 0xf0 ;   // 1 keyframe 2. inner 3. h263 disposable 4.
+        // 1 keyframe 2. inner 3. h263 disposable 4.
+        uint8_t frame_type  = buffer->flags & 0xf0;
         uint8_t codecid     = buffer->flags & 0x0f;    // low 4-bits
         head_writer.write_int8(buffer->flags);
 
         data_size += 1;
         if (frame_type != 0x50) {
-            head_writer.write_int8(buffer->pkt_type.pkt_type); // 0. avc sequence header 1. avc data 2. avc end data
+            // 0. avc sequence header 1. avc data 2. avc end data
+            head_writer.write_int8(buffer->pkt_type.pkt_type);
             head_writer.write_int24(buffer->pts-buffer->dts);
             data_size += 4;
         }
@@ -153,8 +161,8 @@ error_t FlvAVMuxer::write_message(PSpsAVPacket& buffer) {
         return ret;
     }
 
-    sp_debug("packet stream: %u, pkt: %d, flag: %2X, previous: %10u, data_size: %10.u, "
-             "dts: %11lld, pts: %11lld, cts: %11d",
+    sp_debug("packet stream: %u, pkt: %d, flag: %2X, previous: %10u, "
+             "data_size: %10.u, dts: %11lld, pts: %11lld, cts: %11d",
              buffer->stream_type, buffer->pkt_type.pkt_type, buffer->flags,
              tmp_previous,
              data_size,
@@ -169,4 +177,4 @@ error_t FlvAVMuxer::write_tail(PSpsAVPacket& buffer) {
     return SUCCESS;
 }
 
-}
+}  // namespace sps

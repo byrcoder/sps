@@ -23,11 +23,12 @@ SOFTWARE.
 
 #include <sps_cache_buffer.hpp>
 
-#include <string.h>
+#include <cstring>
 
 namespace sps {
 
-PCharBuffer CharBuffer::copy(uint8_t *buf, uint32_t len, uint32_t head_len) {
+PCharBuffer CharBuffer::deep_copy(uint8_t *buf, uint32_t len,
+                                  uint32_t head_len) {
     return std::make_shared<CharBuffer>(buf, len, head_len);
 }
 
@@ -42,4 +43,4 @@ CharBuffer::~CharBuffer() {
     delete []buf;
 }
 
-}
+}  // namespace sps

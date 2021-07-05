@@ -21,6 +21,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
+#include <sps_install.hpp>
+
+#include <string>
+
 #include <sps_log.hpp>
 #include <sps_module.hpp>
 #include <sps_url_protocol.hpp>
@@ -76,7 +80,7 @@ void init_avformats() {
     }
 }
 
-// TODO: FIXME thread safe
+// TODO(byrcoder): FIXME thread safe
 void sps_once_install() {
     static bool installed = false;
     if (installed) {
@@ -89,4 +93,4 @@ void sps_once_install() {
     init_avformats();
 }
 
-}
+}  // namespace sps

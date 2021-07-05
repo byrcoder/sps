@@ -72,4 +72,4 @@ PIURLProtocol UrlProtocol::create(const std::string &url) {
     return p;
 }
 
-}
+}  // namespace sps

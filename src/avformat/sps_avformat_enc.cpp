@@ -22,6 +22,9 @@ SOFTWARE.
 *****************************************************************************/
 
 #include <sps_avformat_enc.hpp>
+
+#include <algorithm>
+
 #include <sps_log.hpp>
 
 namespace sps {
@@ -70,5 +73,4 @@ PIAVMuxer AVEncoderFactory::create(PIWriter p, const std::string &url) {
     return create(std::move(p), purl);
 }
 
-}
-
+}  // namespace sps

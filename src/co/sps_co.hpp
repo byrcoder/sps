@@ -51,8 +51,8 @@ class ICoHandler {
     virtual error_t handler() = 0;
 
  public:
-    virtual void on_start() { };
-    virtual void on_stop()  { };
+    virtual void on_start() { }
+    virtual void on_stop()  { }
 
  private:
     PICo co;
@@ -75,6 +75,6 @@ class ICoFactory {
     static ICoFactory& get_instance();
 };
 
-};
+};  // namespace sps
 
 #endif  // SPS_CO_HPP

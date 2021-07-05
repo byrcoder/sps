@@ -26,7 +26,9 @@ SOFTWARE.
 
 #include <climits>
 #include <list>
+#include <memory>
 #include <string>
+#include <utility>
 
 #include <sps_io.hpp>
 
@@ -63,20 +65,41 @@ class Socket : public IReaderWriter {
     }
 
  public:
-    error_t read_fully(void* buf, size_t size, ssize_t* nread) override { return io->read_fully(buf, size, nread); }
-    error_t read(void* buf, size_t size, size_t& nread) override        { return io->read(buf, size, nread);    }
+    error_t read_fully(void* buf, size_t size, ssize_t* nread) override {
+        return io->read_fully(buf, size, nread);
+    }
 
-    void    set_recv_timeout(utime_t tm) override {    io->set_recv_timeout(tm);      }
-    utime_t get_recv_timeout() override           {    return io->get_recv_timeout(); }
-    bool    seekable() override                   {    return io->seekable();         }
+    error_t read(void* buf, size_t size, size_t& nread) override   {
+        return io->read(buf, size, nread);
+    }
+
+    void   set_recv_timeout(utime_t tm) override {
+        io->set_recv_timeout(tm);
+    }
+
+    utime_t get_recv_timeout() override {
+        return io->get_recv_timeout();
+    }
+
+    bool seekable() override {
+        return io->seekable();
+    }
 
  public:
-    error_t write(void* buf, size_t size) override { return io->write(buf, size);     }
-    void    set_send_timeout(utime_t tm) override  { return io->set_send_timeout(tm); }
-    utime_t get_send_timeout() override            { return io->get_send_timeout();   }
+    error_t write(void* buf, size_t size) override {
+        return io->write(buf, size);
+    }
+
+    void    set_send_timeout(utime_t tm) override  {
+        return io->set_send_timeout(tm);
+    }
+
+    utime_t get_send_timeout() override  {
+        return io->get_send_timeout();
+    }
 
  public:
-    PIReaderWriter get_io()              {  return io;   }
+    PIReaderWriter get_io()   {  return io;   }
     std::string    get_cip()   const     {  return cip;  }
     int            get_port()   const    {  return port; }
 
@@ -90,7 +113,8 @@ typedef std::shared_ptr<Socket> PSocket;
 
 class ClientSocketFactory : public Single<ClientSocketFactory> {
  public:
-    PSocket create_ss(Transport transport, const std::string& ip, int port, utime_t tm);
+    PSocket create_ss(Transport transport, const std::string& ip,
+                      int port, utime_t tm);
 };
 
 /**
@@ -101,7 +125,8 @@ class IServerSocket {
     virtual ~IServerSocket() = default;
 
  public:
-    virtual error_t listen(std::string ip, int port, bool reuse_port = true, int backlog = 1024) = 0;
+    virtual error_t listen(std::string ip, int port, bool reuse_port = true,
+                           int backlog = 1024) = 0;
     virtual PSocket accept()  = 0;
 };
 
@@ -112,6 +137,6 @@ class ServerSocketFactory : public Single<ServerSocketFactory> {
     PIServerSocket create_ss(Transport transport);
 };
 
-}
+}  // namespace sps
 
 #endif  // SPS_IO_SOCKET_HPP

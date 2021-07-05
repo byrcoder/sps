@@ -36,12 +36,13 @@ SOFTWARE.
 #include <list>
 #include <memory>
 #include <string>
+
 #include <sps_typedef.hpp>
 
 namespace sps {
 
 struct RequestHeader {
-    explicit RequestHeader();
+    RequestHeader();
     explicit RequestHeader(const std::string& key, const std::string& value);
     std::string key;
     std::string value;
@@ -54,13 +55,13 @@ typedef std::shared_ptr<RequestUrl> PRequestUrl;
 
 class RequestUrl {
  public:
-    static error_t from(const std::string& url, std::shared_ptr<RequestUrl>& req);
+    static error_t from(const std::string& url, PRequestUrl& req);
+
+ public:
+    RequestUrl() = default;
 
  public:
     error_t parse_url(const std::string& url);
-
- public:
-    explicit RequestUrl() = default;
 
  public:
     virtual const char* get_schema();
@@ -106,6 +107,6 @@ class Response {
 
 typedef std::shared_ptr<Response> PResponse;
 
-}
+}  // namespace sps
 
 #endif  // SPS_URL_HPP

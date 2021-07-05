@@ -37,4 +37,4 @@ PIURLProtocolFactory sps_url_protocols[] = {
         nullptr
 };
 
-}
+}  // namespace sps

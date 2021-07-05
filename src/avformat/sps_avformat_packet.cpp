@@ -30,10 +30,11 @@ SOFTWARE.
 
 namespace sps {
 
-PSpsAVPacket SpsAVPacket::create(SpsMessageType msg_type, SpsAVStreamType stream_type,
-                                 SpsAVPacketType pkt_type, uint8_t* buf, int len,
-                                 int64_t dts, int64_t pts, int flags, int codecid,
-                                 int64_t duration) {
+PSpsAVPacket SpsAVPacket::create(
+        SpsMessageType msg_type, SpsAVStreamType stream_type,
+        SpsAVPacketType pkt_type, uint8_t* buf, int len,
+        int64_t dts, int64_t pts, int flags, int codecid,
+        int64_t duration) {
     auto pkt = std::make_shared<SpsAVPacket>(buf, len, FLV_HEAD_TAG_SIZE);
     pkt->msg_type    = msg_type;
     pkt->stream_type = stream_type;
@@ -47,7 +48,8 @@ PSpsAVPacket SpsAVPacket::create(SpsMessageType msg_type, SpsAVStreamType stream
     return pkt;
 }
 
-SpsAVPacket::SpsAVPacket(uint8_t *buf, int len, int head_len) :  CharBuffer(buf, len, head_len) {
+SpsAVPacket::SpsAVPacket(uint8_t *buf, int len, int head_len)
+    : CharBuffer(buf, len, head_len) {
 }
 
 bool SpsAVPacket::is_video() const {
@@ -84,10 +86,11 @@ bool SpsAVPacket::is_audio_sequence_header() {
 }
 
 void SpsAVPacket::debug() {
-    sp_append_start("msg_type: %d, stream_type: %d, pkt_type: %11d, dts: %11lld, "
-            "pts: %11lld, flags: %2X, codecid: %2d, length: %10d, ",
-            msg_type, stream_type, pkt_type.pkt_type, dts,
-            pts, flags, codecid, size());
+    sp_append_start("msg_type: %d, stream_type: %d, pkt_type: %11d, "
+                    "dts: %11lld, pts: %11lld, flags: %2X, codecid: %2d, "
+                    "length: %10d, ",
+                    msg_type, stream_type, pkt_type.pkt_type, dts,
+                    pts, flags, codecid, size());
 
     for (int i = 0; i < size(); ++i) {
         sp_append("%2X", *(buffer()+i));
@@ -95,4 +98,4 @@ void SpsAVPacket::debug() {
     sp_append_end();
 }
 
-}
+}  // namespace sps
