@@ -21,38 +21,34 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_RTMP_SERVER_HPP
-#define SPS_RTMP_SERVER_HPP
+#ifndef SPS_AVFORMAT_RTMPENC_HPP
+#define SPS_AVFORMAT_RTMPENC_HPP
 
-#include <sps_host_phase_handler.hpp>
-#include <sps_rtmp_librtmp.hpp>
-#include <sps_server.hpp>
+#include <sps_avformat_enc.hpp>
+#include <sps_url_rtmp.hpp>
 
 namespace sps {
 
-class RtmpConnHandler : public IConnHandler {
+class RtmpAVMuxer : public IAVMuxer {
  public:
-    explicit RtmpConnHandler(PSocket io, PServerPhaseHandler& handler);
+    RtmpAVMuxer(PIWriter writer);
 
  public:
-    error_t handler() override;
-
- public:
-    PServerPhaseHandler& hd;
-    std::shared_ptr<RtmpHook> hk;
-    bool publishing;
-    bool playing;
-};
-
-class RtmpConnHandlerFactory : public IConnHandlerFactory {
- public:
-    explicit RtmpConnHandlerFactory(PServerPhaseHandler hd);
-    PIConnHandler create(PSocket io) override;
+    error_t write_header(PSpsAVPacket& buffer) override;
+    error_t write_message(PSpsAVPacket& buffer) override;
+    error_t write_tail(PSpsAVPacket& buffer)    override;
 
  private:
-    PServerPhaseHandler handler;
+    PRtmpUrlProtocol  writer;
+
+ public:
+    bool      filter_video    = false;
+    bool      filter_metadata = false;
+    bool      filter_audio    = false;
 };
+
+AVOutputFormat(Rtmp, "rtmp", "-");
 
 }
 
-#endif  // SPS_RTMP_SERVER_HPP
+#endif  // SPS_AVFORMAT_RTMPENC_HPP

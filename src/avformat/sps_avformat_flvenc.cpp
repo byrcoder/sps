@@ -169,11 +169,4 @@ error_t FlvAVMuxer::write_tail(PSpsAVPacket& buffer) {
     return SUCCESS;
 }
 
-FlvAVOutputFormat::FlvAVOutputFormat() : IAVOutputFormat("flv", "flv") {
-}
-
-PIAVMuxer FlvAVOutputFormat::_create(PIWriter pw) const {
-    return std::make_shared<FlvAVMuxer>(std::move(pw));
-}
-
 }

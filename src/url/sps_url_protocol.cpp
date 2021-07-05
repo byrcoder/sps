@@ -38,7 +38,7 @@ error_t IURLProtocol::open(const std::string& url) {
 
 IURLProtocolFactory::IURLProtocolFactory(const char *schema, Transport t) {
     this->schema = schema;
-    this->t     = t;
+    this->t      = t;
 }
 
 bool IURLProtocolFactory::match(PRequestUrl url) {

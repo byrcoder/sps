@@ -91,6 +91,15 @@ class AVDemuxerFactory : public Registers<AVDemuxerFactory, PIAVInputFormat> {
     PIAVDemuxer create(PIReader p, const std::string& url);
 };
 
+#define AVInputFormat(Name, name, ext) \
+    class Name##AVInputFormat : public IAVInputFormat { \
+        public: \
+            Name##AVInputFormat() : IAVInputFormat(name, ext) { } \
+            \
+        public: \
+            PIAVDemuxer _create(PIReader p) override { return std::make_shared<Name##Demuxer>(std::move(p)); } \
+    }; \
+
 }
 
 #endif  // SPS_AVFORMAT_DEC_HPP

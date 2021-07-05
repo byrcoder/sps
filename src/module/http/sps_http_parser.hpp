@@ -87,7 +87,7 @@ typedef std::shared_ptr<HttpParserContext> PHttpParserContext;
 
 class HttpParser {
  public:
-    HttpParser(int max_header = 1024);
+    HttpParser(int max_header = 2048);
     int parse_header(PIReader io, HttpType ht = BOTH);
     int parse_header(const char* buf, int len, HttpType ht = BOTH);
 

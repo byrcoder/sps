@@ -30,7 +30,13 @@ SOFTWARE.
 
 #include <sps_host_phase_handler.hpp>
 
+#include <sps_avformat_cache.hpp>
+#include <sps_cache.hpp>
+
 namespace sps {
+
+class StreamCache : public InfiniteCache<PAVPacket>, public SingleInstance<StreamCache> {
+};
 
 class StreamPhaseHandler : public IPhaseHandler {
  public:

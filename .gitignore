@@ -3,3 +3,5 @@ src/version.h
 *.o
 cmake-build-debug
 build
+.gitconfig
+media

@@ -21,38 +21,33 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_RTMP_SERVER_HPP
-#define SPS_RTMP_SERVER_HPP
+//
+// Created by byrcoder on 2021/6/30.
+//
+#include <gtest/gtest.h>
 
-#include <sps_host_phase_handler.hpp>
+#include <sps_avformat_rtmpdec.hpp>
 #include <sps_rtmp_librtmp.hpp>
-#include <sps_server.hpp>
+#include <sps_url_rtmp.hpp>
+#include <sps_url_protocol.hpp>
+#include <sps_sync.hpp>
 
-namespace sps {
+using namespace sps;
 
-class RtmpConnHandler : public IConnHandler {
- public:
-    explicit RtmpConnHandler(PSocket io, PServerPhaseHandler& handler);
+GTEST_TEST(RTMP_CIENT, CREATE) {
+    auto& pf = SingleInstance<UrlProtocol>::get_instance();
 
- public:
-    error_t handler() override;
+    std::string url = "rtmp://pull-flv-f11-admin.douyincdn.com/stage/stream-685534728341684325_md"; //rtmp://127.0.0.1/live/test?app=live&tcUrl=baidu.com/live";
+    auto url_rtmp = pf.create(url);
 
- public:
-    PServerPhaseHandler& hd;
-    std::shared_ptr<RtmpHook> hk;
-    bool publishing;
-    bool playing;
-};
+    EXPECT_TRUE(url_rtmp->open(url) == SUCCESS);
 
-class RtmpConnHandlerFactory : public IConnHandlerFactory {
- public:
-    explicit RtmpConnHandlerFactory(PServerPhaseHandler hd);
-    PIConnHandler create(PSocket io) override;
+    RtmpDemuxer demuxer(url_rtmp);
 
- private:
-    PServerPhaseHandler handler;
-};
+    PSpsAVPacket buffer;
+    while (demuxer.read_packet(buffer) == SUCCESS) {
+        ;
+    }
 
+    SingleInstance<Sleep>::get_instance().sleep(4);
 }
-
-#endif  // SPS_RTMP_SERVER_HPP

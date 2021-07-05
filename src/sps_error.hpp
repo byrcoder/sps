@@ -106,14 +106,22 @@ SOFTWARE.
 #define ERROR_RTMP_AMF_CMD_CONVERT          1905
 #define ERROR_RTMP_AMF_PROP_NOT_FOUND       1906
 #define ERROR_RTMP_AMF_PROP_TYPE            1907
+#define ERROR_RTMP_CONNECT                  1908
+#define ERROR_RTMP_ROLE                     1909
+#define ERROR_RTMP_NO_SOURCE                1910
+#define ERROR_RTMP_HAS_SOURCE               1911
+#define ERROR_RTMP_HEAD_TOO_SHORT           1912;
+
 
 // stream 协议
 #define ERROR_STREAM_EOF                    3000
 #define ERROR_STREAM_NOT_IMPL               3001
+#define ERROR_STREAM_NOT_CONF               3002
 
 #define ERROR_AVFORMAT_ENCODER_NOT_EXISTS   3100
 #define ERROR_AVFORMAT_DEMUX_NOT_EXISTS     3101
 #define ERROR_AVFORMAT_SOURCE_NOT_SUPPORT   3102
+#define ERROR_AVFORMAT_RTMP_IO_NULL         3103
 
 // flv 协议
 #define ERROR_FLV_PROBE                     3201

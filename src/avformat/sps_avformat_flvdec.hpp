@@ -49,13 +49,7 @@ class FlvDemuxer : public IAVDemuxer {
     PSpsBytesReader rd;
 };
 
-class FlvAVInputFormat : public IAVInputFormat {
- public:
-    FlvAVInputFormat();
-
- protected:
-    PIAVDemuxer _create(PIReader s) override;
-};
+AVInputFormat(Flv, "flv", "flv");
 
 }
 

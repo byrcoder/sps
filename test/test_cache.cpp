@@ -8,13 +8,15 @@
 
 #include <gtest/gtest.h>
 
+using namespace sps;
+
 GTEST_TEST(SYNC, CREATE) {
     EXPECT_TRUE(true);
 }
 
 GTEST_TEST(CACHE, CREATE) {
-    auto c =  std::make_shared<sps::InfiniteCache>();
-    auto cs1 = std::make_shared<sps::CacheStream>();
+    auto c =  std::make_shared<sps::InfiniteCache<PIBuffer>>();
+    auto cs1 = std::make_shared<sps::CacheStream<PIBuffer>>();
 
     c->put("cs1", cs1);
 
@@ -23,8 +25,8 @@ GTEST_TEST(CACHE, CREATE) {
 
     sp_trace("%p == %p", cs1.get(), cs.get());
 
-    auto sub_cs2 = std::make_shared<sps::CacheStream>();
-    auto sub_cs3 = std::make_shared<sps::CacheStream>();
+    auto sub_cs2 = std::make_shared<sps::CacheStream<PIBuffer>>();
+    auto sub_cs3 = std::make_shared<sps::CacheStream<PIBuffer>>();
 
     cs1->sub(sub_cs2);
     cs1->sub(sub_cs3);

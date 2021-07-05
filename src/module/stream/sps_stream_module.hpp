@@ -37,7 +37,7 @@ struct StreamConfCtx : public ConfCtx {
 #define OFFSET(x) offsetof(StreamConfCtx, x)
 static const ConfigOption stream_options[] = {
         { "play_avformat",     "play avformat",         OFFSET(upstream_url),        CONF_OPT_TYPE_STRING, {.str = "-"} },
-        { "edge",              "upstream avformat",     OFFSET(edge),                 CONF_OPT_TYPE_BOOL,   {.str = "on"} },
+        { "edge",              "edge",                  OFFSET(edge),                CONF_OPT_TYPE_BOOL,   {.str = "on"} },
         { nullptr }
 };
 #undef OFFSET

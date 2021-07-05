@@ -93,7 +93,7 @@ template <class T>
 class Publisher {
  public:
     void publish(T& o) {
-        sp_info("publish ... subs:%lu", subs.size());
+        sp_debug("publish ... subs:%lu", subs.size());
 
         for (auto it = subs.begin(); it != subs.end(); ) {
             auto s = (*it).lock();

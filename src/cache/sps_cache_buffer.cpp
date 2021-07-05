@@ -27,14 +27,15 @@ SOFTWARE.
 
 namespace sps {
 
-PCharBuffer CharBuffer::copy(uint8_t *buf, int len) {
-    return std::make_shared<CharBuffer>(buf, len);
+PCharBuffer CharBuffer::copy(uint8_t *buf, uint32_t len, uint32_t head_len) {
+    return std::make_shared<CharBuffer>(buf, len, head_len);
 }
 
-CharBuffer::CharBuffer(uint8_t *buf, int len) {
-    this->buf = new uint8_t[len];
+CharBuffer::CharBuffer(uint8_t *buf, uint32_t len, uint32_t head_len) {
+    this->buf = new uint8_t[len+head_len];
     this->len = len;
-    memcpy(this->buf, buf, len);
+    this->head_len = head_len;
+    memcpy(this->buf + head_len, buf, len);
 }
 
 CharBuffer::~CharBuffer() {

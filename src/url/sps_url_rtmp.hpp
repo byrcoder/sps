@@ -21,38 +21,47 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_RTMP_SERVER_HPP
-#define SPS_RTMP_SERVER_HPP
+#ifndef SPS_URL_RTMP_HPP
+#define SPS_URL_RTMP_HPP
 
-#include <sps_host_phase_handler.hpp>
 #include <sps_rtmp_librtmp.hpp>
-#include <sps_server.hpp>
+#include <sps_url_protocol.hpp>
 
 namespace sps {
 
-class RtmpConnHandler : public IConnHandler {
+class RtmpUrlProtocol : public IURLProtocol {
  public:
-    explicit RtmpConnHandler(PSocket io, PServerPhaseHandler& handler);
+    explicit RtmpUrlProtocol() = default;
+
+    explicit RtmpUrlProtocol(std::shared_ptr<RtmpHook> hk);
 
  public:
-    error_t handler() override;
+    error_t open(PRequestUrl& url, Transport p) override;
 
  public:
-    PServerPhaseHandler& hd;
-    std::shared_ptr<RtmpHook> hk;
-    bool publishing;
-    bool playing;
-};
+    error_t read(void* buf, size_t size, size_t& nread) override;
 
-class RtmpConnHandlerFactory : public IConnHandlerFactory {
+    error_t read(WrapRtmpPacket& packet);
+
+    error_t write(WrapRtmpPacket& packet);
+
  public:
-    explicit RtmpConnHandlerFactory(PServerPhaseHandler hd);
-    PIConnHandler create(PSocket io) override;
+    PResponse response() override ;
 
  private:
-    PServerPhaseHandler handler;
+    std::shared_ptr<RtmpHook> hk;
+};
+
+typedef std::shared_ptr<RtmpUrlProtocol> PRtmpUrlProtocol;
+
+class RtmpURLProtocolFactory : public IURLProtocolFactory {
+ public:
+    RtmpURLProtocolFactory();
+
+ public:
+    PIURLProtocol create(PRequestUrl url) override;
 };
 
 }
 
-#endif  // SPS_RTMP_SERVER_HPP
+#endif  // SPS_URL_RTMP_HPP

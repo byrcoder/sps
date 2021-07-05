@@ -21,6 +21,26 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-//
-// Created by byrcoder on 2021/6/24.
-//
+#ifndef SPS_RTMP_STREAM_HANDLER_HPP
+#define SPS_RTMP_STREAM_HANDLER_HPP
+
+#include <sps_stream_phase_handler.hpp>
+
+namespace sps {
+
+// rtmp handler
+class RtmpServerStreamHandler : public IPhaseHandler {
+ public:
+    RtmpServerStreamHandler();
+
+ public:
+    error_t handler(ConnContext &ctx) override;
+
+    error_t publish(ConnContext &ctx);
+
+    error_t play(ConnContext &ctx);
+};
+
+}
+
+#endif  // SPS_RTMP_STREAM_HANDLER_HPP

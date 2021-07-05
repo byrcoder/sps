@@ -29,10 +29,8 @@ SOFTWARE.
 
 namespace sps {
 
-static const int max_len = 1 * 1024 * 1024;
-
 FlvDemuxer::FlvDemuxer(PIReader rd) {
-    buf       = std::make_unique<AVBuffer>(max_len, true);
+    buf       = std::make_unique<AVBuffer>(FLV_MAX_LEN, true);
     this->io  = std::move(rd);
     this->rd  = std::make_unique<SpsBytesReader>(io, buf);
 }
@@ -194,14 +192,6 @@ error_t FlvDemuxer::probe(PSpsAVPacket& buffer) {
         return ERROR_FLV_PROBE;
     }
     return SUCCESS;
-}
-
-FlvAVInputFormat::FlvAVInputFormat() :
-    IAVInputFormat("flv", "flv") {
-}
-
-PIAVDemuxer FlvAVInputFormat::_create(PIReader p) {
-    return std::make_shared<FlvDemuxer>(p);
 }
 
 }

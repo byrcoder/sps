@@ -45,6 +45,15 @@ AVBuffer::AVBuffer(uint8_t *buf, size_t cap, bool rw) {
     own           = false;
 }
 
+AVBuffer::AVBuffer(uint8_t* buf, size_t end, size_t cap, bool rw) {
+    this->buf = buf;
+    buf_ptr = 0;
+    this->buf_end = end;
+    this->buf_cap = cap;
+    rewindable    = rw;
+    own           = false;
+}
+
 AVBuffer::~AVBuffer() {
     if (own) {
         delete[] buf;
@@ -116,12 +125,6 @@ void SpsBytesReader::skip_bytes(size_t n) {
     buf->skip(n);
 }
 
-//uint8_t SpsBytesReader::read_int8() {
-//    uint8_t n = *buf->pos();
-//    buf->skip(1);
-//    return n;
-//}
-
 uint16_t SpsBytesReader::read_int16() {
     return ((uint32_t) read_int8()) << 8u | read_int8();
 }
@@ -154,11 +157,9 @@ error_t SpsBytesReader::acquire(uint32_t n) {
     assert(buf->no_rewind_cap_size() >= n);
 
     do {
-        ret = io->read(buf->end(), buf->remain(), nread);
-
-        if (ret != SUCCESS) {
+        if (!io || (ret = io->read(buf->end(), buf->remain(), nread)) != SUCCESS) {
             sp_error("fail increase buffer read ret: %d", ret);
-            return ret;
+            return ret == SUCCESS ? ERROR_IO_EOF : ret;
         }
 
         buf->buf_end += nread;

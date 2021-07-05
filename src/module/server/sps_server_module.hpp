@@ -75,6 +75,7 @@ class ServerModule : public IModule {
 
  public:
     PHostModulesRouter hosts_router = std::make_shared<HostModulesRouter>();
+
  private:
     PIConnHandlerFactory socket_handler;
 

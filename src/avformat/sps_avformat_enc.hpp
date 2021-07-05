@@ -84,6 +84,15 @@ class AVEncoderFactory : public Registers<AVEncoderFactory, PIAVOutputFormat> {
     PIAVMuxer create(PIWriter p, const std::string& url);
 };
 
+#define AVOutputFormat(Name, name, ext) \
+    class Name##AVOutputFormat : public IAVOutputFormat { \
+        public: \
+            Name##AVOutputFormat() : IAVOutputFormat(name, ext) { } \
+            \
+        public: \
+            PIAVMuxer _create(PIWriter pw) const { return std::make_shared<Name##AVMuxer>(std::move(pw));} \
+    }; \
+
 }
 
 #endif  // SPS_STREAM_ENC_HPP

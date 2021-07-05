@@ -31,6 +31,8 @@ SOFTWARE.
 
 namespace sps {
 
+#define FLV_HEAD_TAG_SIZE 20
+
 const int AV_PKT_FLAG_KEY       =   0x0001; ///< The packet contains a keyframe
 const int AV_PKT_FLAG_SEQUENCE  =   0x0002; ///< The packet contains a sequence header
 
@@ -47,6 +49,14 @@ enum SpsAVStreamType {
     AV_STREAM_TYPE_SUBTITLE,
     AV_STREAM_TYPE_DATA,
     AV_STREAM_TYPE_NB,
+};
+
+enum SpsVideoPktType {
+    AV_VIDEO_TYPE_SEQUENCE_HEADER = 0,
+};
+
+enum SpsAudioPktType {
+    AV_AUDIO_TYPE_SEQUENCE_HEADER = 0,
 };
 
 struct SpsAVPacketType {
@@ -82,7 +92,16 @@ class SpsAVPacket : public CharBuffer {
             int64_t duration = 0);
 
  public:
-    SpsAVPacket(uint8_t* buf, int len);
+    // head_len for rtmp
+    SpsAVPacket(uint8_t* buf, int len, int head_len = 0);
+
+ public:
+    bool is_video() const;
+    bool is_audio() const;
+    bool is_script() const;
+    bool is_keyframe() const;
+    bool is_video_sequence_header() const;
+    bool is_audio_sequence_header();
 
  public:
     /**
@@ -130,6 +149,7 @@ class SpsAVPacket : public CharBuffer {
  public:
     void debug();
 };
+typedef std::shared_ptr<SpsAVPacket> PAVPacket;
 
 }
 

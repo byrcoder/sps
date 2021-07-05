@@ -21,38 +21,39 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_RTMP_SERVER_HPP
-#define SPS_RTMP_SERVER_HPP
+#ifndef SPS_AVFORMAT_CACHE_HPP
+#define SPS_AVFORMAT_CACHE_HPP
 
-#include <sps_host_phase_handler.hpp>
-#include <sps_rtmp_librtmp.hpp>
-#include <sps_server.hpp>
+#include <sps_cache.hpp>
+#include <sps_avformat_packet.hpp>
 
 namespace sps {
 
-class RtmpConnHandler : public IConnHandler {
+// publisher, save gop cache
+class AVGopCacheStream : public CacheStream<PAVPacket> {
  public:
-    explicit RtmpConnHandler(PSocket io, PServerPhaseHandler& handler);
+    error_t put(PAVPacket pb) override;
 
- public:
-    error_t handler() override;
-
- public:
-    PServerPhaseHandler& hd;
-    std::shared_ptr<RtmpHook> hk;
-    bool publishing;
-    bool playing;
-};
-
-class RtmpConnHandlerFactory : public IConnHandlerFactory {
- public:
-    explicit RtmpConnHandlerFactory(PServerPhaseHandler hd);
-    PIConnHandler create(PSocket io) override;
+    int dump(std::list<PAVPacket>& vpb, bool /** remove **/) override;
 
  private:
-    PServerPhaseHandler handler;
+    PAVPacket video_sequence_header;
+    PAVPacket audio_sequence_header;
+    PAVPacket script;
+};
+
+// subscriber dump from gop cache and subscribe AVGopCacheStream
+class AVDumpCacheStream : public CacheStream<PAVPacket> {
+ public:
+    AVDumpCacheStream(utime_t recv_timeout);
+
+ public:
+    int dump(std::list<PAVPacket>& vpb, bool /** remove **/) override;
+
+ private:
+    utime_t recv_timeout;
 };
 
 }
 
-#endif  // SPS_RTMP_SERVER_HPP
+#endif  // SPS_AVFORMAT_CACHE_HPP

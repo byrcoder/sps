@@ -24,6 +24,7 @@ SOFTWARE.
 #include <sps_url_file.hpp>
 #include <sps_url_http.hpp>
 #include <sps_url_protocol.hpp>
+#include <sps_url_rtmp.hpp>
 
 namespace sps {
 
@@ -32,6 +33,7 @@ namespace sps {
 PIURLProtocolFactory sps_url_protocols[] = {
         URLPROTOCOL_INSTANCE(Http),
         URLPROTOCOL_INSTANCE(File),
+        URLPROTOCOL_INSTANCE(Rtmp),
         nullptr
 };
 

@@ -36,6 +36,7 @@ namespace sps {
 class FlvAVMuxer : public IAVMuxer {
  public:
     FlvAVMuxer(PIWriter writer);
+
  public:
     error_t write_header(PSpsAVPacket& buffer) override;
     error_t write_message(PSpsAVPacket& buffer) override;
@@ -47,18 +48,12 @@ class FlvAVMuxer : public IAVMuxer {
     uint32_t  previous_size;
 
  public:
-    bool      filter_video    = true;
-    bool      filter_metadata = true;
+    bool      filter_video    = false;
+    bool      filter_metadata = false;
     bool      filter_audio    = false;
 };
 
-class FlvAVOutputFormat : public IAVOutputFormat {
- public:
-    FlvAVOutputFormat();
-
- protected:
-    PIAVMuxer _create(PIWriter pw) const override;
-};
+AVOutputFormat(Flv, "flv", "flv");
 
 }
 

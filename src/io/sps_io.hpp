@@ -35,6 +35,8 @@ SOFTWARE.
 
 #include <sps_typedef.hpp>
 
+#define SPS_IO_NO_TIMEOUT -1
+
 class IReader {
  public:
     virtual ~IReader() = default;

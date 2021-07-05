@@ -53,8 +53,6 @@ SOFTWARE.
 #define RTMP_PACKET_TYPE_AMF0_DATA           0x12  // 18
 #define RTMP_PACKET_TYPE_AMF0_CMD            0x14  // 20
 
-namespace sps {
-
 /**
  * c0: rtmp version default 0x03, 0x06 encrypt(not used)
  * c1: 1536-bytes consists:
@@ -194,6 +192,25 @@ namespace sps {
  * message-type = [15, 17] amf0 data and cmd, [18, 20] amf3 data and cmd
  *
  */
+
+/**
+ * 1. RTMP Chunk Stream uses message type IDs 1, 2, 3, 5, and 6 for
+ * protocol control messages.
+ * These protocol control messages MUST have message stream ID 0 (known
+ * as the control stream) and be sent in chunk stream ID 2
+ *
+ * 2. User Control messages SHOULD use message stream ID 0 (known as the
+ * control stream) and, when sent over RTMP Chunk Stream, be sent on
+ * chunk stream ID 2
+ **/
+// rtmp connect chunked stream id
+#define RTMP_PACKET_STREAM_ID_CONTROL           0x02
+#define RTMP_PACKET_STREAM_ID_NET_CONNECT       0x03
+#define RTMP_PACKET_STREAM_ID_DATA              0x05
+#define RTMP_PACKET_STREAM_ID_NET_STREAM        0x08
+
+namespace sps {
+
 void librtmp_init_once();
 
 // prop check valid
@@ -209,19 +226,33 @@ bool    equal_val(AVal* src, const char* c);
 
 class WrapRtmpPacket {
  public:
+    WrapRtmpPacket(bool own = true);
     ~WrapRtmpPacket();
 
  public:
     void reset();
 
  public:
+    bool is_video();
+    bool is_audio();
+    bool is_script();
+
+    uint8_t* data();
+    size_t   size();
+
+ public:
+    bool       own;
     RTMPPacket packet {0};
 };
 
-class LibRTMPHooks {
+class RtmpHook {
  public:
-    explicit LibRTMPHooks(PSocket io);
-    ~LibRTMPHooks();
+    explicit RtmpHook(PSocket io);
+    ~RtmpHook();
+
+ public:
+    void set_recv_timeout(utime_t tm);
+    void set_send_timeout(utime_t tm);
 
  public:
     RTMP* get_rtmp() { return rtmp; }
@@ -229,120 +260,58 @@ class LibRTMPHooks {
  public:
     error_t  get_error() { return error; }
 
-    error_t  server_handshake();
-
     // chunked id = 2
-    error_t  server_bandwidth();
-    error_t  send_set_chunked_size();
+    error_t  send_ack_window_size();
 
-    // chunked id = 3
+    // rtmp server->client
+    error_t  server_handshake();
+    error_t  send_client_bandwidth();
+    error_t  send_set_chunked_size();
+    error_t  send_play_start(int /** transaction_id **/);
+    error_t  send_publish_start(int transaction_id);
+
+    // flash
+    error_t  send_sample_access();
+
+    error_t  send_stream_begin();
+
     error_t  send_connect_result(double transid);
     error_t  send_result(double transid, double id);
     error_t  recv_packet(WrapRtmpPacket& packet);
     error_t  send_packet(RTMPPacket& packet, bool queue);
+
+    // rtmp client->server
+    error_t  client_connect(const std::string& url, const std::string& params, bool publish);
+    error_t  send_server_bandwidth();
+    error_t  send_connect(const std::string& app, const std::string& tc_url);
+    error_t  create_stream();
+    error_t  send_buffer_length();
 
  private:
     PSocket   skt;
     RTMP*     rtmp;
     RTMP_HOOK hook{0};
     error_t   error;
+    int       transaction_id = 0;
 
  public:
     // connect
-    static int RTMP_Connect(RTMP *r, RTMPPacket *cp); // RTMP_CONNECT, FALSE=0 TRUE=1
-    static int RTMP_TLS_Accept(RTMP *r, void *ctx);
+    static int SPS_RTMP_Connect(RTMP *r, RTMPPacket *cp); // RTMP_CONNECT, FALSE=0 TRUE=1
+    static int SPS_RTMP_TLS_Accept(RTMP *r, void *ctx);
 
     // send ret < 0 fail, n byte return ok
-    static int RTMPSockBuf_Send(RTMPSockBuf *sb, const char *buf, int len);
+    static int SPS_RTMPSockBuf_Send(RTMPSockBuf *sb, const char *buf, int len);
 
     // read
     // return -1 error, n nbyte return success
-    static int RTMPSockBuf_Fill(RTMPSockBuf *sb, char* buf, int nb_bytes);
+    static int SPS_RTMPSockBuf_Fill(RTMPSockBuf *sb, char* buf, int nb_bytes);
 
     // close
-    static int RTMPSockBuf_Close(RTMPSockBuf *sb);
+    static int SPS_RTMPSockBuf_Close(RTMPSockBuf *sb);
 
     // search
-    static int RTMP_IsConnected(RTMP *r);
-    static int RTMP_Socket(RTMP *r);
-};
-
-class IRtmpPacket {
- public:
-    virtual ~IRtmpPacket() = default;
-
- public:
-    virtual error_t decode(WrapRtmpPacket& packet) = 0;
-    error_t encode(WrapRtmpPacket& packet);
-};
-typedef std::unique_ptr<IRtmpPacket> PIRTMPPacket;
-
-class AmfRtmpPacket : public IRtmpPacket {
- public:
-    AmfRtmpPacket();
-    ~AmfRtmpPacket();
-
- public:
-    error_t decode(WrapRtmpPacket& packet);
-
- public:
-    error_t convert_self(PIRTMPPacket& result);
-
- public:
-    AMFObject amf_object {0};
-};
-
-class CommandRtmpPacket : public AmfRtmpPacket {
- public:
-    error_t decode(WrapRtmpPacket& packet);
-
- public:
-    error_t from(AMFObject& amf_object);
-
-    virtual error_t invoke_from(AMFObject& amf_object);
-
- public:
-    AVal        name = {0, 0};
-    double      transaction_id = 0;
-    AMFObject*  object         = 0;
-};
-
-class ConnectRtmpPacket : public CommandRtmpPacket {
- public:
-    error_t invoke_from(AMFObject& amf_object) override;
-
- public:
-    AVal        tc_url    = {0, 0 };
-    AVal        app       = {0, 0};
-    AVal        flash_ver = {0, 0};
-};
-
-class CreateStreamRtmpPacket : public CommandRtmpPacket {
- public:
-    error_t invoke_from(AMFObject& amf_object) override;
-};
-
-class PlayRtmpPacket : public CommandRtmpPacket {
- public:
-    error_t invoke_from(AMFObject& amf_object) override;
-
- public:
-    std::string stream_params;
-};
-
-class RtmpPacketDecoder {
- public:
-    __unused static bool    is_set_chunked_size(int pkt_type);
-    static bool    is_abort_message(int pkt_type);
-    static bool    is_ack(int pkt_type);
-    static bool    is_user_control(int pkt_type);
-    static bool    is_ack_win_size(int pkt_type);
-    static bool    is_set_peer_bandwidth(int pkt_type);
-    static bool    is_command(int pkt_type);
-    static bool    is_amf0_command(int pkt_type);
-    static bool    is_amf3_command(int pkt_type);
-
-    static error_t decode(WrapRtmpPacket& packet, PIRTMPPacket& result);
+    static int SPS_RTMP_IsConnected(RTMP *r);
+    static int SPS_RTMP_Socket(RTMP *r);
 };
 
 }

@@ -34,7 +34,7 @@ PSpsAVPacket SpsAVPacket::create(SpsMessageType msg_type, SpsAVStreamType stream
                                  SpsAVPacketType pkt_type, uint8_t* buf, int len,
                                  int64_t dts, int64_t pts, int flags, int codecid,
                                  int64_t duration) {
-    auto pkt = std::make_shared<SpsAVPacket> (buf, len);
+    auto pkt = std::make_shared<SpsAVPacket>(buf, len, FLV_HEAD_TAG_SIZE);
     pkt->msg_type    = msg_type;
     pkt->stream_type = stream_type;
     pkt->pkt_type    = pkt_type;
@@ -47,7 +47,40 @@ PSpsAVPacket SpsAVPacket::create(SpsMessageType msg_type, SpsAVStreamType stream
     return pkt;
 }
 
-SpsAVPacket::SpsAVPacket(uint8_t *buf, int len) :  CharBuffer(buf, len) {
+SpsAVPacket::SpsAVPacket(uint8_t *buf, int len, int head_len) :  CharBuffer(buf, len, head_len) {
+}
+
+bool SpsAVPacket::is_video() const {
+    return stream_type == AV_STREAM_TYPE_VIDEO;
+}
+
+bool SpsAVPacket::is_audio() const {
+    return stream_type == AV_STREAM_TYPE_AUDIO;
+}
+
+bool SpsAVPacket::is_script() const {
+    return stream_type == AV_STREAM_TYPE_SUBTITLE;
+}
+
+bool SpsAVPacket::is_keyframe() const {
+    if (!is_video()) {
+        return false;
+    }
+    return ((flags >> 4) & 0x0F) == 1;
+}
+
+bool SpsAVPacket::is_video_sequence_header() const {
+    if (!is_video()) {
+        return false;
+    }
+    return pkt_type.pkt_type == AV_VIDEO_TYPE_SEQUENCE_HEADER;
+}
+
+bool SpsAVPacket::is_audio_sequence_header() {
+    if (!is_audio()) {
+        return false;
+    }
+    return pkt_type.pkt_type == AV_AUDIO_TYPE_SEQUENCE_HEADER;
 }
 
 void SpsAVPacket::debug() {

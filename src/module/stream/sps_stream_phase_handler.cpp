@@ -33,14 +33,13 @@ SOFTWARE.
 namespace sps {
 
 StreamPhaseHandler::StreamPhaseHandler() : IPhaseHandler("stream-handler"){
-
 }
 
 error_t StreamPhaseHandler::handler(ConnContext &ctx) {
     auto    stream_ctx = std::static_pointer_cast<StreamConfCtx>(ctx.host->stream_module->conf);
     error_t ret        = SUCCESS;
 
-    if (!stream_ctx->edge) {
+    if (!stream_ctx || !stream_ctx->edge) {
         sp_error("fatal not support stream publish source!");
         return ERROR_AVFORMAT_SOURCE_NOT_SUPPORT;
     }

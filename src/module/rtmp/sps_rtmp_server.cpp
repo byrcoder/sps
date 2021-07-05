@@ -31,7 +31,9 @@ namespace sps {
 
 RtmpConnHandler::RtmpConnHandler(PSocket io, PServerPhaseHandler& handler) :
         IConnHandler(std::move(io)), hd(handler) {
-    hk = std::make_unique<LibRTMPHooks>(this->io);
+    hk = std::make_shared<RtmpHook>(this->io);
+    publishing = false;
+    playing    = false;
 }
 
 error_t RtmpConnHandler::handler() {

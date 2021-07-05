@@ -21,11 +21,35 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SRS_URL_RTMP_HPP
-#define SRS_URL_RTMP_HPP
+#ifndef SPS_AVFORMAT_RTMP_HPP
+#define SPS_AVFORMAT_RTMP_HPP
+
+#include <sps_avformat_dec.hpp>
+#include <sps_avformat_flv.hpp>
+
+#include <sps_io.hpp>
+#include <sps_io_bytes.hpp>
+
+#include <sps_url_rtmp.hpp>
 
 namespace sps {
 
+class RtmpDemuxer : public IAVDemuxer {
+ public:
+    explicit RtmpDemuxer(PIReader rd);
+
+ public:
+    error_t read_header(PSpsAVPacket& buffer)  override;
+    error_t read_packet(PSpsAVPacket& buffer)   override;
+    error_t read_tail(PSpsAVPacket& buffer)    override;
+    error_t probe(PSpsAVPacket& buffer)        override;
+
+ private:
+    PRtmpUrlProtocol io;
+};
+
+AVInputFormat(Rtmp, "rtmp", "-")
+
 }
 
-#endif  // SRS_URL_RTMP_HPP
+#endif  // SPS_AVFORMAT_RTMP_HPP

@@ -29,14 +29,11 @@ SOFTWARE.
 #include <memory>
 #include <string>
 
-#include <sps_cache_buffer.hpp>
 #include <sps_sync.hpp>
 #include <sps_typedef.hpp>
 
 namespace sps {
 
-class ICacheStream;
-typedef std::shared_ptr<ICacheStream> PICacheStream;
 /*
  * recv-upstream cache_stream (publisher)----> visitor cache_stream (subscriber) --> wakeup -> send
  *                                       \---> visitor cache_stream (subscriber) --> wakeup -> send
@@ -44,38 +41,79 @@ typedef std::shared_ptr<ICacheStream> PICacheStream;
  */
 
 // 流媒体缓存器，包含flv/rtmp 的gop cache，以及文件类型的cache
-class ICacheStream : public Subscriber<PIBuffer>, public Publisher<PIBuffer> {
+
+template<class T>
+class ICacheStream: public Subscriber<T>, public Publisher<T> {
+ public:
+    typedef std::shared_ptr<ICacheStream<T>> PICacheStream;
+
  public:
     virtual ~ICacheStream() = default;
 
  public:
-    virtual error_t put(PIBuffer pb) = 0;
-    virtual int dump(std::list<PIBuffer>& vpb, bool remove = false) = 0;
+    virtual error_t put(T pb) = 0;
+    virtual int dump(std::list<T>& vpb, bool remove = false) = 0;
     virtual int size() = 0;
-    virtual bool eof();
-    virtual void close();
+    virtual bool empty() = 0;
+    virtual bool eof() { return is_eof; }
+    virtual void close() { is_eof = true; }
 
  public:
-    int do_event(PIBuffer& o) override  { return SUCCESS; }
+    error_t do_event(T& o) override  { return SUCCESS; }
 
  private:
     bool is_eof = false;
 };
 
-class CacheStream : public ICacheStream {
+template<class T>
+class CacheStream : public ICacheStream<T> {
  public:
-    error_t put(PIBuffer pb) override;
-    int dump(std::list<PIBuffer>& vpb, bool remove = false) override;
-    int size() override ;
+    error_t put(T pb) override {
+        if (!pb)  return SUCCESS;
+
+        this->pbs.push_back(pb);
+        this->publish(pb);
+        return SUCCESS;
+    }
+
+    error_t copy_from(ICacheStream<T>& cache) {
+        cache.dump(pbs, false);
+        return SUCCESS;
+    }
+
+    int dump(std::list<T>& vpb, bool remove = false) override {
+        vpb.insert(vpb.end(), pbs.begin(), pbs.end());
+        int n = pbs.size();
+
+        if (remove) {
+            pbs.clear();
+        }
+        return n;
+    }
+
+    int size() override {
+        return pbs.size();
+    }
+
+    bool empty() override {
+        return pbs.empty();
+    }
 
  public:
-    int do_event(PIBuffer& o) override;
+    error_t do_event(T& o) override {
+        return put(o);
+    }
 
- private:
-    std::list<PIBuffer> pbs;
+ protected:
+    std::list<T> pbs;
 };
 
+template<class T>
 class ICache {
+    typedef typename ICacheStream<T>::PICacheStream PICacheStream;
+ public:
+    typedef std::shared_ptr<ICache<T>> PICache;
+
  public:
     virtual ~ICache() = default;
 
@@ -86,15 +124,29 @@ class ICache {
     virtual PICacheStream operator[](const std::string& name) = 0;
 };
 
-typedef std::shared_ptr<ICache> PICache;
-
-class InfiniteCache : public ICache {
+template<class T>
+class InfiniteCache : public ICache<T> {
+    typedef typename ICacheStream<T>::PICacheStream PICacheStream;
  public:
-    PICacheStream get(const std::string& name) override;
-    error_t       put(const std::string& name, PICacheStream cs) override;
-    error_t       erase(const std::string& name) override;
+    PICacheStream get(const std::string& name) override {
+        auto it = css.find(name);
+        return (it == css.end()) ? nullptr : it->second;
+    }
 
-    PICacheStream operator[](const std::string& name) override;
+    error_t put(const std::string& name, PICacheStream cs) override {
+        css[name] = cs;
+        return SUCCESS;
+    }
+
+    error_t erase(const std::string& name) override {
+        css.erase(name);
+        return SUCCESS;
+    }
+
+    PICacheStream operator[](const std::string& name) override {
+        auto it = css.find(name);
+        return it == css.end() ? nullptr : it->second;
+    }
 
  private:
     std::map<std::string, PICacheStream> css;

@@ -48,6 +48,7 @@ class AVBuffer {
  public:
     AVBuffer(size_t cap, bool rewindable);
     AVBuffer(uint8_t* buf, size_t cap, bool rewindable);
+    AVBuffer(uint8_t* buf, size_t end, size_t cap, bool rewindable);
     ~AVBuffer();
 
  public:

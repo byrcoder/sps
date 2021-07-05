@@ -31,12 +31,16 @@ SOFTWARE.
 #include <sps_avformat_flvdec.hpp>
 #include <sps_avformat_flvenc.hpp>
 
+#include <sps_avformat_rtmpdec.hpp>
+#include <sps_avformat_rtmpenc.hpp>
+
 namespace sps {
 
 #define AVINPUTFORMAT_INSTANCE(NAME) (std::make_shared<NAME##AVInputFormat>())
 
 PIAVInputFormat av_input_formats[] = {
         AVINPUTFORMAT_INSTANCE(Flv),
+        AVINPUTFORMAT_INSTANCE(Rtmp),
         nullptr,
 };
 
@@ -44,7 +48,8 @@ PIAVInputFormat av_input_formats[] = {
 #define AVOUTPUTFORMAT_INSTANCE(NAME) (std::make_shared<NAME##AVOutputFormat>())
 
 PIAVOutputFormat av_output_formats[] = {
-        // AVOUTPUTFORMAT_INSTANCE(Flv),
+        AVOUTPUTFORMAT_INSTANCE(Flv),
+        AVOUTPUTFORMAT_INSTANCE(Rtmp),
         nullptr,
 };
 
