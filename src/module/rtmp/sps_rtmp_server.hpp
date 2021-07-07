@@ -25,7 +25,7 @@ SOFTWARE.
 #define SPS_RTMP_SERVER_HPP
 
 #include <sps_host_phase_handler.hpp>
-#include <sps_rtmp_librtmp.hpp>
+#include <librtmp/sps_librtmp.hpp>
 #include <sps_server.hpp>
 
 namespace sps {

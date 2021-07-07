@@ -76,4 +76,4 @@ error_t CoreModule::install()  {
     return ret;
 }
 
-}
+}  // namespace sps

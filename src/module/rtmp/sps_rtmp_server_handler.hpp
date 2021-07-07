@@ -27,8 +27,8 @@ SOFTWARE.
 #include <librtmp/rtmp.h>
 
 #include <sps_host_phase_handler.hpp>
-#include <sps_rtmp_librtmp.hpp>
-#include <sps_rtmp_packet.hpp>
+#include <librtmp/sps_librtmp.hpp>
+#include <librtmp/sps_librtmp_packet.hpp>
 
 namespace sps {
 

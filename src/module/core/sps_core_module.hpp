@@ -38,11 +38,11 @@ struct CoreConfCtx : public ConfCtx {
 
 #define OFFSET(x) offsetof(CoreConfCtx, x)
 static const ConfigOption core_options[] = {
-        { "comment",  "comment", OFFSET(comment),        CONF_OPT_TYPE_STRING,    {.str = "core"} },
-        { "upstream", "upstream submodule", 0,    CONF_OPT_TYPE_SUBMODULE, {.str = "upstream"} },
-        { "http",     "http submodule", 0,        CONF_OPT_TYPE_SUBMODULE, {.str = "http"} },
-        { "rtmp",     "rtmp submodule", 0,        CONF_OPT_TYPE_SUBMODULE, {.str = "rtmp"} },
-        { nullptr }
+        {"comment",  "comment", OFFSET(comment), CONF_OPT_TYPE_STRING,    {.str = "core"}},
+        {"upstream", "upstream submodule", 0,    CONF_OPT_TYPE_SUBMODULE, {.str = "upstream"}},
+        {"http",     "http submodule",     0,    CONF_OPT_TYPE_SUBMODULE, {.str = "http"}},
+        {"rtmp",     "rtmp submodule",     0,    CONF_OPT_TYPE_SUBMODULE, {.str = "rtmp"}},
+        {nullptr}
 };
 #undef OFFSET
 
@@ -58,15 +58,16 @@ class CoreModule : public IModule {
     error_t install() override;
 
  public:
-    std::list<PHttpModule>      http_modules;
-    std::list<PRtmpModule>      rtmp_modules;   // TODO: FIXME RTMP & HTTP
-    std::list<PUpStreamModule>  upstream_modules;
+    std::list<PHttpModule> http_modules;
+    // TODO(byrcoder): FIXME RTMP & HTTP
+    std::list<PRtmpModule> rtmp_modules;
+    std::list<PUpStreamModule> upstream_modules;
 };
 
 typedef std::shared_ptr<CoreModule> PCoreModule;
 
 MODULE_FACTORY(Core)
 
-}
+}  // namespace sps
 
 #endif  // SPS_CORE_MODULE_HPP

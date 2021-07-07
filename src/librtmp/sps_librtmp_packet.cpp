@@ -25,13 +25,130 @@ SOFTWARE.
 // Created by byrcoder on 2021/7/3.
 //
 
-#include <sps_rtmp_packet.hpp>
+#include <librtmp/sps_librtmp_packet.hpp>
+
+#include <librtmp/amf.h>
 
 #include <sstream>
 
 #include <sps_log.hpp>
 
 namespace sps {
+
+
+error_t get_amf_prop(AMFObjectProperty *prop, AMFObject **obj) {
+    if (prop->p_UTCoffset == AMF_INVALID) {
+        return ERROR_RTMP_AMF_PROP_NOT_FOUND;
+    }
+
+    if (prop->p_type != AMF_OBJECT && prop->p_type != AMF_NULL) {
+        return ERROR_RTMP_AMF_PROP_TYPE;
+    }
+    *obj = &prop->p_vu.p_object;
+    return SUCCESS;
+}
+
+error_t get_amf_prop(AMFObjectProperty *prop, AVal *val) {
+    if (prop->p_UTCoffset == AMF_INVALID) {
+        return ERROR_RTMP_AMF_PROP_NOT_FOUND;
+    }
+
+    if (prop->p_type != AMF_STRING) {
+        return ERROR_RTMP_AMF_PROP_TYPE;
+    }
+    *val = prop->p_vu.p_aval;
+    return SUCCESS;
+}
+
+error_t get_amf_prop(AMFObjectProperty *prop, double *num) {
+    if (prop->p_UTCoffset == AMF_INVALID) {
+        return ERROR_RTMP_AMF_PROP_NOT_FOUND;
+    }
+
+    if (prop->p_type != AMF_NUMBER) {
+        return ERROR_RTMP_AMF_PROP_TYPE;
+    }
+    *num = prop->p_vu.p_number;
+    return SUCCESS;
+}
+
+error_t get_amf_object(AMFObject *obj, const char *name, AMFObject **obj_val) {
+    AVal found = AMF_VAL_STRING(name);
+
+    AMFObjectProperty *prop = AMF_GetProp(obj, &found, -1);
+    return get_amf_prop(prop, obj_val);
+}
+
+error_t get_amf_string(AMFObject *obj, const char *name, AVal *str_val) {
+    AVal found = AMF_VAL_STRING(name);
+
+    AMFObjectProperty *prop = AMF_GetProp(obj, &found, -1);
+    return get_amf_prop(prop, str_val);
+}
+
+error_t get_amf_num(AMFObject *obj, const char *name, double *num) {
+    AVal found = AMF_VAL_STRING(name);
+
+    AMFObjectProperty *prop = AMF_GetProp(obj, &found, -1);
+    return get_amf_prop(prop, num);
+}
+
+// work as librtmp
+char *AMF_EncodeNull(char *start) {
+    *start = 0x05;
+    return start + 1;
+}
+
+char *AMF_EncodeStartObject(char *start) {
+    *start = 0x03;
+    return start + 1;
+}
+
+char *AMF_EncodeEndObject(char *start) {
+    *start++ = 0x00;
+    *start++ = 0x00;
+    *start++ = 0x09;
+    return start;
+}
+
+bool equal_val(AVal *src, const char *c) {
+    return strlen(c) == src->av_len && memcmp(src->av_val, c, src->av_len) == 0;
+}
+
+WrapRtmpPacket::WrapRtmpPacket(bool own) {
+    this->own = own;
+}
+
+WrapRtmpPacket::~WrapRtmpPacket() {
+    reset();
+}
+
+void WrapRtmpPacket::reset() {
+    if (own) {
+        RTMPPacket_Free(&packet);
+    }
+}
+
+bool WrapRtmpPacket::is_video() const {
+    return packet.m_body && packet.m_packetType == RTMP_PACKET_TYPE_VIDEO;
+}
+
+bool WrapRtmpPacket::is_audio() const {
+    return packet.m_body && packet.m_packetType == RTMP_PACKET_TYPE_AUDIO;
+}
+
+bool WrapRtmpPacket::is_script() const {
+    return packet.m_body && (packet.m_packetType == RTMP_PACKET_TYPE_AMF0_DATA
+                             || packet.m_packetType == RTMP_PACKET_TYPE_AMF3_DATA);
+}
+
+uint8_t *WrapRtmpPacket::data() const {
+    return (uint8_t *) packet.m_body;
+}
+
+size_t WrapRtmpPacket::size() const {
+    return packet.m_nBodySize;
+}
 
 AmfRtmpPacket::AmfRtmpPacket() {
     AMF_Reset(&amf_object);
@@ -44,7 +161,7 @@ AmfRtmpPacket::~AmfRtmpPacket() {
 static std::string debug_amf_object(struct AMFObjectProperty *amf) {
     std::stringstream ss;
     ss << "amf_name: " << std::string(amf->p_name.av_val, amf->p_name.av_len) << "\t"
-       <<"amf_type: " << amf->p_type << "\t";
+       << "amf_type: " << amf->p_type << "\t";
     if (amf->p_type == AMF_NUMBER) {
         ss << amf->p_vu.p_number;
     } else if (amf->p_type == AMF_STRING) {
@@ -58,9 +175,9 @@ static std::string debug_amf_object(struct AMFObjectProperty *amf) {
     return ss.str();
 }
 
-error_t AmfRtmpPacket::decode(WrapRtmpPacket& pkt) {
-    error_t ret  = SUCCESS;
-    auto& packet = pkt.packet;
+error_t AmfRtmpPacket::decode(WrapRtmpPacket &pkt) {
+    error_t ret = SUCCESS;
+    auto &packet = pkt.packet;
 
     sp_info ("amf type: %d", pkt.packet.m_packetType);
 
@@ -74,26 +191,26 @@ error_t AmfRtmpPacket::decode(WrapRtmpPacket& pkt) {
         ret = ERROR_RTMP_AMF_DECODE;
         sp_error("decode amf failed type: %d,  %.*s, %X, %X",
                  packet.m_packetType, packet.m_nBodySize, packet.m_body,
-                 *packet.m_body, *(packet.m_body+1));
+                 *packet.m_body, *(packet.m_body + 1));
         return ret;
     }
 
     sp_info ("amf num: %d", amf_object.o_num);
     for (int i = 0; i < amf_object.o_num; ++i) {
-        auto amf = amf_object.o_props+i;
+        auto amf = amf_object.o_props + i;
         sp_debug("%d. %s", i, debug_amf_object(amf).c_str());
     }
     return SUCCESS;
 }
 
-error_t AmfRtmpPacket::convert_self(PIRTMPPacket& result) {
+error_t AmfRtmpPacket::convert_self(PIRTMPPacket &result) {
     if (amf_object.o_num <= 0) {
         sp_error("amf not object num %d <= 0", amf_object.o_num);
         return ERROR_RTMP_AMF_CMD_CONVERT;
     }
 
     AVal name = {nullptr, 0};
-    auto ret  = get_amf_prop(amf_object.o_props, &name);
+    auto ret = get_amf_prop(amf_object.o_props, &name);
     if (ret != SUCCESS) {
         sp_error("amf first object: %d not string", amf_object.o_props->p_type);
         return ret;
@@ -116,7 +233,7 @@ error_t AmfRtmpPacket::convert_self(PIRTMPPacket& result) {
         }
 
         result = std::move(conn);
-    } else if (equal_val(&name, "play")){
+    } else if (equal_val(&name, "play")) {
         auto conn = std::make_unique<PlayRtmpPacket>();
 
         if (conn->from(amf_object) != SUCCESS) {
@@ -339,8 +456,8 @@ bool RtmpPacketDecoder::is_amf3_command(int pkt_type) {
 }
 
 error_t RtmpPacketDecoder::decode(WrapRtmpPacket &pkt, PIRTMPPacket &result) {
-    error_t ret  = SUCCESS;
-    auto& packet = pkt.packet;
+    error_t ret = SUCCESS;
+    auto &packet = pkt.packet;
     int pkt_type = packet.m_packetType;
 
     sp_info("pkt_type: %d", pkt_type);
@@ -366,11 +483,10 @@ error_t RtmpPacketDecoder::decode(WrapRtmpPacket &pkt, PIRTMPPacket &result) {
         case RTMP_PACKET_TYPE_AMF0_CMD:
         case RTMP_PACKET_TYPE_AMF3_DATA:
         case RTMP_PACKET_TYPE_AMF3_CMD: {
-            sp_info("amf pkt_type: %d", pkt_type);
-
             auto amf = std::make_unique<AmfRtmpPacket>();
-            ret      = amf->decode(pkt);
+            ret = amf->decode(pkt);
 
+            sp_info("amf pkt_type: %d", pkt_type);
             if (ret != SUCCESS) {
                 sp_error("decode failed ret %d", ret);
                 return ret;
@@ -379,8 +495,8 @@ error_t RtmpPacketDecoder::decode(WrapRtmpPacket &pkt, PIRTMPPacket &result) {
             sp_info("final decode ret %d", ret);
         }
             break;
-        case RTMP_PACKET_TYPE_VIDEOS:
         case RTMP_PACKET_TYPE_AUDIOS:
+        case RTMP_PACKET_TYPE_VIDEOS:
 
             break;
         default:

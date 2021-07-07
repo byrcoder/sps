@@ -28,7 +28,7 @@ SOFTWARE.
 #include <sps_rtmp_server_handler.hpp>
 #include <sps_avformat_rtmpdec.hpp>
 
-#include <sps_rtmp_packet.hpp>
+#include <librtmp/sps_librtmp_packet.hpp>
 #include <sps_rtmp_server.hpp>
 
 namespace sps {
@@ -122,7 +122,7 @@ error_t RtmpPreRequest::connect() {
         return ret;
     }
 
-    ret = hook->send_client_bandwidth();
+    ret = hook->send_peer_bandwidth();
     if (ret != SUCCESS) {
         return ret;
     }
@@ -189,7 +189,6 @@ error_t RtmpPreRequest::connect() {
             publishing = true;
             break;
         }
-
     }
 
     return ret;

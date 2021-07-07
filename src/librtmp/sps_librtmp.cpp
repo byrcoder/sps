@@ -25,15 +25,15 @@ SOFTWARE.
 // Created by byrcoder on 2021/6/24.
 //
 
-#include <sps_rtmp_librtmp.hpp>
+#include <librtmp/sps_librtmp.hpp>
 
-#include <sps_log.hpp>
-
-#include <librtmp/amf.h>
+#include <librtmp/rtmp.h>
 #include <librtmp/log.h>
 #include <string>
 
-#define SAVC(x) static const AVal av_##x = AMF_CONST_VAL_STRING(#x)
+#include <sps_log.hpp>
+
+#define SAVC(name) static const AVal av_##name = AMF_CONST_VAL_STRING(#name)
 
 SAVC(app);
 SAVC(connect);
@@ -71,123 +71,6 @@ void librtmp_init_once() {
     RTMP_LogSetLevel(RTMP_LOGDEBUG);
 }
 
-error_t get_amf_prop(AMFObjectProperty* prop, AMFObject** obj) {
-    if (prop->p_UTCoffset == AMF_INVALID) {
-        return ERROR_RTMP_AMF_PROP_NOT_FOUND;
-    }
-
-    if (prop->p_type != AMF_OBJECT && prop->p_type != AMF_NULL) {
-        return ERROR_RTMP_AMF_PROP_TYPE;
-    }
-    *obj = &prop->p_vu.p_object;
-    return SUCCESS;
-}
-
-error_t get_amf_prop(AMFObjectProperty* prop, AVal* val) {
-    if (prop->p_UTCoffset == AMF_INVALID) {
-        return ERROR_RTMP_AMF_PROP_NOT_FOUND;
-    }
-
-    if (prop->p_type != AMF_STRING) {
-        return ERROR_RTMP_AMF_PROP_TYPE;
-    }
-    *val = prop->p_vu.p_aval;
-    return SUCCESS;
-}
-
-error_t get_amf_prop(AMFObjectProperty* prop, double* num) {
-    if (prop->p_UTCoffset == AMF_INVALID) {
-        return ERROR_RTMP_AMF_PROP_NOT_FOUND;
-    }
-
-    if (prop->p_type != AMF_NUMBER) {
-        return ERROR_RTMP_AMF_PROP_TYPE;
-    }
-    *num = prop->p_vu.p_number;
-    return SUCCESS;
-}
-
-error_t get_amf_object(AMFObject* obj, const char* name, AMFObject** obj_val) {
-    AVal found = AMF_VAL_STRING(name);
-    auto ret   = SUCCESS;
-
-    AMFObjectProperty* prop = AMF_GetProp(obj, &found, -1);
-    return get_amf_prop(prop, obj_val);
-}
-
-error_t get_amf_string(AMFObject* obj, const char* name, AVal* str_val) {
-    AVal found = AMF_VAL_STRING(name);
-    auto ret   = SUCCESS;
-
-    AMFObjectProperty* prop = AMF_GetProp(obj, &found, -1);
-    return get_amf_prop(prop, str_val);
-}
-
-error_t get_amf_num(AMFObject* obj, const char* name, double* num) {
-    AVal found = AMF_VAL_STRING(name);
-    auto ret   = SUCCESS;
-
-    AMFObjectProperty* prop = AMF_GetProp(obj, &found, -1);
-    return get_amf_prop(prop, num);
-}
-
-// work as librtmp
-char* AMF_EncodeNull(char* start) {
-    *start = 0x05;
-    return start+1;
-}
-
-char* AMF_EncodeStartObject(char* start) {
-    *start = 0x03;
-    return start+1;
-}
-
-char* AMF_EncodeEndObject(char* start) {
-    *start++ = 0x00;
-    *start++ = 0x00;
-    *start++ = 0x09;
-    return start;
-}
-
-bool equal_val(AVal* src, const char* c) {
-    return strlen(c) == src->av_len && memcmp(src->av_val, c, src->av_len) == 0;
-}
-
-WrapRtmpPacket::WrapRtmpPacket(bool own) {
-    this->own = own;
-}
-
-WrapRtmpPacket::~WrapRtmpPacket() {
-    reset();
-}
-
-void WrapRtmpPacket::reset() {
-    if (own) {
-        RTMPPacket_Free(&packet);
-    }
-}
-
-bool WrapRtmpPacket::is_video() {
-    return packet.m_body && packet.m_packetType == RTMP_PACKET_TYPE_VIDEO;
-}
-
-bool WrapRtmpPacket::is_audio() {
-    return packet.m_body && packet.m_packetType == RTMP_PACKET_TYPE_AUDIO;
-}
-
-bool WrapRtmpPacket::is_script() {
-    return packet.m_body && (packet.m_packetType == RTMP_PACKET_TYPE_AMF0_DATA
-        || packet.m_packetType == RTMP_PACKET_TYPE_AMF3_DATA);
-}
-
-uint8_t* WrapRtmpPacket::data() {
-    return (uint8_t*) packet.m_body;
-}
-
-size_t WrapRtmpPacket::size() {
-    return packet.m_nBodySize;
-}
-
 RTMP_HOOK krtmp_hook = {
         .RTMP_Connect         = RtmpHook::SPS_RTMP_Connect,
         .RTMP_TLS_Accept      = RtmpHook::SPS_RTMP_TLS_Accept,
@@ -198,22 +81,21 @@ RTMP_HOOK krtmp_hook = {
         .RTMP_Socket          = RtmpHook::SPS_RTMP_Socket
 };
 
-RtmpHook::RtmpHook(PSocket io)  {
+RtmpHook::RtmpHook(PIReaderWriter io) {
     librtmp_init_once();
 
-    this->skt  = std::move(io);
-    this->rtmp = (RTMP*) malloc(sizeof(RTMP));
-    error      = SUCCESS;
+    this->skt = std::move(io);
+    this->rtmp = (RTMP *) malloc(sizeof(RTMP));
+    error = SUCCESS;
 
     hook = krtmp_hook;
     hook.rtmp_obj = (void *) this;
 
-    rtmp->m_nServerBW    = 200 * 1000 * 1000;
-
     RTMP_Init(rtmp);
     RTMP_Init_Hook(rtmp, &hook);
-    rtmp->m_outChunkSize = 128;  // TODO: fixme for config
-    rtmp->m_inChunkSize  = 128;
+
+    rtmp->m_nServerBW = 60 * 1000 * 1000; //
+    next_acked = rtmp->m_nClientBW = 55 * 1000 * 1000; //
 
     sp_info("self->hook: %p", &hook);
     sp_info("rtmp sockbuf hook: %p", &rtmp->m_sb);
@@ -237,6 +119,66 @@ void RtmpHook::set_send_timeout(utime_t tm) {
     }
 }
 
+RTMP *RtmpHook::get_rtmp() {
+    return rtmp;
+}
+
+error_t RtmpHook::get_error() const {
+    return error;
+}
+
+error_t RtmpHook::on_send_packet(RTMPPacket &packet) {
+    switch (packet.m_packetType) {
+        case RTMP_PACKET_TYPE_CHUNK_SIZE:
+            if (packet.m_nBodySize >= 4)
+            {
+                rtmp->m_outChunkSize = (int) AMF_DecodeInt32(packet.m_body);
+            }
+            break;
+        case RTMP_PACKET_TYPE_CONTROL:
+            // TODO(byrcoder): fixme impl ping/pong
+            break;
+        case RTMP_PACKET_TYPE_SERVER_BW:
+            rtmp->m_bSendCounter = TRUE;
+            rtmp->m_nServerBW = (int) AMF_DecodeInt32(packet.m_body);
+            break;
+        case RTMP_PACKET_TYPE_CLIENT_BW:
+            rtmp->m_bSendCounter = TRUE;
+            rtmp->m_nClientBW = (int) AMF_DecodeInt32(packet.m_body);
+            break;
+    }
+    return SUCCESS;
+}
+
+error_t RtmpHook::on_recv_packet(RTMPPacket &packet) {
+    switch (packet.m_packetType) {
+        case RTMP_PACKET_TYPE_CHUNK_SIZE:
+            if (packet.m_nBodySize >= 4)
+            {
+                rtmp->m_inChunkSize = (int) AMF_DecodeInt32(packet.m_body);
+            }
+            break;
+        case RTMP_PACKET_TYPE_CONTROL: {
+            // ping/pong
+            if (packet.m_nBodySize >= 6) {
+                if (AMF_DecodeInt16(packet.m_body) == 6) {
+                    return send_pong(AMF_DecodeInt32(packet.m_body+2));
+                }
+            }
+            break;
+        }
+        case RTMP_PACKET_TYPE_SERVER_BW:
+            rtmp->m_nServerBW = (int) AMF_DecodeInt32(packet.m_body);
+            break;
+        case RTMP_PACKET_TYPE_CLIENT_BW:
+            next_acked = rtmp->m_nClientBW = (int) AMF_DecodeInt32(packet.m_body);
+            break;
+    }
+
+    ack();
+    return SUCCESS;
+}
+
 error_t RtmpHook::server_handshake() {
     if (RTMP_Serve(rtmp) == FALSE) {
         sp_error("rtmp s-handshake failed ret: %d", ERROR_RTMP_HANDSHAKE);
@@ -245,99 +187,23 @@ error_t RtmpHook::server_handshake() {
     return SUCCESS;
 }
 
-error_t RtmpHook::send_ack_window_size() {
-    RTMPPacket packet;
-    char pbuf[256], *pend = pbuf + sizeof(pbuf);
-    error_t    ret = SUCCESS;
-
-    packet.m_nChannel = RTMP_PACKET_STREAM_ID_CONTROL;	/* control channel (invoke) */
-    packet.m_headerType = 0;
-    packet.m_packetType = RTMP_PACKET_TYPE_WIN_ACK_SIZE;
-    packet.m_nTimeStamp = 0;
-    packet.m_nInfoField2 = 0;
-    packet.m_hasAbsTimestamp = 0;
-    packet.m_body = pbuf + RTMP_MAX_HEADER_SIZE;
-
-    packet.m_nBodySize = 4;
-
-    AMF_EncodeInt32(packet.m_body, pend, 500*1000);
-
-    if ((ret = send_packet(packet, false)) != SUCCESS) {
-        sp_error("fail send ack win size ret: %d", ret);
-        return ret;
-    }
-    sp_info("success send ack win size");
-    return SUCCESS;
-}
-
-error_t RtmpHook::send_client_bandwidth() {
-    RTMPPacket packet;
-    char pbuf[256], *pend = pbuf + sizeof(pbuf);
-    error_t    ret = SUCCESS;
-
-    packet.m_nChannel = RTMP_PACKET_STREAM_ID_CONTROL;	/* control channel (invoke) */
-    packet.m_headerType = 0;
-    packet.m_packetType = RTMP_PACKET_TYPE_CLIENT_BW;
-    packet.m_nTimeStamp = 0;
-    packet.m_nInfoField2 = 0;
-    packet.m_hasAbsTimestamp = 0;
-    packet.m_body = pbuf + RTMP_MAX_HEADER_SIZE;
-
-    packet.m_nBodySize = 5;
-
-    char *enc     = packet.m_body;
-    enc = AMF_EncodeInt32(enc, pend, rtmp->m_nClientBW);
-    *enc = 0x02;
-
-    if ((ret = send_packet(packet, false)) != SUCCESS) {
+error_t RtmpHook::send_peer_bandwidth() {
+    error_t ret = RTMP_SendClientBW(rtmp) == TRUE ?
+                  SUCCESS : (error ? error : ERROR_RTMP_NOT_CONNECT);
+    if (ret != SUCCESS) {
         sp_error("fail send chunked size %d, size: %d, ret: %d",
-                 rtmp->m_inChunkSize, packet.m_nBodySize, ret);
+                 rtmp->m_inChunkSize, rtmp->m_nClientBW, ret);
         return ret;
     }
-    sp_info("success amf set peer: %d, size: %d", rtmp->m_inChunkSize, packet.m_nBodySize);
-    return SUCCESS;
-}
-
-error_t RtmpHook::send_set_chunked_size() {
-    RTMPPacket packet   = {0};
-    char pbuf[64], *pend = pbuf+sizeof(pbuf);
-    AMFObject obj;
-    AMFObjectProperty p, op;
-    AVal av;
-    error_t   ret  = SUCCESS;
-
-    packet.m_nChannel = RTMP_PACKET_STREAM_ID_CONTROL;
-    packet.m_headerType = 0;
-    packet.m_packetType = RTMP_PACKET_TYPE_CHUNK_SIZE;
-    packet.m_nTimeStamp = 0;
-    packet.m_nInfoField2 = 0;
-    packet.m_hasAbsTimestamp = 0;
-    packet.m_body = pbuf + RTMP_MAX_HEADER_SIZE;
-    char *enc     = packet.m_body;
-
-    const int chunk_size = 4096;
-    enc = AMF_EncodeInt32(enc, pend, chunk_size);
-    packet.m_nBodySize = enc - packet.m_body;
-
-    if ((ret = send_packet(packet, false)) != SUCCESS) {
-        sp_error("fail send chunked size %d, size: %d, ret: %d",
-                rtmp->m_inChunkSize, packet.m_nBodySize, ret);
-        return ret;
-    }
-
-    rtmp->m_outChunkSize = rtmp->m_inChunkSize = chunk_size;
-
-    sp_info("success amf set chunked size: %d, size: %d", rtmp->m_inChunkSize, packet.m_nBodySize);
-    return SUCCESS;
+    sp_info("success amf set peer %d", rtmp->m_nClientBW);
+    return ret;
 }
 
 error_t RtmpHook::send_play_start(int /** txn **/) {
-    RTMPPacket packet   = {0};
-    char pbuf[512], *pend = pbuf+sizeof(pbuf);
-    AMFObject obj;
-    AMFObjectProperty p, op;
+    RTMPPacket packet = {0};
+    char pbuf[512], *pend = pbuf + sizeof(pbuf);
     AVal av;
-    error_t   ret  = SUCCESS;
+    error_t ret = SUCCESS;
 
     packet.m_nChannel = RTMP_PACKET_STREAM_ID_NET_CONNECT;
     packet.m_headerType = 0;
@@ -346,7 +212,7 @@ error_t RtmpHook::send_play_start(int /** txn **/) {
     packet.m_nInfoField2 = 0;
     packet.m_hasAbsTimestamp = 0;
     packet.m_body = pbuf + RTMP_MAX_HEADER_SIZE;
-    char *enc     = packet.m_body;
+    char *enc = packet.m_body;
 
     enc = AMF_EncodeString(enc, pend, &av_onStatus);
     enc = AMF_EncodeNumber(enc, pend, 0);
@@ -355,10 +221,10 @@ error_t RtmpHook::send_play_start(int /** txn **/) {
     {
         enc = AMF_EncodeStartObject(enc);
 
-        AMF_INIT_VAL_STRING(av,"NetStream.Play.Start");
+        AMF_INIT_VAL_STRING(av, "NetStream.Play.Start");
         enc = AMF_EncodeNamedString(enc, pend, &av_level, &av_status);
         enc = AMF_EncodeNamedString(enc, pend, &av_code, &av);
-        AMF_INIT_VAL_STRING(av,"Start live");
+        AMF_INIT_VAL_STRING(av, "Start live");
         enc = AMF_EncodeNamedString(enc, pend, &av_description, &av);
 
         enc = AMF_EncodeEndObject(enc);
@@ -374,13 +240,11 @@ error_t RtmpHook::send_play_start(int /** txn **/) {
     return ret;
 }
 
-error_t RtmpHook::send_publish_start(int transaction_id) {
-    RTMPPacket packet   = {0};
-    char pbuf[512], *pend = pbuf+sizeof(pbuf);
-    AMFObject obj;
-    AMFObjectProperty p, op;
+error_t RtmpHook::send_publish_start(int txn) {
+    RTMPPacket packet = {0};
+    char pbuf[512], *pend = pbuf + sizeof(pbuf);
     AVal av;
-    error_t   ret  = SUCCESS;
+    error_t ret = SUCCESS;
 
     packet.m_nChannel = RTMP_PACKET_STREAM_ID_NET_CONNECT;
     packet.m_headerType = 0;
@@ -389,23 +253,21 @@ error_t RtmpHook::send_publish_start(int transaction_id) {
     packet.m_nInfoField2 = 0;
     packet.m_hasAbsTimestamp = 0;
     packet.m_body = pbuf + RTMP_MAX_HEADER_SIZE;
-    char *enc     = packet.m_body;
+    char *enc = packet.m_body;
 
     enc = AMF_EncodeString(enc, pend, &av_onStatus);
-    enc = AMF_EncodeNumber(enc, pend, transaction_id);
+    enc = AMF_EncodeNumber(enc, pend, txn);
     enc = AMF_EncodeNull(enc);
 
-    {
-        enc = AMF_EncodeStartObject(enc);
+    enc = AMF_EncodeStartObject(enc);
 
-        AMF_INIT_VAL_STRING(av,"NetStream.Publish.Start");
-        enc = AMF_EncodeNamedString(enc, pend, &av_level, &av_status);
-        enc = AMF_EncodeNamedString(enc, pend, &av_code, &av);
-        AMF_INIT_VAL_STRING(av,"Start publishing");
-        enc = AMF_EncodeNamedString(enc, pend, &av_description, &av);
+    AMF_INIT_VAL_STRING(av, "NetStream.Publish.Start");
+    enc = AMF_EncodeNamedString(enc, pend, &av_level, &av_status);
+    enc = AMF_EncodeNamedString(enc, pend, &av_code, &av);
+    AMF_INIT_VAL_STRING(av, "Start publishing");
+    enc = AMF_EncodeNamedString(enc, pend, &av_description, &av);
 
-        enc = AMF_EncodeEndObject(enc);
-    }
+    enc = AMF_EncodeEndObject(enc);
 
     packet.m_nBodySize = enc - packet.m_body;
 
@@ -418,12 +280,10 @@ error_t RtmpHook::send_publish_start(int transaction_id) {
 }
 
 error_t RtmpHook::send_sample_access() {
-    RTMPPacket packet   = {0};
-    char pbuf[512], *pend = pbuf+sizeof(pbuf);
-    AMFObject obj;
-    AMFObjectProperty p, op;
+    RTMPPacket packet = {0};
+    char pbuf[512], *pend = pbuf + sizeof(pbuf);
     AVal av;
-    error_t   ret  = SUCCESS;
+    error_t ret = SUCCESS;
 
     packet.m_nChannel = RTMP_PACKET_STREAM_ID_DATA;
     packet.m_headerType = 0;
@@ -432,7 +292,7 @@ error_t RtmpHook::send_sample_access() {
     packet.m_nInfoField2 = 0;
     packet.m_hasAbsTimestamp = 0;
     packet.m_body = pbuf + RTMP_MAX_HEADER_SIZE;
-    char *enc     = packet.m_body;
+    char *enc = packet.m_body;
 
     AMF_INIT_VAL_STRING(av, "|RtmpSampleAccess");
     enc = AMF_EncodeString(enc, pend, &av);
@@ -450,12 +310,9 @@ error_t RtmpHook::send_sample_access() {
 }
 
 error_t RtmpHook::send_stream_begin() {
-    RTMPPacket packet   = {0};
-    char pbuf[512], *pend = pbuf+sizeof(pbuf);
-    AMFObject obj;
-    AMFObjectProperty p, op;
-    AVal av;
-    error_t   ret  = SUCCESS;
+    RTMPPacket packet = {0};
+    error_t    ret    = SUCCESS;
+    char pbuf[512], *pend = pbuf + sizeof(pbuf);
 
     packet.m_nChannel = RTMP_PACKET_STREAM_ID_CONTROL;
     packet.m_headerType = 0;
@@ -464,7 +321,7 @@ error_t RtmpHook::send_stream_begin() {
     packet.m_nInfoField2 = 0;
     packet.m_hasAbsTimestamp = 0;
     packet.m_body = pbuf + RTMP_MAX_HEADER_SIZE;
-    char *enc     = packet.m_body;
+    char *enc = packet.m_body;
     enc = AMF_EncodeInt16(enc, pend, 0); // stream_begin
     enc = AMF_EncodeInt32(enc, pend, 1); // stream_id
 
@@ -481,13 +338,11 @@ error_t RtmpHook::send_stream_begin() {
 }
 
 error_t RtmpHook::send_connect_result(double txn) {
-    RTMPPacket packet   = {0};
-    char pbuf[512] = { 0 };
+    RTMPPacket packet = {0};
+    char pbuf[512] = {0};
     char *pend = pbuf + sizeof(pbuf);
-    AMFObject obj;
-    AMFObjectProperty p, op;
     AVal av;
-    error_t   ret  = SUCCESS;
+    error_t ret = SUCCESS;
 
     packet.m_nChannel = RTMP_PACKET_STREAM_ID_NET_CONNECT;  // control channel (invoke) chunked id
     packet.m_headerType = 0;
@@ -520,15 +375,15 @@ error_t RtmpHook::send_connect_result(double txn) {
     AMF_INIT_VAL_STRING(av, "NetConnection.Connect.Success");
     enc = AMF_EncodeNamedString(enc, pend, &av_code, &av);
 
-    // TODO: FIXME WHY WROTE FAILED?
+    // TODO(byrcoder): FIXME WHY WROTE FAILED?
     /*
     AMF_INIT_VAL_STRING(av, "Connection succeeded.");
     enc = AMF_EncodeNamedString(enc, pend, &av_description, &av);
      */
 
     AMF_INIT_VAL_STRING(av, "Connection succeeded.");
-    AVal name = {(char*) "description", (int) strlen("description")};
-    av        = {     (char*) "Connection succeeded.", (int)  strlen("Connection succeeded.")  };
+    AVal name = {(char *) "description", (int) strlen("description")};
+    av = {(char *) "Connection succeeded.", (int) strlen("Connection succeeded.")};
     // enc = AMF_EncodeNamedString(enc, pend, &name, &av);
 
     sp_info("av_code: %.*s(%d),  av_description: %d, %s, "
@@ -550,9 +405,51 @@ error_t RtmpHook::send_connect_result(double txn) {
     return ret;
 }
 
+error_t RtmpHook::send_pong(uint32_t /** stream_id **/) {
+    if (RTMP_SendCtrl(rtmp, 7, 0, 0) == FALSE) {
+        sp_error("fail send rtmp pong ret %d", error);
+        return error;
+    }
+
+    sp_info("success send rtmp pong");
+    return error;
+}
+
+error_t RtmpHook::ack() {
+    if (next_acked > rtmp->m_nBytesIn) {
+        return SUCCESS;
+    }
+    next_acked = rtmp->m_nBytesIn + rtmp->m_nClientBW;
+
+    RTMPPacket packet;
+    error_t  ret = SUCCESS;
+    char pbuf[256], *pend = pbuf + sizeof(pbuf);
+
+    packet.m_nChannel = RTMP_PACKET_STREAM_ID_CONTROL;	/* control channel (invoke) */
+    packet.m_headerType = RTMP_PACKET_SIZE_MEDIUM;
+    packet.m_packetType = RTMP_PACKET_TYPE_BYTES_READ_REPORT;
+    packet.m_nTimeStamp = 0;
+    packet.m_nInfoField2 = 0;
+    packet.m_hasAbsTimestamp = 0;
+    packet.m_body = pbuf + RTMP_MAX_HEADER_SIZE;
+
+    packet.m_nBodySize = 4;
+
+    AMF_EncodeInt32(packet.m_body, pend, rtmp->m_nBytesIn);
+
+    if ((ret = send_packet(packet, false)) != SUCCESS) {
+        sp_error("fail ack size %d ret %d",rtmp->m_nBytesIn, ret);
+        return ret;
+    }
+
+    sp_info("success acked size %d, gap %d, next ack %d",
+             rtmp->m_nBytesIn, rtmp->m_nClientBW, next_acked);
+    return ret;
+}
+
 error_t RtmpHook::send_result(double txn, double id) {
     RTMPPacket packet;
-    char pbuf[256], *pend = pbuf+sizeof(pbuf);
+    char pbuf[256], *pend = pbuf + sizeof(pbuf);
 
     packet.m_nChannel = RTMP_PACKET_STREAM_ID_NET_CONNECT;
     packet.m_headerType = 0;
@@ -575,50 +472,94 @@ error_t RtmpHook::send_result(double txn, double id) {
     return send_packet(packet, false);
 }
 
-error_t RtmpHook::recv_packet(WrapRtmpPacket &pkt) {
+error_t RtmpHook::send_ack_window_size() {
+    error_t ret = RTMP_SendServerBW(rtmp) == TRUE ?
+                  SUCCESS : (error ? error : ERROR_RTMP_NOT_CONNECT);
+
+    if (ret != SUCCESS) {
+        sp_error("fail send ack win size(%d) ret: %d",
+                 rtmp->m_nServerBW, ret);
+        return ret;
+    }
+    sp_info("success send ack win size");
+    return ret;
+}
+
+error_t RtmpHook::send_set_chunked_size() {
+    RTMPPacket packet = {0};
+    char pbuf[64], *pend = pbuf + sizeof(pbuf);
     error_t ret = SUCCESS;
 
-    pkt.reset();
+    packet.m_nChannel = RTMP_PACKET_STREAM_ID_CONTROL;
+    packet.m_headerType = 0;
+    packet.m_packetType = RTMP_PACKET_TYPE_CHUNK_SIZE;
+    packet.m_nTimeStamp = 0;
+    packet.m_nInfoField2 = 0;
+    packet.m_hasAbsTimestamp = 0;
+    packet.m_body = pbuf + RTMP_MAX_HEADER_SIZE;
+    char *enc = packet.m_body;
+
+    int chunk_size = 128;
+    enc = AMF_EncodeInt32(enc, pend, chunk_size);
+    packet.m_nBodySize = enc - packet.m_body;
+
+    if ((ret = send_packet(packet, false)) != SUCCESS) {
+        sp_error("fail send chunked size %d, size: %d, ret: %d",
+                 rtmp->m_inChunkSize, packet.m_nBodySize, ret);
+        return ret;
+    }
+
+    sp_info("success amf set chunked size: %d, size: %d", rtmp->m_inChunkSize, packet.m_nBodySize);
+    return SUCCESS;
+}
+
+error_t RtmpHook::recv_packet(WrapRtmpPacket &pkt) {
+    error_t ret  = SUCCESS;
+    auto &packet = pkt.packet;
 
     do {
-        if (RTMP_ReadPacket(rtmp, &pkt.packet) != TRUE) {
+        pkt.reset();
+        if (RTMP_ReadPacket(rtmp, &packet) != TRUE) {
             ret = error;
             sp_error("rtmp recv failed ret: %d", ret);
             return ret;
         }
 
-        if (RTMPPacket_IsReady(&pkt.packet)) {
-            RTMP_ClientPacket(rtmp, &pkt.packet);
+        if (RTMPPacket_IsReady(&packet)) {
+            // RTMP_ClientPacket(rtmp, &pkt.packet);
             break;
         }
-    } while(true);
+    } while (true);
 
-    {
-        auto& packet = pkt.packet;
-        sp_debug("rtmp packet head_type: %u, m_packetType: %u, "
-                "m_hasAbsTimestamp: %u, m_nChannel: %d, "
-                "m_nTimeStamp: %u, m_nInfoField2: %d, "
-                "m_nBodySize: %u, m_nBytesRead: %u",
-                packet.m_headerType, packet.m_packetType,
-                packet.m_hasAbsTimestamp, packet.m_nChannel,
-                packet.m_nTimeStamp, packet.m_nInfoField2,
-                packet.m_nBodySize, packet.m_nBytesRead);
-    }
-    return ret;
+    sp_debug("rtmp packet head_type: %u, m_packetType: %u, "
+             "m_hasAbsTimestamp: %u, m_nChannel: %d, "
+             "m_nTimeStamp: %u, m_nInfoField2: %d, "
+             "m_nBodySize: %u, m_nBytesRead: %u",
+             packet.m_headerType, packet.m_packetType,
+             packet.m_hasAbsTimestamp, packet.m_nChannel,
+             packet.m_nTimeStamp, packet.m_nInfoField2,
+             packet.m_nBodySize, packet.m_nBytesRead);
+
+    return on_recv_packet(packet);
 }
 
-error_t RtmpHook::send_packet(RTMPPacket& pkt, bool queue) {
+error_t RtmpHook::send_packet(WrapRtmpPacket &packet, bool queue) {
+    return send_packet(packet.packet, queue);
+}
+
+error_t RtmpHook::send_packet(RTMPPacket &pkt, bool queue) {
     if (RTMP_SendPacket(rtmp, &pkt, queue ? 1 : 0) != TRUE) {
         sp_error("send packet failed error %d", error);
         return error;
     }
-    return SUCCESS;
+    return on_send_packet(pkt);
 }
 
-error_t RtmpHook::client_connect(const std::string& url, const std::string& params, bool publish) {
+error_t RtmpHook::client_connect(const std::string &url,
+        const std::string &params, bool publish) {
     error_t ret = SUCCESS;
 
-    if (RTMP_SetupURL(rtmp, (char*) (url + " " + params).c_str()) == FALSE) {
+    if (RTMP_SetupURL(rtmp, (char *) (url + " " + params).c_str()) == FALSE) {
         sp_error("fail set url %s.", url.c_str());
         return ERROR_RTMP_CONNECT;
     }
@@ -627,7 +568,7 @@ error_t RtmpHook::client_connect(const std::string& url, const std::string& para
         RTMP_EnableWrite(rtmp);
     }
 
-    if (!RTMP_Connect(rtmp, NULL)) {
+    if (!RTMP_Connect(rtmp, nullptr)) {
         sp_error("fail connect url %s. error %d", url.c_str(), ret);
         return error != SUCCESS ? error : ERROR_RTMP_CONNECT;
     }
@@ -644,9 +585,9 @@ error_t RtmpHook::client_connect(const std::string& url, const std::string& para
 error_t RtmpHook::send_server_bandwidth() {
     RTMPPacket packet;
     char pbuf[256], *pend = pbuf + sizeof(pbuf);
-    error_t    ret = SUCCESS;
+    error_t ret = SUCCESS;
 
-    packet.m_nChannel = RTMP_PACKET_STREAM_ID_CONTROL;	/* control channel (invoke) */
+    packet.m_nChannel = RTMP_PACKET_STREAM_ID_CONTROL;    /* control channel (invoke) */
     packet.m_headerType = 0;
     packet.m_packetType = RTMP_PACKET_TYPE_SERVER_BW;
     packet.m_nTimeStamp = 0;
@@ -656,7 +597,7 @@ error_t RtmpHook::send_server_bandwidth() {
 
     packet.m_nBodySize = 5;
 
-    char *enc     = packet.m_body;
+    char *enc = packet.m_body;
     enc = AMF_EncodeInt32(enc, pend, rtmp->m_nServerBW);
     *enc = 0x02; // dynamic limit
 
@@ -665,17 +606,19 @@ error_t RtmpHook::send_server_bandwidth() {
                  rtmp->m_inChunkSize, packet.m_nBodySize, ret);
         return ret;
     }
-    sp_info("success amf set peer: %d, size: %d", rtmp->m_inChunkSize, packet.m_nBodySize);
+    sp_info("success amf set peer: %d, size: %d",
+            rtmp->m_inChunkSize, packet.m_nBodySize);
+
     return SUCCESS;
 }
 
-error_t RtmpHook::send_connect(const std::string& app, const std::string& tc_url) {
+error_t RtmpHook::send_connect(const std::string &app, const std::string &tc_url) {
     RTMPPacket packet;
-    char pbuf[256], *pend = pbuf+sizeof(pbuf);
+    char pbuf[256], *pend = pbuf + sizeof(pbuf);
     AVal av;
     error_t ret = SUCCESS;
 
-    packet.m_nChannel   = RTMP_PACKET_STREAM_ID_NET_CONNECT;     // stream_id 0x03
+    packet.m_nChannel = RTMP_PACKET_STREAM_ID_NET_CONNECT;     // stream_id 0x03
     packet.m_headerType = 0;
     packet.m_packetType = RTMP_PACKET_TYPE_INVOKE;
     packet.m_nTimeStamp = 0;
@@ -683,7 +626,7 @@ error_t RtmpHook::send_connect(const std::string& app, const std::string& tc_url
     packet.m_hasAbsTimestamp = 0;
     packet.m_body = pbuf + RTMP_MAX_HEADER_SIZE;
 
-    char* enc = packet.m_body;
+    char *enc = packet.m_body;
     enc = AMF_EncodeString(enc, pend, &av_connect); // command
     enc = AMF_EncodeNumber(enc, pend, ++transaction_id);    // transaction_id
 
@@ -728,11 +671,10 @@ error_t RtmpHook::send_connect(const std::string& app, const std::string& tc_url
 
 error_t RtmpHook::create_stream() {
     RTMPPacket packet;
-    char pbuf[256], *pend = pbuf+sizeof(pbuf);
-    AVal av;
+    char pbuf[256], *pend = pbuf + sizeof(pbuf);
     error_t ret = SUCCESS;
 
-    packet.m_nChannel   = RTMP_PACKET_STREAM_ID_NET_CONNECT;     // stream_id 0x03
+    packet.m_nChannel = RTMP_PACKET_STREAM_ID_NET_CONNECT;     // stream_id 0x03
     packet.m_headerType = 0;
     packet.m_packetType = RTMP_PACKET_TYPE_INVOKE;
     packet.m_nTimeStamp = 0;
@@ -740,7 +682,7 @@ error_t RtmpHook::create_stream() {
     packet.m_hasAbsTimestamp = 0;
     packet.m_body = pbuf + RTMP_MAX_HEADER_SIZE;
 
-    char* enc = packet.m_body;
+    char *enc = packet.m_body;
     enc = AMF_EncodeString(enc, pend, &av_createStream); // command
     enc = AMF_EncodeNumber(enc, pend, ++transaction_id);    // transaction_id
     enc = AMF_EncodeNull(enc);
@@ -757,26 +699,27 @@ error_t RtmpHook::create_stream() {
 }
 
 error_t RtmpHook::send_buffer_length() {
-    RTMPPacket packet   = {0};
-    char pbuf[64], *pend = pbuf+sizeof(pbuf);
-    AMFObject obj;
-    AMFObjectProperty p, op;
-    AVal av;
-    error_t   ret  = SUCCESS;
+    rtmp->m_nBufferMS = buffer_ms;
+    RTMP_UpdateBufferMS(rtmp);
 
-    packet.m_nChannel = RTMP_PACKET_STREAM_ID_CONTROL;
-    packet.m_headerType = 0;
-    packet.m_packetType = RTMP_PACKET_TYPE_CONTROL;
-    packet.m_nTimeStamp = 0;
-    packet.m_nInfoField2 = 0;
-    packet.m_hasAbsTimestamp = 0;
-    packet.m_body = pbuf + RTMP_MAX_HEADER_SIZE;
-    char *enc     = packet.m_body;
+    if (error != SUCCESS) {
+        sp_error("fail update buffer ms ret %d", error);
+    }
 
-    return ERROR_RTMP_NOT_IMPL;
+    return error;
 }
 
-int RtmpHook::SPS_RTMP_Connect(RTMP* r, RTMPPacket *cp /** cp* */) {
+error_t RtmpHook::send_ping(uint32_t) {
+    if (RTMP_SendCtrl(rtmp, 6, 0, 0) == FALSE) {
+        sp_error("fail send rtmp ping ret %d", error);
+        return error;
+    }
+
+    sp_info("success send rtmp ping");
+    return error;
+}
+
+int RtmpHook::SPS_RTMP_Connect(RTMP *r, RTMPPacket* /** cp* */) {
     if (!r->hook || !r->hook->rtmp_obj) {
         sp_error("rtmp  hook or rtmp obj hook is null! hook: %p.", r->hook);
         exit(-1);
@@ -790,7 +733,7 @@ int RtmpHook::SPS_RTMP_Connect(RTMP* r, RTMPPacket *cp /** cp* */) {
     return FALSE;
 }
 
-int RtmpHook::SPS_RTMP_TLS_Accept(RTMP *r, void *ctx /** ctx **/) {
+int RtmpHook::SPS_RTMP_TLS_Accept(RTMP *r, void* /** ctx **/) {
     if (!r->hook || !r->hook->rtmp_obj) {
         sp_error("rtmp  hook or rtmp obj hook is null! hook: %p.", r->hook);
         exit(-1);
@@ -807,7 +750,6 @@ int RtmpHook::SPS_RTMPSockBuf_Send(RTMPSockBuf *sb, const char *buf, int len) {
     RTMP *r = (RTMP *) sb->rtmp;
     auto hook = (RtmpHook *) r->hook->rtmp_obj;
 
-    sp_debug("send rtmp buf len :%d", len);
     hook->error = hook->skt->write((void *) buf, len);
     if (hook->error == SUCCESS) {
         sp_debug("send success rtmp buf len :%d", len);
@@ -822,7 +764,7 @@ int RtmpHook::SPS_RTMPSockBuf_Fill(RTMPSockBuf *sb, char *buf, int nb_bytes) {
     RTMP *r = (RTMP *) sb->rtmp;
 
     if (r == nullptr || r->hook == nullptr) {
-        sp_error("socketbuf's: %p rtmp or rtmp->hook is null rtmp: %p", sb, r);
+        sp_error("socket buf's: %p rtmp or rtmp->hook is null rtmp: %p", sb, r);
         exit(-1);
     }
 
@@ -839,7 +781,7 @@ int RtmpHook::SPS_RTMPSockBuf_Fill(RTMPSockBuf *sb, char *buf, int nb_bytes) {
     }
 }
 
-int RtmpHook::SPS_RTMPSockBuf_Close(RTMPSockBuf *sb /** sb **/) {
+int RtmpHook::SPS_RTMPSockBuf_Close(RTMPSockBuf* /** sb **/) {
     return 0;
 }
 
@@ -849,10 +791,8 @@ int RtmpHook::SPS_RTMP_IsConnected(RTMP *r) {
     return hook->skt ? TRUE : FALSE;
 }
 
-int RtmpHook::SPS_RTMP_Socket(RTMP *r /** r **/) {
-    // auto *hook = (LibRTMPHooks *) r->hook->rtmp_obj;
-    // ignore
+int RtmpHook::SPS_RTMP_Socket(RTMP* /** r **/) {
     return -1;
 }
 
-}
+}  // namespace sps

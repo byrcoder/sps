@@ -30,7 +30,7 @@ SOFTWARE.
 #include <utility>
 
 #include <sps_log.hpp>
-#include <sps_rtmp_librtmp.hpp>
+#include <librtmp/sps_librtmp.hpp>
 
 namespace sps  {
 

@@ -30,7 +30,7 @@ SOFTWARE.
 #include <sps_avformat_rtmpdec.hpp>
 #include <sps_avformat_rtmpenc.hpp>
 
-#include <sps_rtmp_packet.hpp>
+#include <librtmp/sps_librtmp_packet.hpp>
 #include <sps_rtmp_server.hpp>
 #include <sps_rtmp_server_handler.hpp>
 

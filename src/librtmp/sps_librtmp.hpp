@@ -1,4 +1,3 @@
-#include <iso646.h>
 /*****************************************************************************
 MIT License
 Copyright (c) 2021 byrcoder
@@ -22,36 +21,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_RTMP_LIBRTMP_HPP
-#define SPS_RTMP_LIBRTMP_HPP
+#ifndef SPS_URL_LIBRTMP_HPP
+#define SPS_URL_LIBRTMP_HPP
 
 #include <rtmp.h>
 
 #include <cstring>
 
-#include <sps_io_socket.hpp>
-
-#define AMF_VAL_STRING(c) { .av_val = (char*) c, .av_len = (int) strlen(c)}
-#define AMF_CONST_VAL_STRING(c) { .av_val = (char*) c, .av_len = (int) sizeof(c) -1}
-#define AMF_INIT_VAL_STRING(av, c) av = AMF_VAL_STRING(c)
-
-#define RTMP_PACKET_TYPE_SET_CHUNK_SIZE                 0x01
-#define RTMP_PACKET_TYPE_ABORT_STREAM                   0x02
-#define RTMP_PACKET_TYPE_ACK                            0x03
-#define RTMP_PACKET_TYPE_USER_CONTROL                   0x04
-#define RTMP_PACKET_TYPE_WIN_ACK_SIZE                   0x05
-#define RTMP_PACKET_TYPE_SET_PEER_BANDWIDTH             0x06
-
-#define RTMP_PACKET_TYPE_AUDIOS                          0x08
-#define RTMP_PACKET_TYPE_VIDEOS                          0x09
-
-// amf3
-#define RTMP_PACKET_TYPE_AMF3_DATA           0x0F   // 15
-#define RTMP_PACKET_TYPE_AMF3_CMD            0x11   // 17
-
-// amf0
-#define RTMP_PACKET_TYPE_AMF0_DATA           0x12  // 18
-#define RTMP_PACKET_TYPE_AMF0_CMD            0x14  // 20
+#include <sps_io.hpp>
+#include <librtmp/sps_librtmp_packet.hpp>
 
 /**
  * c0: rtmp version default 0x03, 0x06 encrypt(not used)
@@ -203,118 +181,123 @@ SOFTWARE.
  * control stream) and, when sent over RTMP Chunk Stream, be sent on
  * chunk stream ID 2
  **/
-// rtmp connect chunked stream id
-#define RTMP_PACKET_STREAM_ID_CONTROL           0x02
-#define RTMP_PACKET_STREAM_ID_NET_CONNECT       0x03
-#define RTMP_PACKET_STREAM_ID_DATA              0x05
-#define RTMP_PACKET_STREAM_ID_NET_STREAM        0x08
-
 namespace sps {
 
 void librtmp_init_once();
 
-// prop check valid
-error_t get_amf_prop(AMFObjectProperty* prop, AMFObject** obj);
-error_t get_amf_prop(AMFObjectProperty* prop, AVal* val);
-error_t get_amf_prop(AMFObjectProperty* prop, double* num);
-
-error_t get_amf_object(AMFObject* obj, const char* name, AMFObject** obj_val);
-error_t get_amf_string(AMFObject* obj, const char* name, AVal* str_val);
-error_t get_amf_num(AMFObject* obj, const char* name, double* num);
-
-bool    equal_val(AVal* src, const char* c);
-
-class WrapRtmpPacket {
- public:
-    WrapRtmpPacket(bool own = true);
-    ~WrapRtmpPacket();
-
- public:
-    void reset();
-
- public:
-    bool is_video();
-    bool is_audio();
-    bool is_script();
-
-    uint8_t* data();
-    size_t   size();
-
- public:
-    bool       own;
-    RTMPPacket packet {0};
-};
-
 class RtmpHook {
  public:
-    explicit RtmpHook(PSocket io);
+    explicit RtmpHook(PIReaderWriter io);
+
     ~RtmpHook();
 
  public:
     void set_recv_timeout(utime_t tm);
+
     void set_send_timeout(utime_t tm);
 
- public:
-    RTMP* get_rtmp() { return rtmp; }
+    RTMP *get_rtmp();
 
- public:
-    error_t  get_error() { return error; }
-
-    // chunked id = 2
-    error_t  send_ack_window_size();
-
-    // rtmp server->client
-    error_t  server_handshake();
-    error_t  send_client_bandwidth();
-    error_t  send_set_chunked_size();
-    error_t  send_play_start(int /** transaction_id **/);
-    error_t  send_publish_start(int transaction_id);
-
-    // flash
-    error_t  send_sample_access();
-
-    error_t  send_stream_begin();
-
-    error_t  send_connect_result(double transid);
-    error_t  send_result(double transid, double id);
-    error_t  recv_packet(WrapRtmpPacket& packet);
-    error_t  send_packet(RTMPPacket& packet, bool queue);
-
-    // rtmp client->server
-    error_t  client_connect(const std::string& url, const std::string& params, bool publish);
-    error_t  send_server_bandwidth();
-    error_t  send_connect(const std::string& app, const std::string& tc_url);
-    error_t  create_stream();
-    error_t  send_buffer_length();
+    error_t get_error() const;
 
  private:
-    PSocket   skt;
-    RTMP*     rtmp;
-    RTMP_HOOK hook{0};
-    error_t   error;
-    int       transaction_id = 0;
+    /**
+     * set rtmp number value when send
+     */
+    error_t on_send_packet(RTMPPacket &packet);
+
+    /**
+     * process rtmp invoke when recv packet
+     * 1. set chunked size
+     * 2. ping/pong
+     * 3. ack win
+     * 4. client/server bandwidth
+     */
+    error_t on_recv_packet(RTMPPacket &packet);
 
  public:
-    // connect
-    static int SPS_RTMP_Connect(RTMP *r, RTMPPacket *cp); // RTMP_CONNECT, FALSE=0 TRUE=1
+    error_t recv_packet(WrapRtmpPacket &packet);
+
+    error_t send_packet(WrapRtmpPacket &packet, bool queue);
+
+    error_t send_packet(RTMPPacket &packet, bool queue);
+
+ public:
+    error_t send_result(double txn, double id);
+
+    // chunked id = 2
+    error_t send_ack_window_size();
+
+    // set chunked size for output
+    error_t send_set_chunked_size();
+
+    error_t send_ping(uint32_t /** stream_id **/);
+
+    error_t send_pong(uint32_t /** stream_id **/);
+
+    error_t ack();
+
+ public:
+    // rtmp server->client
+    error_t server_handshake();
+
+    error_t send_peer_bandwidth();
+
+    error_t send_play_start(int /** transaction_id **/);
+
+    error_t send_publish_start(int transaction_id);
+
+    // flash
+    error_t send_sample_access();
+
+    error_t send_stream_begin();
+
+    error_t send_connect_result(double txn);
+
+ public:
+    // rtmp client->server
+    error_t client_connect(const std::string &url, const std::string &params, bool publish);
+
+    error_t send_server_bandwidth();
+
+    error_t send_connect(const std::string &app, const std::string &tc_url);
+
+    error_t create_stream();
+
+    error_t send_buffer_length();
+
+ private:
+    PIReaderWriter skt;
+    RTMP *rtmp;
+    RTMP_HOOK hook{0};
+    error_t error;
+    int transaction_id = 0;
+    int next_acked;
+    int buffer_ms      = 2000;
+
+ public:
+    // connect, RTMP_CONNECT, FALSE=0 TRUE=1
+    static int SPS_RTMP_Connect(RTMP *r, RTMPPacket *cp);
+
     static int SPS_RTMP_TLS_Accept(RTMP *r, void *ctx);
 
     // send ret < 0 fail, n byte return ok
     static int SPS_RTMPSockBuf_Send(RTMPSockBuf *sb, const char *buf, int len);
 
-    // read
-    // return -1 error, n nbyte return success
-    static int SPS_RTMPSockBuf_Fill(RTMPSockBuf *sb, char* buf, int nb_bytes);
+    // return -1 error, n byte return success
+    static int SPS_RTMPSockBuf_Fill(RTMPSockBuf *sb, char *buf, int nb_bytes);
 
     // close
     static int SPS_RTMPSockBuf_Close(RTMPSockBuf *sb);
 
     // search
     static int SPS_RTMP_IsConnected(RTMP *r);
+
     static int SPS_RTMP_Socket(RTMP *r);
 };
+
 typedef std::shared_ptr<RtmpHook> PRtmpHook;
 
 }
 
-#endif  // SPS_RTMP_LIBRTMP_HPP
+#endif  // SPS_URL_LIBRTMP_HPP

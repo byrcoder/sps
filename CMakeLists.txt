@@ -38,18 +38,17 @@ set(AUTO_HEAD ${PROJECT_SOURCE_DIR}/src/sps_auto_header.hpp)
 file(REMOVE ${AUTO_HEAD})
 file(APPEND ${AUTO_HEAD}
 
-        "#ifndef AUTO_HEADER
-#define AUTO_HEADER
+"#ifndef SPS_AUTO_HEADER
+#define SPS_AUTO_HEADER
 
 #define GIT_VERSION \"${GIT_VERSION}\"
-#define GIT_BRANCH  \"${GIT_BRANCH}\"
-")
+#define GIT_BRANCH  \"${GIT_BRANCH}\"\r\n")
 
 if (SRT_DISABLED)
-    file(APPEND ${AUTO_HEAD} "#define SRT_DISABLED
-")
+    file(APPEND ${AUTO_HEAD} "#define SRT_DISABLED\r\n")
 endif()
 
+file(APPEND ${AUTO_HEAD} "\r\n")
 file(APPEND ${AUTO_HEAD} "#endif")
 #end auto header
 
@@ -75,6 +74,7 @@ include_directories(
         ${PROJECT_SOURCE_DIR}/src/co
         ${PROJECT_SOURCE_DIR}/src/install
         ${PROJECT_SOURCE_DIR}/src/io
+        ${PROJECT_SOURCE_DIR}/src/librtmp
         ${PROJECT_SOURCE_DIR}/src/kernel
         ${PROJECT_SOURCE_DIR}/src/log
 
@@ -122,6 +122,7 @@ file(GLOB SRC_LIST
 
         "${PROJECT_SOURCE_DIR}/src/io/*.cpp"
 
+        "${PROJECT_SOURCE_DIR}/src/librtmp/*.cpp"
 
         "${PROJECT_SOURCE_DIR}/src/st/co/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/st/io/*.cpp"

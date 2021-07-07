@@ -26,7 +26,7 @@ SOFTWARE.
 
 #include <memory>
 
-#include <sps_rtmp_librtmp.hpp>
+#include <librtmp/sps_librtmp.hpp>
 #include <sps_url_protocol.hpp>
 
 namespace sps {

@@ -27,7 +27,7 @@ SOFTWARE.
 #include <gtest/gtest.h>
 
 #include <sps_avformat_rtmpdec.hpp>
-#include <sps_rtmp_librtmp.hpp>
+#include <librtmp/sps_librtmp.hpp>
 #include <sps_url_rtmp.hpp>
 #include <sps_url_protocol.hpp>
 #include <sps_sync.hpp>
