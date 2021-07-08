@@ -98,6 +98,8 @@ RtmpHook::RtmpHook(PIReaderWriter io) {
 
     rtmp->m_nServerBW = 6000 * 1000;  // ack window size
     next_acked = rtmp->m_nClientBW = 5000 * 1000;  //  ack window size
+
+    rtmp->m_pktReadonly = TRUE;  // not change the packet
 }
 
 RtmpHook::~RtmpHook() {

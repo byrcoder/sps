@@ -48,6 +48,7 @@ error_t RtmpAVMuxer::write_message(PSpsAVPacket& buffer) {
     WrapRtmpPacket packet(false);
     auto& pkt = packet.packet;
 
+#if 0
     // TODO: FIXME (rtmp buffer copy)
     // RTMP_SendPacket will change the buffer when send with chunked size
     auto copy_buffer = SpsAVPacket::create(
@@ -55,9 +56,9 @@ error_t RtmpAVMuxer::write_message(PSpsAVPacket& buffer) {
             buffer->buffer(), buffer->size(), buffer->dts, buffer->pts,
             buffer->flags, buffer->codecid, buffer->duration
             );
-
     copy_buffer->number = buffer->number;
     buffer = std::move(copy_buffer);
+#endif
 
     error_t  ret          = SUCCESS;
     int      head_len     = buffer->head_size();
