@@ -15,8 +15,8 @@
   |  -----------------|------------- |--------------------|
   | os dispatch       | coroutine    |      co  （plugin state-threads） |
   | transport         | tcp/srt      |      io   (plugin state-threads srt) |
-  | app               | http proxy   |      modules (plugin                 |
-  | streaming         | flv          |      avformat(plugin flv)            |
+  | app               | http/rtmp    |      modules (plugin)                |
+  | streaming         | flv/rtmp     |      avformat(plugin flv rtmp)       |
   
 # Requirements
 
