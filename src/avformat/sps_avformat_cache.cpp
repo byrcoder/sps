@@ -32,6 +32,7 @@ namespace sps {
 error_t AVGopCacheStream::put(PAVPacket pb) {
     if (!pb) return SUCCESS;
 
+    pb->number = number++;
     if (pb->is_audio_sequence_header()) {
         sp_info("new audio header dts %.12lld", pb->dts);
         audio_sequence_header = pb;

@@ -45,6 +45,7 @@ class RtmpAVMuxer : public IAVMuxer {
     bool      filter_video    = false;
     bool      filter_metadata = false;
     bool      filter_audio    = false;
+    int       num             = 0;
 };
 
 AVOutputFormat(Rtmp, "rtmp", "-");

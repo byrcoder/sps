@@ -150,6 +150,8 @@ class SpsAVPacket : public CharBuffer {
 
     int     codecid = 0;
 
+    int     number  = 0;
+
  public:
     void debug();
 };

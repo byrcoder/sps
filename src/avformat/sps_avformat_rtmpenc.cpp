@@ -48,6 +48,17 @@ error_t RtmpAVMuxer::write_message(PSpsAVPacket& buffer) {
     WrapRtmpPacket packet(false);
     auto& pkt = packet.packet;
 
+    // TODO: FIXME (rtmp buffer copy)
+    // RTMP_SendPacket will change the buffer when send with chunked size
+    auto copy_buffer = SpsAVPacket::create(
+            buffer->msg_type, buffer->stream_type, buffer->pkt_type,
+            buffer->buffer(), buffer->size(), buffer->dts, buffer->pts,
+            buffer->flags, buffer->codecid, buffer->duration
+            );
+
+    copy_buffer->number = buffer->number;
+    buffer = std::move(copy_buffer);
+
     error_t  ret          = SUCCESS;
     int      head_len     = buffer->head_size();
     uint8_t* head_pos     = buffer->head_pos();
@@ -63,11 +74,11 @@ error_t RtmpAVMuxer::write_message(PSpsAVPacket& buffer) {
 
         pkt.m_nChannel   = 4;
 
-        sp_info("rtmp encode script stream pkt: 0x%2X, flag: %2X, "
+        buffer->debug();
+        sp_info("%d. rtmp encode script stream pkt: 0x%2X, flag: %2X, "
                 "data_size: %10.d, dts: %11d, pts: %1d, cts: %1d",
-                pkt.m_packetType, 0, pkt.m_nBodySize,
+                buffer->number, pkt.m_packetType, 0, pkt.m_nBodySize,
                 pkt.m_nTimeStamp, 0, 0);
-
     } else if (buffer->is_audio()) {
         pkt.m_packetType = RTMP_PACKET_TYPE_AUDIO;
         pkt.m_headerType = RTMP_PACKET_SIZE_LARGE;
@@ -120,9 +131,9 @@ error_t RtmpAVMuxer::write_message(PSpsAVPacket& buffer) {
         pkt.m_nBodySize += 1;
 
         if (buffer->is_keyframe()) {
-            sp_info("rtmp encode video stream pkt: %d, flag: %2X, "
+            sp_info("%d. rtmp encode video stream pkt: %d, flag: %2X, "
                     "data_size: %10.d (%d), dts: %11d, pts: %lld, cts: %lld",
-                     pkt.m_packetType, buffer->flags, pkt.m_nBodySize,
+                     buffer->number, pkt.m_packetType, buffer->flags, pkt.m_nBodySize,
                      buffer->size(), pkt.m_nTimeStamp, buffer->dts,
                      buffer->pts - buffer->dts);
         }

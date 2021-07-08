@@ -30,6 +30,7 @@ SOFTWARE.
 #include <librtmp/amf.h>
 
 #include <sstream>
+#include <utility>
 
 #include <sps_log.hpp>
 
@@ -139,7 +140,7 @@ bool WrapRtmpPacket::is_audio() const {
 
 bool WrapRtmpPacket::is_script() const {
     return packet.m_body && (packet.m_packetType == RTMP_PACKET_TYPE_AMF0_DATA
-                             || packet.m_packetType == RTMP_PACKET_TYPE_AMF3_DATA);
+            || packet.m_packetType == RTMP_PACKET_TYPE_AMF3_DATA);
 }
 
 uint8_t *WrapRtmpPacket::data() const {
@@ -160,7 +161,8 @@ AmfRtmpPacket::~AmfRtmpPacket() {
 
 static std::string debug_amf_object(struct AMFObjectProperty *amf) {
     std::stringstream ss;
-    ss << "amf_name: " << std::string(amf->p_name.av_val, amf->p_name.av_len) << "\t"
+    ss << "amf_name: " << std::string(amf->p_name.av_val, amf->p_name.av_len)
+       << "\t"
        << "amf_type: " << amf->p_type << "\t";
     if (amf->p_type == AMF_NUMBER) {
         ss << amf->p_vu.p_number;
@@ -179,7 +181,7 @@ error_t AmfRtmpPacket::decode(WrapRtmpPacket &pkt) {
     error_t ret = SUCCESS;
     auto &packet = pkt.packet;
 
-    sp_info ("amf type: %d", pkt.packet.m_packetType);
+    sp_info("amf type: %d", pkt.packet.m_packetType);
 
     if (RtmpPacketDecoder::is_amf3_command(pkt.packet.m_packetType)) {
         ret = AMF3_Decode(&amf_object, packet.m_body, packet.m_nBodySize, 0);
@@ -195,7 +197,7 @@ error_t AmfRtmpPacket::decode(WrapRtmpPacket &pkt) {
         return ret;
     }
 
-    sp_info ("amf num: %d", amf_object.o_num);
+    sp_info("amf num: %d", amf_object.o_num);
     for (int i = 0; i < amf_object.o_num; ++i) {
         auto amf = amf_object.o_props + i;
         sp_debug("%d. %s", i, debug_amf_object(amf).c_str());
@@ -287,17 +289,21 @@ error_t CommandRtmpPacket::from(AMFObject &amf_object) {
     }
 
     if ((ret = get_amf_prop(amf_object.o_props, &name)) != SUCCESS) {
-        sp_error("amf 1st-prop (%d) is not string, ret: %d", amf_object.o_props->p_type, ret);
+        sp_error("amf 1st-prop (%d) is not string, ret: %d",
+                  amf_object.o_props->p_type, ret);
         return ret;
     }
 
-    if ((ret = get_amf_prop(amf_object.o_props + 1, &transaction_id)) != SUCCESS) {
-        sp_error("amf 2st-prop (%d) is not number ret: %d", amf_object.o_props->p_type, ret);
+    if ((ret = get_amf_prop(amf_object.o_props + 1,
+            &transaction_id)) != SUCCESS) {
+        sp_error("amf 2st-prop (%d) is not number ret: %d",
+                  amf_object.o_props->p_type, ret);
         return ret;
     }
 
     if ((ret = get_amf_prop(amf_object.o_props + 2, &object)) != SUCCESS) {
-        sp_error("amf 3rd-prop (%d) is not object ret: %d", amf_object.o_props->p_type, ret);
+        sp_error("amf 3rd-prop (%d) is not object ret: %d",
+                  amf_object.o_props->p_type, ret);
         return ERROR_RTMP_AMF_CMD_CONVERT;
     }
 
@@ -322,7 +328,8 @@ error_t ConnectRtmpPacket::invoke_from(AMFObject &amf_object) {
     error_t ret = SUCCESS;
 
     if (!equal_val(&name, "connect")) {
-        sp_error("amf 1st-prop (%.*s) is not connect", name.av_len, name.av_val);
+        sp_error("amf 1st-prop (%.*s) is not connect",
+                  name.av_len, name.av_val);
         return ERROR_RTMP_AMF_CMD_CONVERT;
     }
 
@@ -344,7 +351,8 @@ error_t CreateStreamRtmpPacket::invoke_from(AMFObject &amf_object) {
     error_t ret = SUCCESS;
 
     if (!equal_val(&name, "createStream")) {
-        sp_error("amf 1st-prop (%.*s) is not createStream", name.av_len, name.av_val);
+        sp_error("amf 1st-prop (%.*s) is not createStream",
+                  name.av_len, name.av_val);
         return ERROR_RTMP_AMF_CMD_CONVERT;
     }
 
@@ -355,7 +363,8 @@ error_t NetStreamRtmpPacket::invoke_from(AMFObject &amf_object) {
     error_t ret = SUCCESS;
 
     if (!equal_val(&name, expect_command_name.c_str())) {
-        sp_error("amf 1st-prop (%.*s) is not play", name.av_len, name.av_val);
+        sp_error("amf 1st-prop (%.*s) is not play",
+                  name.av_len, name.av_val);
         return ERROR_RTMP_AMF_CMD_CONVERT;
     }
 
@@ -366,7 +375,8 @@ error_t NetStreamRtmpPacket::invoke_from(AMFObject &amf_object) {
 
     AVal stream;
     if ((ret = get_amf_prop(amf_object.o_props + 3, &stream)) != SUCCESS) {
-        sp_error("amf 3rd-prop (%d) is not number ret: %d", amf_object.o_props->p_type, ret);
+        sp_error("amf 3rd-prop (%d) is not number ret: %d",
+                  amf_object.o_props->p_type, ret);
         return ERROR_RTMP_AMF_CMD_CONVERT;
     }
 
@@ -392,8 +402,10 @@ error_t PublishRtmpPacket::invoke_from(AMFObject &amf_object) {
 
     if (amf_object.o_num > 5) {
         AVal stream;
-        if ((ret = get_amf_prop(amf_object.o_props + 4, &stream)) != SUCCESS) {
-            sp_error("amf 3rd-prop (%d) is not number ret: %d", amf_object.o_props->p_type, ret);
+        if ((ret = get_amf_prop(amf_object.o_props + 4,
+                &stream)) != SUCCESS) {
+            sp_error("amf 3rd-prop (%d) is not number ret: %d",
+                    amf_object.o_props->p_type, ret);
             return ERROR_RTMP_AMF_CMD_CONVERT;
         }
 
@@ -507,4 +519,4 @@ error_t RtmpPacketDecoder::decode(WrapRtmpPacket &pkt, PIRTMPPacket &result) {
     return ret;
 }
 
-}
+}  // namespace sps

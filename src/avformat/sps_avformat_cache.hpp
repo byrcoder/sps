@@ -42,6 +42,7 @@ class AVGopCacheStream : public CacheStream<PAVPacket> {
     PAVPacket video_sequence_header;
     PAVPacket audio_sequence_header;
     PAVPacket script;
+    int       number = 0;
 };
 
 // subscriber dump from gop cache and subscribe AVGopCacheStream

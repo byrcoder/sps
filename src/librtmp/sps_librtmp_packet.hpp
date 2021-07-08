@@ -21,25 +21,31 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_URL_LIBRTMP_PACKET_HPP
-#define SPS_URL_LIBRTMP_PACKET_HPP
+#ifndef SPS_LIBRTMP_PACKET_HPP
+#define SPS_LIBRTMP_PACKET_HPP
 
 #include <librtmp/rtmp.h>
 
+#include <memory>
 #include <string>
 
 #include <sps_error.hpp>
 #include <sps_typedef.hpp>
 
-#define RTMP_PACKET_TYPE_SET_CHUNK_SIZE                 RTMP_PACKET_TYPE_CHUNK_SIZE // 0x01
-#define RTMP_PACKET_TYPE_ABORT_STREAM                   0x02  // 0x02
-#define RTMP_PACKET_TYPE_ACK                            RTMP_PACKET_TYPE_BYTES_READ_REPORT // 0x03
-#define RTMP_PACKET_TYPE_USER_CONTROL                   RTMP_PACKET_TYPE_CONTROL  // 0x04
-#define RTMP_PACKET_TYPE_WIN_ACK_SIZE                   RTMP_PACKET_TYPE_SERVER_BW  // 0x05
-#define RTMP_PACKET_TYPE_SET_PEER_BANDWIDTH             RTMP_PACKET_TYPE_CLIENT_BW  // 0x06
+// 0x01
+#define RTMP_PACKET_TYPE_SET_CHUNK_SIZE       RTMP_PACKET_TYPE_CHUNK_SIZE
+#define RTMP_PACKET_TYPE_ABORT_STREAM         0x02
+// 0x03
+#define RTMP_PACKET_TYPE_ACK                  RTMP_PACKET_TYPE_BYTES_READ_REPORT
+// 0x04
+#define RTMP_PACKET_TYPE_USER_CONTROL         RTMP_PACKET_TYPE_CONTROL
+// 0x05
+#define RTMP_PACKET_TYPE_WIN_ACK_SIZE         RTMP_PACKET_TYPE_SERVER_BW
+// 0x06
+#define RTMP_PACKET_TYPE_SET_PEER_BANDWIDTH   RTMP_PACKET_TYPE_CLIENT_BW
 
-#define RTMP_PACKET_TYPE_AUDIOS                         RTMP_PACKET_TYPE_AUDIO  // 0x08
-#define RTMP_PACKET_TYPE_VIDEOS                         RTMP_PACKET_TYPE_VIDEO  // 0x09
+#define RTMP_PACKET_TYPE_AUDIOS               RTMP_PACKET_TYPE_AUDIO  // 0x08
+#define RTMP_PACKET_TYPE_VIDEOS               RTMP_PACKET_TYPE_VIDEO  // 0x09
 
 // amf3
 #define RTMP_PACKET_TYPE_AMF3_DATA           0x0F   // 15
@@ -225,4 +231,4 @@ class RtmpPacketDecoder {
 
 }  // namespace sps
 
-#endif  // SPS_URL_LIBRTMP_PACKET_HPP
+#endif  // SPS_LIBRTMP_PACKET_HPP

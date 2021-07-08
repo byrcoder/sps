@@ -21,12 +21,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_URL_LIBRTMP_HPP
-#define SPS_URL_LIBRTMP_HPP
+#ifndef SPS_LIBRTMP_HPP
+#define SPS_LIBRTMP_HPP
 
-#include <rtmp.h>
+#include <librtmp/rtmp.h>
 
 #include <cstring>
+#include <string>
+#include <memory>
 
 #include <sps_io.hpp>
 #include <librtmp/sps_librtmp_packet.hpp>
@@ -256,7 +258,8 @@ class RtmpHook {
 
  public:
     // rtmp client->server
-    error_t client_connect(const std::string &url, const std::string &params, bool publish);
+    error_t client_connect(const std::string &url, const std::string &params,
+                           bool publish);
 
     error_t send_server_bandwidth();
 
@@ -298,6 +301,6 @@ class RtmpHook {
 
 typedef std::shared_ptr<RtmpHook> PRtmpHook;
 
-}
+}  // namespace sps
 
-#endif  // SPS_URL_LIBRTMP_HPP
+#endif  // SPS_LIBRTMP_HPP
