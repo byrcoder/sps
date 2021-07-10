@@ -35,7 +35,8 @@ SOFTWARE.
 
 namespace sps {
 
-class StreamCache : public InfiniteCache<PAVPacket>, public SingleInstance<StreamCache> {
+class StreamCache : public InfiniteCache<PAVPacket>,
+                    public SingleInstance<StreamCache> {
 };
 
 class StreamPhaseHandler : public IPhaseHandler {
@@ -46,6 +47,6 @@ class StreamPhaseHandler : public IPhaseHandler {
     error_t handler(ConnContext& ctx) override;
 };
 
-}
+}  // namespace sps
 
 #endif  // SPS_STREAM_PHASE_HANDLER_HPP

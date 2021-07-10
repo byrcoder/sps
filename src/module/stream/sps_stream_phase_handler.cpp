@@ -32,12 +32,14 @@ SOFTWARE.
 
 namespace sps {
 
-StreamPhaseHandler::StreamPhaseHandler() : IPhaseHandler("stream-handler"){
+StreamPhaseHandler::StreamPhaseHandler()
+    : IPhaseHandler("stream-handler") {
 }
 
 error_t StreamPhaseHandler::handler(ConnContext &ctx) {
-    auto    stream_ctx = std::static_pointer_cast<StreamConfCtx>(ctx.host->stream_module->conf);
     error_t ret        = SUCCESS;
+    auto    stream_ctx = std::static_pointer_cast<StreamConfCtx>(
+                           ctx.host->stream_module->conf);
 
     if (!stream_ctx || !stream_ctx->edge) {
         sp_error("fatal not support stream publish source!");
@@ -59,9 +61,10 @@ error_t StreamPhaseHandler::handler(ConnContext &ctx) {
         upstream_req += "?" + ctx.req->params;
     }
 
-    sp_info("upstream url %s.", upstream_req.c_str());
+    PIURLProtocol url_protocol = SingleInstance<UrlProtocol>::get_instance().
+            create(upstream_req);
 
-    PIURLProtocol url_protocol = SingleInstance<UrlProtocol>::get_instance().create(upstream_req);
+    sp_info("upstream url %s.", upstream_req.c_str());
     if (!url_protocol) {
         sp_error("failed found url protocol for %s.", upstream_req.c_str());
         return ERROR_URL_PROTOCOL_NOT_EXISTS;
@@ -100,13 +103,13 @@ error_t StreamPhaseHandler::handler(ConnContext &ctx) {
         ret = enc->write_message(buffer);
 
         if (ret != SUCCESS) {
-            sp_error("failed encoder write message url protocol for ret:%d", ret);
+            sp_error("failed encoder write message url protocol for ret:%d",
+                      ret);
             break;
         }
-
-    } while(ret == SUCCESS);
+    } while (ret == SUCCESS);
 
     return ret;
 }
 
-}
+}  // namespace sps

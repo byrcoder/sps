@@ -33,7 +33,6 @@ namespace sps {
 
 HttpConnHandler::HttpConnHandler(PSocket io, PServerPhaseHandler& handler) :
         IConnHandler(std::move(io)), hd(handler) {
-
 }
 
 error_t HttpConnHandler::handler() {
@@ -45,7 +44,7 @@ error_t HttpConnHandler::handler() {
             return ret;
         }
         sp_trace("success handler ret %d", ret);
-    } while(true);
+    } while (true);
 
     return SUCCESS;
 }
@@ -58,4 +57,4 @@ PIConnHandler HttpConnHandlerFactory::create(PSocket io) {
     return std::make_shared<HttpConnHandler>(io, handler);
 }
 
-}
+}  // namespace sps

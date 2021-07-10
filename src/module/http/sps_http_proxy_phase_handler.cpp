@@ -27,16 +27,18 @@ SOFTWARE.
 
 #include <sps_http_proxy_phase_handler.hpp>
 
+#include <memory>
+#include <string>
+
 #include <sps_http_parser.hpp>
-#include <sps_http_phase_handler.hpp>
 #include <sps_http_socket.hpp>
 
 #include <sps_url_protocol.hpp>
 
 namespace sps {
 
-
-HttpProxyPhaseHandler::HttpProxyPhaseHandler() : IPhaseHandler("http-router-handler") {
+HttpProxyPhaseHandler::HttpProxyPhaseHandler()
+    : IPhaseHandler("http-router-handler") {
 }
 
 error_t HttpProxyPhaseHandler::handler(ConnContext &ctx) {
@@ -63,12 +65,13 @@ error_t HttpProxyPhaseHandler::handler(ConnContext &ctx) {
     }
 
     if ((ret = url_protocol->open(proxy_req, DEFAULT)) != SUCCESS) {
-        sp_error("Failed open url protocol %s. %s, ret:%ld.",proxy_req->url.c_str(),
-                 host_conf->pass_proxy.c_str(), ret);
+        sp_error("Failed open url protocol %s. %s, ret:%ld.",
+                  proxy_req->url.c_str(), host_conf->pass_proxy.c_str(), ret);
         return ret;
     }
 
-    auto http_rsp = std::dynamic_pointer_cast<HttpResponse>(url_protocol->response());
+    auto http_rsp = std::dynamic_pointer_cast<HttpResponse>(
+            url_protocol->response());
     HttpResponseSocket rsp(ctx.socket, ctx.ip, ctx.port);
 
     rsp.init(http_rsp->status_code, &http_rsp->headers,
@@ -95,10 +98,12 @@ error_t HttpProxyPhaseHandler::handler(ConnContext &ctx) {
         }
     }
 
-    sp_trace("final response code:%d, ret:%ld, eof:%d, chunked:%d", http_rsp->status_code,
+    sp_trace("final response code:%d, ret:%ld, eof:%d, chunked:%d",
+             http_rsp->status_code,
              ret, ret == ERROR_HTTP_RES_EOF, http_rsp->chunked);
 
-    return (ret == ERROR_HTTP_RES_EOF || ret == SUCCESS) ? SPS_PHASE_SUCCESS_NO_CONTINUE : ret;
+    return (ret == ERROR_HTTP_RES_EOF || ret == SUCCESS) ?
+                SPS_PHASE_SUCCESS_NO_CONTINUE : ret;
 }
 
-}
+}  // namespace sps

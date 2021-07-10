@@ -43,7 +43,8 @@ class HttpParsePhaseHandler : public IPhaseHandler {
 };
 
 // 404 响应
-class Http404PhaseHandler : public IPhaseHandler, public Single<Http404PhaseHandler> {
+class Http404PhaseHandler : public IPhaseHandler,
+                            public Single<Http404PhaseHandler> {
  public:
     Http404PhaseHandler();
 
@@ -51,6 +52,6 @@ class Http404PhaseHandler : public IPhaseHandler, public Single<Http404PhaseHand
     error_t handler(ConnContext& ctx) override;
 };
 
-}
+}  // namespace sps
 
 #endif  // SPS_HTTP_PHASE_HANDLER_HPP

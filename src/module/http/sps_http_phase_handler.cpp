@@ -29,7 +29,8 @@ SOFTWARE.
 
 namespace sps {
 
-HttpParsePhaseHandler::HttpParsePhaseHandler() : IPhaseHandler("http-parser-handler") {
+HttpParsePhaseHandler::HttpParsePhaseHandler()
+    : IPhaseHandler("http-parser-handler") {
 }
 
 error_t HttpParsePhaseHandler::handler(ConnContext &ctx) {
@@ -38,28 +39,33 @@ error_t HttpParsePhaseHandler::handler(ConnContext &ctx) {
 
     sp_debug("Request Http Parse");
 
-    if ((ret = http_parser->parse_header(ctx.socket, HttpType::REQUEST)) <= SUCCESS) {
+    if ((ret = http_parser->parse_header(ctx.socket,
+                                      HttpType::REQUEST)) <= SUCCESS) {
         sp_error("failed get http request ret:%d", ret);
         return ret;
     }
 
     ctx.req = http_parser->get_request();
-    sp_trace("request info %s, %s", ctx.req->host.c_str(), ctx.req->url.c_str());
+    sp_trace("request info %s, %s", ctx.req->host.c_str(),
+              ctx.req->url.c_str());
 
     return SPS_PHASE_CONTINUE;
 }
 
-Http404PhaseHandler::Http404PhaseHandler() : IPhaseHandler("http-404-handler") {
-
+Http404PhaseHandler::Http404PhaseHandler()
+    : IPhaseHandler("http-404-handler") {
 }
 
 error_t Http404PhaseHandler::handler(ConnContext& ctx) {
     auto socket = ctx.socket;
-    PHttpResponseSocket http_socket = std::make_shared<HttpResponseSocket>(socket,
-            socket->get_cip(), socket->get_port());
+    PHttpResponseSocket http_socket = std::make_shared<HttpResponseSocket>(
+            socket,
+            socket->get_cip(),
+            socket->get_port());
 
     if (!http_socket) {
-        sp_error("Fatal not http socket type(socket):%s", typeid(ctx.socket.get()).name());
+        sp_error("Fatal not http socket type(socket):%s",
+                  typeid(ctx.socket.get()).name());
         return ERROR_HTTP_SOCKET_CREATE;
     }
 
@@ -71,4 +77,4 @@ error_t Http404PhaseHandler::handler(ConnContext& ctx) {
     return SPS_PHASE_SUCCESS_NO_CONTINUE;
 }
 
-}
+}  // namespace sps

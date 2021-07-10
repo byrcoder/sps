@@ -22,13 +22,16 @@ SOFTWARE.
 *****************************************************************************/
 
 #include <sps_module.hpp>
-#include <sps_log.hpp>
 
 #include <sstream>
+#include <vector>
+
+#include <sps_log.hpp>
 
 namespace sps {
 
-IModule::IModule(std::string module_type, std::string module_name, const ConfigOption *opts, PIModule parent) {
+IModule::IModule(std::string module_type, std::string module_name,
+                 const ConfigOption *opts, PIModule parent) {
     this->module_type   = std::move(module_type);
     this->module_name    = std::move(module_name);
     this->opts   = opts;
@@ -36,6 +39,19 @@ IModule::IModule(std::string module_type, std::string module_name, const ConfigO
 }
 
 error_t IModule::install() {
+    error_t ret = SUCCESS;
+
+    for (auto& it : submodules) {
+        for (auto& sub : it.second) {
+            if ((ret = sub->install()) != SUCCESS) {
+                return ret;
+            }
+        }
+    }
+    return SUCCESS;
+}
+
+error_t IModule::merge_brother(PIModule &module) {
     return SUCCESS;
 }
 
@@ -48,7 +64,7 @@ error_t IModule::post_conf() {
 }
 
 error_t IModule::post_sub_module(PIModule sub) {
-    return SUCCESS;
+    return add_submodule(sub->module_type, sub);
 }
 
 error_t IModule::init_conf(PIReader rd) {
@@ -74,7 +90,8 @@ error_t IModule::init_conf(PIReader rd) {
         return ret;
     }
 
-    do {    // set config values
+    // set config values
+    do {
         std::string name;
         std::string arg;
 
@@ -83,77 +100,93 @@ error_t IModule::init_conf(PIReader rd) {
         }
 
         if ((ret = parse(ctx_line, name, arg, cmd_type)) != SUCCESS) {
-            sp_error("Failed parse line:%d, %s.", rd->cur_line_num(), ctx_line.c_str());
+            sp_error("Failed parse line:%d, %s.", rd->cur_line_num(),
+                      ctx_line.c_str());
             return ret;
         }
 
         if (cmd_type == EMPTY || cmd_type == COMMENT) {
             continue;
-        } else if (cmd_type == SUBMODULE_END) { // 模块已经处理完成直接，退出
+        } else if (cmd_type == SUBMODULE_END) {  // 模块已经处理完成直接，退出
             break;
         }
 
         int i = 0;
         while (opts[i].name && name != opts[i].name) ++i;
 
-        if (!opts[i].name) {
-            sp_warn("skip line:%d, %s, %s, %s", rd->cur_line_num(), ctx_line.c_str(), name.c_str(), arg.c_str());
+        if (!opts[i].name && cmd_type == ITEM) {
+            sp_warn("skip line:%d, %s, %s, %s", rd->cur_line_num(),
+                     ctx_line.c_str(), name.c_str(), arg.c_str());
             continue;
         }
 
         switch (cmd_type) {
             case ITEM:
                 if (opts[i].type == CONF_OPT_TYPE_SUBMODULE) {
-                    sp_error("item expect line:%d, %s %s", rd->cur_line_num(), name.c_str(), arg.c_str());
+                    sp_error("item expect line:%d, %s %s", rd->cur_line_num(),
+                              name.c_str(), arg.c_str());
                     return ERROR_CONFIG_PARSE_INVALID;
                 }
 
                 opts[i].opt_set(conf.get(), arg.c_str(), arg.size());
-                // sp_debug("set %s { %s->%s } success", this->name, opts[i].name, arg.c_str());
+                sp_debug("set %s { %s->%s } success", this->name,
+                           opts[i].name, arg.c_str());
 
                 break;
             case SUBMODULE_START: {
-                if (opts[i].type != CONF_OPT_TYPE_SUBMODULE) {
-                    sp_error("submodule expect line:%d, %s %s", rd->cur_line_num(), name.c_str(),
-                             arg.c_str());
-                    return ERROR_CONFIG_PARSE_INVALID;
+                if (!opts[i].name || opts[i].type != CONF_OPT_TYPE_SUBMODULE) {
+                    sp_warn("submodule not config try create line:%d, %s %s",
+                             rd->cur_line_num(), name.c_str(), arg.c_str());
+                    // return ERROR_CONFIG_PARSE_INVALID;
                 }
 
                 auto sub = SingleInstance<ModuleFactoryRegister>::get_instance()
                         .create(name, arg, shared_from_this());
 
+                if (!sub) {
+                    sp_error("submodule not config try create line:%d, %s %s",
+                            rd->cur_line_num(), name.c_str(), arg.c_str());
+                    return ERROR_CONFIG_PARSE_INVALID;
+                }
+
                 ret = sub->init_conf(rd);
 
                 if (ret != SUCCESS) {
-                    sp_error("parse sub module %s %s failed", name.c_str(), arg.c_str());
+                    sp_error("parse sub module %s %s failed", name.c_str(),
+                             arg.c_str());
                     return ret;
                 }
 
                 ret = post_sub_module(sub);
 
                 if (ret != SUCCESS) {
-                    sp_error("post sub module %s %s failed", name.c_str(), arg.c_str());
+                    sp_error("post sub module %s %s failed", name.c_str(),
+                              arg.c_str());
                     return ret;
                 }
 
-                sp_info("success add submodule %s->%s", module_type.c_str(), sub->module_type.c_str());
+                sp_info("success add submodule %s->%s", module_type.c_str(),
+                         sub->module_type.c_str());
                 break;
             }
             default:
-                sp_error("submodule expect line:%d, %s %s", rd->cur_line_num(), name.c_str(), arg.c_str());
-                exit(-1); // illegal be here
+                sp_error("submodule expect line:%d, %s %s", rd->cur_line_num(),
+                          name.c_str(), arg.c_str());
+                exit(-1);  // illegal be here
         }
-
-    } while(ret == SUCCESS);
+    } while (ret == SUCCESS);
 
     if (ret != SUCCESS && ret != ERROR_IO_EOF) {
         sp_error("Failed read line:%d, ret:%d", rd->cur_line_num(), ret);
         return ret;
     }
 
-    if (("core" == module_type && ret != ERROR_IO_EOF) || ("core" != module_type && cmd_type != SUBMODULE_END)) {
-        sp_error("module_type:%s, cmd_type:%d, unexpected end line:%d, %s, ret:%d",
-                module_type.c_str(), cmd_type, rd->cur_line_num(), ctx_line.c_str(), ret);
+    if ((is_module("root") && ret != ERROR_IO_EOF)
+          || (!is_module("root") && cmd_type != SUBMODULE_END)) {
+        sp_error("module_type:%s, cmd_type:%d, "
+                 "unexpected end line:%d, %s, ret:%d",
+                  module_type.c_str(), cmd_type, rd->cur_line_num(),
+                  ctx_line.c_str(), ret);
         return ERROR_CONFIG_PARSE_INVALID;
     }
 
@@ -166,15 +199,15 @@ error_t IModule::init_conf(PIReader rd) {
     return SUCCESS;
 }
 
-error_t IModule::parse(const std::string &line, std::string &cmd, std::string &arg,
-                                LineType &lt) {
+error_t IModule::parse(const std::string &line, std::string &cmd,
+                       std::string &arg, LineType &lt) {
     std::stringstream ss;
     ss.str(line);
 
     std::vector<std::string> args;
     bool found_end = false;
 
-    while (!ss.eof()) { // split the args
+    while (!ss.eof()) {  // split the args
         std::string tmp_arg;
         ss >> tmp_arg;
 
@@ -208,7 +241,7 @@ error_t IModule::parse(const std::string &line, std::string &cmd, std::string &a
         args.push_back(tmp_arg);
     }
 
-    if (args.empty()) { // empty line
+    if (args.empty()) {  // empty line
         lt = EMPTY;
         return SUCCESS;
     }
@@ -218,7 +251,7 @@ error_t IModule::parse(const std::string &line, std::string &cmd, std::string &a
         return SUCCESS;
     }
 
-    if (!found_end) { // no end flag
+    if (!found_end) {  // no end flag
         sp_error("Fatal no end flag %s", line.c_str());
         return ERROR_CONFIG_PARSE_INVALID;
     }
@@ -253,8 +286,18 @@ error_t IModule::parse(const std::string &line, std::string &cmd, std::string &a
         }
     }
 
-    sp_debug("parse line (%s)->(%s) size:%lu", cmd.c_str(), arg.c_str(), args.size());
+    sp_debug("parse line (%s)->(%s) size:%lu", cmd.c_str(),
+              arg.c_str(), args.size());
     return SUCCESS;
+}
+
+error_t IModule::add_submodule(std::string module_type, PIModule module) {
+    submodules[module_type].push_back(module);
+    return SUCCESS;
+}
+
+bool IModule::is_module(const std::string& name) {
+    return module_type == name;
 }
 
 error_t IModule::set_default() {
@@ -277,7 +320,9 @@ error_t IModule::set_default() {
     return ret;
 }
 
-PIModule ModuleFactoryRegister::create(const std::string &name, const std::string& arg, PIModule parent) {
+PIModule ModuleFactoryRegister::create(const std::string &name,
+                                       const std::string& arg,
+                                       PIModule parent) {
     auto f = this->get(name);
     if (!f) {
         sp_error("unknown sub module name:%s", name.c_str());
@@ -286,4 +331,4 @@ PIModule ModuleFactoryRegister::create(const std::string &name, const std::strin
     return (*f)->create(name, arg, std::move(parent));
 }
 
-}
+}  // namespace sps

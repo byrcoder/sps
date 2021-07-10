@@ -35,7 +35,7 @@ SOFTWARE.
 namespace sps {
 
 error_t RtmpModule::post_sub_module(PIModule sub) {
-    if (sub->module_type == "server") {
+    if (sub->is_module("server")) {
         auto s = dynamic_pointer_cast<ServerModule>(sub);
         if (!s) {
             sp_error("http sub module not server %s", sub->module_type.c_str());
@@ -53,6 +53,8 @@ error_t RtmpModule::post_sub_module(PIModule sub) {
 
 error_t RtmpModule::install() {
     error_t ret = SUCCESS;
+    const auto& rtmp_404 =
+            SingleInstance<sps::RtmpServer404Handler>::get_instance_share_ptr();
 
     for (auto& s : server_modules) {
         auto handler     = std::make_shared<sps::ServerPhaseHandler>();
@@ -64,7 +66,7 @@ error_t RtmpModule::install() {
         handler->reg(std::make_shared<sps::HostRouterPhaseHandler>(
                 s->hosts_router,
                 std::make_shared<sps::RtmpServerStreamHandler>(),
-                SingleInstance<sps::RtmpServer404Handler>::get_instance_share_ptr()));
+                rtmp_404));
 
         s->pre_install(std::make_shared<RtmpConnHandlerFactory>(handler));
 
@@ -72,9 +74,10 @@ error_t RtmpModule::install() {
             sp_error("failed install %s rtmp server", s->module_name.c_str());
             return ret;
         }
-        sp_info("success install %s rtmp server listen", s->module_name.c_str());
+        sp_info("success install %s rtmp server listen",
+                 s->module_name.c_str());
     }
     return ret;
 }
 
-}
+}  // namespace sps

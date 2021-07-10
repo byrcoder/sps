@@ -24,11 +24,13 @@ SOFTWARE.
 #ifndef SPS_SERVER_MODULE_HPP
 #define SPS_SERVER_MODULE_HPP
 
+#include <memory>
 #include <string>
+#include <vector>
 
 #include <sps_module.hpp>
 #include <sps_host_module.hpp>
-#include "sps_server.hpp"
+#include <sps_server.hpp>
 
 namespace sps {
 
@@ -82,10 +84,10 @@ class ServerModule : public IModule {
  public:
     static std::vector<PServer> servers;
 };
-typedef std::shared_ptr<ServerModule> PServerModule ;
+typedef std::shared_ptr<ServerModule> PServerModule;
 
 MODULE_FACTORY(Server)
 
-}
+}  // namespace sps
 
 #endif  // SPS_SERVER_MODULE_HPP

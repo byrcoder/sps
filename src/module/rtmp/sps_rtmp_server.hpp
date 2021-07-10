@@ -24,8 +24,11 @@ SOFTWARE.
 #ifndef SPS_RTMP_SERVER_HPP
 #define SPS_RTMP_SERVER_HPP
 
+#include <memory>
+#include <utility>
+
 #include <sps_host_phase_handler.hpp>
-#include <librtmp/sps_librtmp.hpp>
+#include <sps_librtmp.hpp>
 #include <sps_server.hpp>
 
 namespace sps {
@@ -53,6 +56,6 @@ class RtmpConnHandlerFactory : public IConnHandlerFactory {
     PServerPhaseHandler handler;
 };
 
-}
+}  // namespace sps
 
 #endif  // SPS_RTMP_SERVER_HPP

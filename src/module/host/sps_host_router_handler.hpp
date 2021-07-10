@@ -44,6 +44,6 @@ class HostRouterPhaseHandler : public IPhaseHandler {
     PIPhaseHandler      not_found_handler;
 };
 
-}
+}  // namespace sps
 
 #endif  // SPS_HOST_ROUTER_HANDLER_HPP

@@ -22,6 +22,7 @@ SOFTWARE.
 *****************************************************************************/
 
 #include <sps_server.hpp>
+
 #include <sps_log.hpp>
 
 namespace sps {
@@ -45,7 +46,8 @@ error_t Server::init(PIConnHandlerFactory f, Transport transport,
 }
 
 int Server::listen(std::string ip, int port, bool reuse_port, int backlog) {
-    server_socket = SingleInstance<ServerSocketFactory>::get_instance().create_ss(tran);
+    server_socket = SingleInstance<ServerSocketFactory>::get_instance()
+            .create_ss(tran);
     return server_socket->listen(ip, port, reuse_port, backlog);
 }
 
@@ -65,7 +67,7 @@ error_t Server::accept() {
         }
 
         SingleInstance<ConnManager>::get_instance().reg(h);
-    } while(true);
+    } while (true);
 
     return SUCCESS;
 }
@@ -74,4 +76,4 @@ error_t Server::handler() {
     return accept();
 }
 
-}
+}  // namespace sps

@@ -28,7 +28,8 @@ SOFTWARE.
 
 namespace sps {
 
-#define URLPROTOCOL_INSTANCE(NAME) (std::make_shared<NAME##URLProtocolFactory >())
+#define URLPROTOCOL_INSTANCE(NAME) \
+    (std::make_shared<NAME##URLProtocolFactory >())
 
 PIURLProtocolFactory sps_url_protocols[] = {
         URLPROTOCOL_INSTANCE(Http),

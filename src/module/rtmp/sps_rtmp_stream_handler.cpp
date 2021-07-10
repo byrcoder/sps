@@ -27,6 +27,11 @@ SOFTWARE.
 
 #include <sps_rtmp_stream_handler.hpp>
 
+#include <list>
+#include <memory>
+#include <string>
+#include <utility>
+
 #include <sps_avformat_rtmpdec.hpp>
 #include <sps_avformat_rtmpenc.hpp>
 
@@ -36,7 +41,8 @@ SOFTWARE.
 
 namespace sps {
 
-RtmpServerStreamHandler::RtmpServerStreamHandler() : IPhaseHandler("rtmp-server") {
+RtmpServerStreamHandler::RtmpServerStreamHandler()
+    : IPhaseHandler("rtmp-server") {
 }
 
 error_t RtmpServerStreamHandler::handler(ConnContext &ctx) {
@@ -51,7 +57,7 @@ error_t RtmpServerStreamHandler::handler(ConnContext &ctx) {
     } else if (rt->playing) {
         return play(ctx);
     } else {
-        sp_error("fatal unknown rtmp role"); // never happend
+        sp_error("fatal unknown rtmp role");  // never happen
         ret = ERROR_RTMP_ROLE;
     }
 
@@ -60,17 +66,19 @@ error_t RtmpServerStreamHandler::handler(ConnContext &ctx) {
 
 error_t RtmpServerStreamHandler::publish(ConnContext &ctx) {
     auto stream_ctx = ctx.host->stream_module ?
-            std::static_pointer_cast<StreamConfCtx>(ctx.host->stream_module->conf) : nullptr;
+            std::static_pointer_cast<StreamConfCtx>(
+                    ctx.host->stream_module->conf) : nullptr;
 
     // cannot publish when edge
     if (!stream_ctx) {
-        sp_error("fatal not support rtmp stream publish source! stream conf null");
+        sp_error("fatal not support rtmp stream publish source! conf null");
         return ERROR_STREAM_NOT_CONF;
     }
 
     if (stream_ctx->edge) {
-        sp_error("fatal edge cannot publish %d, url: %s, pass_proxy: %s", stream_ctx->edge,
-                stream_ctx->upstream_url.c_str(), stream_ctx->pass_proxy.c_str());
+        sp_error("fatal edge cannot publish %d, url: %s, pass_proxy: %s",
+                  stream_ctx->edge, stream_ctx->upstream_url.c_str(),
+                  stream_ctx->pass_proxy.c_str());
         return ERROR_AVFORMAT_SOURCE_NOT_SUPPORT;
     }
 
@@ -100,11 +108,11 @@ error_t RtmpServerStreamHandler::publish(ConnContext &ctx) {
             break;
         }
         cache->put(packet);
-    } while(true);
+    } while (true);
 
 final:
     stream_store.erase(url);
-    return ret; // ignore
+    return ret;  // ignore
 }
 
 error_t RtmpServerStreamHandler::play(ConnContext &ctx) {
@@ -117,7 +125,8 @@ error_t RtmpServerStreamHandler::play(ConnContext &ctx) {
     auto& stream_store =  StreamCache::SingleInstance().get_instance();
     auto cache         =  stream_store.get(url);
     auto stream_ctx = ctx.host->stream_module ?
-                      std::static_pointer_cast<StreamConfCtx>(ctx.host->stream_module->conf) : nullptr;
+                      std::static_pointer_cast<StreamConfCtx>(
+                              ctx.host->stream_module->conf) : nullptr;
 
     if (!stream_ctx) {
         sp_error("rtmp stream has no config!");
@@ -158,11 +167,11 @@ error_t RtmpServerStreamHandler::play(ConnContext &ctx) {
                 break;
             }
         }
-    } while(ret == SUCCESS);
+    } while (ret == SUCCESS);
 
 final:
     cache->cancel(client_cache);
-    return ret; // ignore
+    return ret;  // ignore
 }
 
-}
+}  // namespace sps

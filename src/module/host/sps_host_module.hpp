@@ -24,6 +24,10 @@ SOFTWARE.
 #ifndef SPS_HOST_MODULE_HPP
 #define SPS_HOST_MODULE_HPP
 
+#include <map>
+#include <memory>
+#include <string>
+
 #include <sps_module.hpp>
 #include <sps_stream_module.hpp>
 
@@ -37,10 +41,10 @@ struct HostConfCtx : public ConfCtx {
 
 #define OFFSET(x) offsetof(HostConfCtx, x)
 static const ConfigOption host_options[] = {
-        { "hostname",  "hostname",      OFFSET(hostname),   CONF_OPT_TYPE_STRING,   {.str = "- hostname"} },
-        { "pass_proxy","pass_proxy",    OFFSET(pass_proxy), CONF_OPT_TYPE_STRING,   {.str = "- pass_proxy"} },
-        { "pass_url",  "pass_url",      OFFSET(pass_url),   CONF_OPT_TYPE_STRING,   {.str = "- pass_url"} },
-        { "stream",    "stream module",    0,       CONF_OPT_TYPE_SUBMODULE, {.str = "-"} },
+        { "hostname",   "hostname",      OFFSET(hostname),   CONF_OPT_TYPE_STRING,   {.str = "- hostname"} },
+        { "pass_proxy", "pass_proxy",    OFFSET(pass_proxy), CONF_OPT_TYPE_STRING,   {.str = "- pass_proxy"} },
+        { "pass_url",   "pass_url",      OFFSET(pass_url),   CONF_OPT_TYPE_STRING,   {.str = "- pass_url"} },
+        { "stream",     "stream module",    0,       CONF_OPT_TYPE_SUBMODULE, {.str = "-"} },
         { nullptr }
 };
 #undef OFFSET
@@ -83,6 +87,6 @@ class HostModulesRouter {
 
 typedef std::shared_ptr<HostModulesRouter> PHostModulesRouter;
 
-}
+}  // namespace sps
 
 #endif  // SPS_HOST_MODULE_HPP

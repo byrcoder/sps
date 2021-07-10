@@ -22,7 +22,6 @@ SOFTWARE.
 *****************************************************************************/
 
 #include <sps_host_phase_handler.hpp>
-#include <sps_http_phase_handler.hpp>
 
 namespace sps {
 
@@ -36,12 +35,6 @@ error_t ServerPhaseHandler::handler(ConnContext& ctx) {
     error_t ret = SUCCESS;
 
     auto& filters = refs();
-
-#if 0
-    if (filters.empty()) {
-        return SingleInstance<Http404PhaseHandler>::get_instance().handler(ctx);
-    }
-#endif
 
     for (auto& f : filters) {
         ret = f->handler(ctx);
@@ -62,4 +55,4 @@ error_t ServerPhaseHandler::handler(ConnContext& ctx) {
 ServerPhaseHandler::ServerPhaseHandler() {
 }
 
-}
+}  // namespace sps

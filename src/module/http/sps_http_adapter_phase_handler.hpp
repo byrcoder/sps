@@ -28,6 +28,8 @@ SOFTWARE.
 #ifndef SPS_HTTP_ADAPTER_PHASE_HANDLER_HPP
 #define SPS_HTTP_ADAPTER_PHASE_HANDLER_HPP
 
+#include <memory>
+
 #include <sps_http_proxy_phase_handler.hpp>
 #include <sps_stream_phase_handler.hpp>
 
@@ -45,6 +47,6 @@ class HttpAdapterPhaseHandler : public IPhaseHandler {
     std::unique_ptr<StreamPhaseHandler>    stream_handler;
 };
 
-}
+}  // namespace sps
 
 #endif  // SPS_HTTP_ADAPTER_PHASE_HANDLER_HPP

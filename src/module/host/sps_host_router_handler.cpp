@@ -23,11 +23,14 @@ SOFTWARE.
 
 #include <sps_host_router_handler.hpp>
 
+#include <utility>
+
 namespace sps {
 
-HostRouterPhaseHandler::HostRouterPhaseHandler(PHostModulesRouter router,
+HostRouterPhaseHandler::HostRouterPhaseHandler(
+        PHostModulesRouter router,
         PIPhaseHandler df, PIPhaseHandler not_found_handler) :
-                                                IPhaseHandler("host-router-handler") {
+          IPhaseHandler("host-router-handler") {
     this->router          = std::move(router);
     this->host_handler    = std::move(df);
     this->not_found_handler = std::move(not_found_handler);
@@ -42,6 +45,7 @@ error_t HostRouterPhaseHandler::handler(ConnContext &ctx) {
 
     if (!ctx.host) {
         sp_error("Not found host:%s", ctx.req ? ctx.req->host.c_str() : "");
+
         if (not_found_handler) {
             return not_found_handler->handler(ctx);
         }
@@ -51,4 +55,4 @@ error_t HostRouterPhaseHandler::handler(ConnContext &ctx) {
     return host_handler->handler(ctx);
 }
 
-}
+}  // namespace sps

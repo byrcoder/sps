@@ -87,7 +87,7 @@ typedef std::shared_ptr<HttpParserContext> PHttpParserContext;
 
 class HttpParser {
  public:
-    HttpParser(int max_header = 2048);
+    explicit HttpParser(int max_header = 2048);
     int parse_header(PIReader io, HttpType ht = BOTH);
     int parse_header(const char* buf, int len, HttpType ht = BOTH);
 
@@ -119,6 +119,6 @@ class HttpParser {
     static http_parser_settings http_setting;
 };
 
-}
+}  // namespace sps
 
 #endif  // SPS_HTTP_PARSER_HPP

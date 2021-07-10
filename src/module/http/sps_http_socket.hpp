@@ -24,6 +24,11 @@ SOFTWARE.
 #ifndef SPS_HTTP_SOCKET_HPP
 #define SPS_HTTP_SOCKET_HPP
 
+#include <memory>
+#include <list>
+#include <string>
+#include <utility>
+
 #include <sps_url.hpp>
 #include <sps_io_socket.hpp>
 
@@ -34,7 +39,8 @@ class HttpResponseSocket : public Socket {
     HttpResponseSocket(PIReaderWriter rw, const std::string& ip, int port);
 
  public:
-    error_t init(int s_code, std::list<RequestHeader>* hd, int content_len, bool chunked);
+    error_t init(int s_code, std::list<RequestHeader>* hd,
+                 int content_len, bool chunked);
     error_t write_header();
     error_t write(void* buf, size_t size) override;
 
@@ -47,6 +53,6 @@ class HttpResponseSocket : public Socket {
 };
 typedef std::shared_ptr<HttpResponseSocket> PHttpResponseSocket;
 
-}
+}  // namespace sps
 
 #endif  // SPS_HTTP_SOCKET_HPP

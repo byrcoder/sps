@@ -24,8 +24,9 @@ SOFTWARE.
 #ifndef SPS_UPSTREAM_MODULE_HPP
 #define SPS_UPSTREAM_MODULE_HPP
 
-#include <string>
 #include <map>
+#include <memory>
+#include <string>
 
 #include <sps_module.hpp>
 
@@ -68,6 +69,6 @@ class UpstreamModules : public Single<UpstreamModules> {
 MODULE_FACTORY(UpStream)
 class UpStreamModuleFactory;
 
-}
+}  // namespace sps
 
 #endif  // SPS_UPSTREAM_MODULE_HPP

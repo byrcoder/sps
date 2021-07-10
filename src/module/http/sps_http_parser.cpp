@@ -53,7 +53,8 @@ bool HttpParserContext::contains(const std::string& key, std::string* value) {
     return false;
 }
 
-bool HttpParserContext::contains(const std::string& key, std::vector<std::string>* vs) {
+bool HttpParserContext::contains(const std::string& key,
+                                 std::vector<std::string>* vs) {
     if (!vs) return contains(key, (std::string*) nullptr);
 
     for (auto& h : headers) {
@@ -91,8 +92,9 @@ int HttpParserContext::parse_response() {
     res->chunked        = http.uses_transfer_encoding;
     res->headers        = headers;
 
-    sp_info("header size:%lu, status_code:%d, cl:%llu, chunked:%d", headers.size(), http.status_code,
-            http.content_length, http.uses_transfer_encoding);
+    sp_info("header size:%lu, status_code:%d, cl:%llu, chunked:%d",
+             headers.size(), http.status_code,
+             http.content_length, http.uses_transfer_encoding);
 
     return SUCCESS;
 }
@@ -120,18 +122,20 @@ HttpParser::HttpParser(int max_header) {
 }
 
 int HttpParser::parse_header(PIReader io, HttpType ht) {
-    int state = 4; // state 0 - 4 from x\r\n\r\n
+    int state = 4;  // state 0 - 4 from x\r\n\r\n
     error_t ret = SUCCESS;
 
     do {
         int left = max_header - buf_read;
 
         if (state > left) {
-            sp_error("state %d, left %d, %.*s.", state, left, buf_read, buf.get());
+            sp_error("state %d, left %d, %.*s.", state, left,
+                      buf_read, buf.get());
             return -1;
         }
 
-        if ((ret = io->read_fully(buf.get() + buf_read, state, nullptr)) != SUCCESS) {
+        if ((ret = io->read_fully(buf.get() + buf_read, state,
+                nullptr)) != SUCCESS) {
             sp_error("failed read ret:%d", ret);
             return ret > 0 ? -ret : ret;
         }
@@ -143,17 +147,26 @@ int HttpParser::parse_header(PIReader io, HttpType ht) {
         if (*p != '\n' && *p != '\r') {
             state = 4;
         } else if (*p == '\r') {
-            if (*(p-1) == '\n' && *(p-2) == '\r') state = 1;
-            else state = 3;
+            if (*(p-1) == '\n' && *(p-2) == '\r') {
+                state = 1;
+            } else {
+                state = 3;
+            }
         } else {
-            if (*(p-1) != '\r') state = 4;
-            if (*(p-2) != '\n' && *(p-3) != '\r') state = 2;
-            else break;
-        }
-    } while(true);
+            if (*(p-1) != '\r') {
+                state = 4;
+            }
 
-    if (ht == HttpType::BOTH &&
-            (buf[0] == 'H' && buf[1] == 'T' && buf[2] == 'T' && buf[3] == 'P'))  {
+            if (*(p-2) != '\n' && *(p-3) != '\r')  {
+                state = 2;
+            } else {
+                break;
+            }
+        }
+    } while (true);
+
+    if (ht == HttpType::BOTH && (buf[0] == 'H' && buf[1] == 'T'
+                && buf[2] == 'T' && buf[3] == 'P'))  {
         ht = HttpType::REQUEST;
     }
 
@@ -172,8 +185,12 @@ int HttpParser::parse_header(const char *b, int len, HttpType ht) {
 
     sp_debug("parsed: %zu, ht:%u", parsed, ht);
 
-    if ((ht == HttpType::REQUEST || ht == HttpType::BOTH)  && parsed >= 0) ctx->parse_request();
-    else if ((ht == HttpType::RESPONSE || ht == HttpType::BOTH) && parsed >= 0) ctx->parse_response();
+    if ((ht == HttpType::REQUEST || ht == HttpType::BOTH) && parsed >= 0)  {
+        ctx->parse_request();
+    } else if ((ht == HttpType::RESPONSE || ht == HttpType::BOTH)
+            && parsed >= 0) {
+        ctx->parse_response();
+    }
 
     return parsed;
 }
@@ -208,7 +225,8 @@ int HttpParser::on_status(http_parser* hp, const char *at, size_t length) {
     return SUCCESS;
 }
 
-int HttpParser::on_header_field(http_parser* hp, const char *at, size_t length) {
+int HttpParser::on_header_field(http_parser* hp, const char *at,
+                                size_t length) {
     auto p = static_cast<HttpParser *>(hp->data);
 
     p->head.key = std::string(at, length);
@@ -217,7 +235,8 @@ int HttpParser::on_header_field(http_parser* hp, const char *at, size_t length) 
     return SUCCESS;
 }
 
-int HttpParser::on_header_value(http_parser* hp, const char *at, size_t length) {
+int HttpParser::on_header_value(http_parser* hp, const char *at,
+                                size_t length) {
     auto p = static_cast<HttpParser *>(hp->data);
 
     p->head.value = std::string(at, length);
@@ -253,4 +272,4 @@ int HttpParser::on_chunk_complete(http_parser* ) {
     return SUCCESS;
 }
 
-}
+}  // namespace sps

@@ -24,13 +24,18 @@ SOFTWARE.
 /**
  *
  * kernel IPhaseHandler which work for every connection when accepted
- * every module may has diff IPhaseHandler for example http has HttpParsePhaseHandler,
+ * every module may has diff IPhaseHandler:
+ * for example http has HttpParsePhaseHandler,
  * stream submodule has StreamPhaseHandler
  *
  */
 
 #ifndef SPS_HOST_PHASE_HANDLER_HPP
 #define SPS_HOST_PHASE_HANDLER_HPP
+
+#include <memory>
+#include <string>
+#include <utility>
 
 #include <sps_url.hpp>
 #include <sps_host_module.hpp>
@@ -48,9 +53,9 @@ namespace sps {
 struct ConnContext {
     ConnContext(PRequestUrl r, PSocket s, IConnHandler* conn);
 
-    IConnHandler* conn; // rtmp or http conn
-    PRequestUrl   req;  // client request. eg: http://github.com/byrcoder
-    PSocket       socket; // client socket
+    IConnHandler* conn;  // rtmp or http conn
+    PRequestUrl   req;   // client request. eg: http://github.com/byrcoder
+    PSocket       socket;  // client socket
 
     std::string ip;       // client ip
     int         port;     // client port
@@ -86,6 +91,6 @@ class ServerPhaseHandler : public FifoRegisters<PIPhaseHandler> {
 
 typedef std::shared_ptr<ServerPhaseHandler> PServerPhaseHandler;
 
-}
+}  // namespace sps
 
 #endif  // SPS_HOST_PHASE_HANDLER_HPP

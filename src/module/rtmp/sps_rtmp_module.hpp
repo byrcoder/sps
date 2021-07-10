@@ -28,6 +28,11 @@ SOFTWARE.
 #ifndef SPS_RTMP_MODULE_HPP
 #define SPS_RTMP_MODULE_HPP
 
+#include <list>
+#include <memory>
+#include <string>
+#include <utility>
+
 #include <sps_module.hpp>
 #include <sps_server_module.hpp>
 
@@ -70,6 +75,6 @@ typedef std::shared_ptr<RtmpModule> PRtmpModule;
 MODULE_FACTORY(Rtmp)
 class RtmpModuleFactory;
 
-}
+}  // namespace sps
 
 #endif  // SPS_RTMP_MODULE_HPP

@@ -30,8 +30,8 @@ SOFTWARE.
 namespace sps {
 
 error_t HttpModule::post_sub_module(PIModule sub) {
-    if (sub->module_type == "server") {
-        auto s = dynamic_pointer_cast<ServerModule>(sub);
+    if (sub->is_module("server")) {
+        auto s = std::dynamic_pointer_cast<ServerModule>(sub);
         if (!s) {
             sp_error("http sub module not server %s", sub->module_type.c_str());
             exit(-1);
@@ -49,6 +49,9 @@ error_t HttpModule::post_sub_module(PIModule sub) {
 error_t HttpModule::install() {
     error_t ret = SUCCESS;
 
+    const auto& http_404_phase =
+            SingleInstance<sps::Http404PhaseHandler>::get_instance_share_ptr();
+
     for (auto& s : server_modules) {
         auto handler     = std::make_shared<sps::ServerPhaseHandler>();
 
@@ -57,19 +60,21 @@ error_t HttpModule::install() {
 
         // host router -> do host handler or default return 404
         handler->reg(std::make_shared<sps::HostRouterPhaseHandler>(
-                s->hosts_router,
-                std::make_shared<sps::HttpAdapterPhaseHandler>(),
-                SingleInstance<sps::Http404PhaseHandler>::get_instance_share_ptr()));
+            s->hosts_router,
+            std::make_shared<sps::HttpAdapterPhaseHandler>(),
+            http_404_phase));
 
         s->pre_install(std::make_shared<HttpConnHandlerFactory>(handler));
 
         if ((ret = s->install()) != SUCCESS) {
-            sp_error("failed install %s http server", s->module_name.c_str());
+            sp_error("failed install %s http server",
+                      s->module_name.c_str());
             return ret;
         }
-        sp_info("success install %s http server listen", s->module_name.c_str());
+        sp_info("success install %s http server listen",
+                 s->module_name.c_str());
     }
     return ret;
 }
 
-}
+}  // namespace sps

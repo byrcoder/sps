@@ -26,6 +26,9 @@ SOFTWARE.
 
 #include <sps_module.hpp>
 
+#include <memory>
+#include <string>
+
 namespace sps {
 
 struct StreamConfCtx : public ConfCtx {
@@ -53,6 +56,6 @@ typedef std::shared_ptr<StreamModule> PStreamModule;
 
 MODULE_FACTORY(Stream)
 
-}
+}  // namespace sps
 
 #endif  // SPS_STREAM_CONFIG_HPP

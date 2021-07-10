@@ -21,8 +21,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_CORE_MODULE_HPP
-#define SPS_CORE_MODULE_HPP
+#ifndef SPS_ROOT_MODULE_HPP
+#define SPS_ROOT_MODULE_HPP
+
+#include <memory>
+#include <string>
 
 #include <sps_module.hpp>
 #include <sps_http_module.hpp>
@@ -32,42 +35,27 @@ SOFTWARE.
 
 namespace sps {
 
-struct CoreConfCtx : public ConfCtx {
+struct RootConfCtx : public ConfCtx {
     std::string comment;
 };
 
-#define OFFSET(x) offsetof(CoreConfCtx, x)
+#define OFFSET(x) offsetof(RootConfCtx, x)
 static const ConfigOption core_options[] = {
-        {"comment",  "comment", OFFSET(comment), CONF_OPT_TYPE_STRING,    {.str = "core"}},
-        {"upstream", "upstream submodule", 0,    CONF_OPT_TYPE_SUBMODULE, {.str = "upstream"}},
-        {"http",     "http submodule",     0,    CONF_OPT_TYPE_SUBMODULE, {.str = "http"}},
-        {"rtmp",     "rtmp submodule",     0,    CONF_OPT_TYPE_SUBMODULE, {.str = "rtmp"}},
         {nullptr}
 };
 #undef OFFSET
 
-class CoreModule : public IModule {
+class RootModule : public IModule {
  public:
-    MODULE_CONSTRUCT(Core, core_options)
+    MODULE_CONSTRUCT(Root, core_options)
 
-    MODULE_CREATE_CTX(Core);
-
-    error_t post_sub_module(PIModule sub) override;
-
- public:
-    error_t install() override;
-
- public:
-    std::list<PHttpModule> http_modules;
-    // TODO(byrcoder): FIXME RTMP & HTTP
-    std::list<PRtmpModule> rtmp_modules;
-    std::list<PUpStreamModule> upstream_modules;
+    MODULE_CREATE_CTX(Root);
 };
 
-typedef std::shared_ptr<CoreModule> PCoreModule;
+typedef std::shared_ptr<RootModule> PRootModule;
 
-MODULE_FACTORY(Core)
+MODULE_FACTORY(Root)
 
 }  // namespace sps
 
-#endif  // SPS_CORE_MODULE_HPP
+#endif  // SPS_ROOT_MODULE_HPP

@@ -21,38 +21,4 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_HTTP_SERVER_HPP
-#define SPS_HTTP_SERVER_HPP
-
-#include <memory>
-#include <utility>
-
-#include <sps_http_phase_handler.hpp>
-#include <sps_io_socket.hpp>
-#include <sps_server.hpp>
-
-namespace sps {
-
-class HttpConnHandler : public IConnHandler {
- public:
-    explicit HttpConnHandler(PSocket io, PServerPhaseHandler& handler);
-
- public:
-    error_t handler() override;
-
- public:
-    PServerPhaseHandler& hd;
-};
-
-class HttpConnHandlerFactory : public IConnHandlerFactory {
- public:
-    explicit HttpConnHandlerFactory(PServerPhaseHandler hd);
-    PIConnHandler create(PSocket io) override;
-
- private:
-    PServerPhaseHandler handler;
-};
-
-}  // namespace sps
-
-#endif  // SPS_HTTP_SERVER_HPP
+#include <sps_root_module.hpp>

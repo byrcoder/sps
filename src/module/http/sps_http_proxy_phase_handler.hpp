@@ -36,12 +36,12 @@ namespace sps {
 // http proxy for upstream
 class HttpProxyPhaseHandler : public IPhaseHandler {
  public:
-    explicit HttpProxyPhaseHandler();
+    HttpProxyPhaseHandler();
 
  public:
     error_t handler(ConnContext& ctx) override;
 };
 
-}
+}  // namespace sps
 
 #endif  // SPS_HTTP_PROXY_PHASE_HANDLER_HPP

@@ -52,12 +52,12 @@ enum ConfigOptionType {
     CONF_OPT_TYPE_DOUBLE,
     CONF_OPT_TYPE_FLOAT,
 
-    CONF_OPT_TYPE_CSTRING, // c string
-    CONF_OPT_TYPE_STRING,  // c++ string
+    CONF_OPT_TYPE_CSTRING,  // c string
+    CONF_OPT_TYPE_STRING,   // c++ string
     CONF_OPT_TYPE_UINT64,
     CONF_OPT_TYPE_BOOL,
 
-    CONF_OPT_TYPE_SUBMODULE     // submodules
+    CONF_OPT_TYPE_SUBMODULE,  // submodules
 };
 
 // work as AVOption
@@ -85,6 +85,6 @@ struct ConfigOption {
     error_t opt_set(void* obj, const char* val, int len) const;
 };
 
-}
+}  // namespace sps
 
 #endif  // SPS_CONFIG_OPT_HPP

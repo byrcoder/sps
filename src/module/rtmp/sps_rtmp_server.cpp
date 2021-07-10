@@ -45,7 +45,7 @@ error_t RtmpConnHandler::handler() {
             return ret;
         }
         sp_trace("success handler ret %d", ret);
-    } while(true);
+    } while (true);
 
     return SUCCESS;
 }
@@ -58,4 +58,4 @@ PIConnHandler RtmpConnHandlerFactory::create(PSocket io) {
     return std::make_shared<RtmpConnHandler>(io, handler);
 }
 
-}
+}  // namespace sps

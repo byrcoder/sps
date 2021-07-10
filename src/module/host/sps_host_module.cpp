@@ -26,14 +26,17 @@ SOFTWARE.
 namespace sps {
 
 error_t HostModule::post_sub_module(PIModule sub) {
-    if (sub->module_type == "stream") {
-        auto hm = std::dynamic_pointer_cast<StreamModule>(sub);
-        if (!hm) {
+    if (sub->is_module("stream")) {
+        stream_module = std::dynamic_pointer_cast<StreamModule>(sub);
+
+        if (!stream_module) {
             sp_error("http sub module not stream %s,%s. %s",
-                     sub->module_type.c_str(), sub->module_name.c_str(), typeid(sub.get()).name());
+                     sub->module_type.c_str(),
+                     sub->module_name.c_str(),
+                     typeid(sub.get()).name());
             return ERROR_MODULE_TYPE_NOT_MATCH;
         }
-        stream_module = std::move(hm);
+
         return SUCCESS;
     } else {
         sp_error("http not found sub module type %s", sub->module_type.c_str());
@@ -56,12 +59,15 @@ std::string HostModulesRouter::get_wildcard_host(std::string host) {
 }
 
 error_t HostModulesRouter::register_host(PHostModule host) {
-    if (host->module_name[0] != '*') {        // 完全匹配
+    if (host->module_name[0] != '*') {
+        // full match
         exact_hosts[host->module_name] = std::move(host);
         return SUCCESS;
-    } else if(host->module_name[1] == '\0') { // 默认匹配
+    } else if (host->module_name[1] == '\0') {
+        // default
         default_host = host;
-    } else if (host->module_name[1] != '.' || host->module_name[2] == '\0') { // 非法格式
+    } else if (host->module_name[1] != '.' || host->module_name[2] == '\0') {
+        // illegal match
         sp_error("Unsupported Host start with %s", host->module_name.c_str());
         return ERROR_CONFIG_PARSE_INVALID;
     }
@@ -72,7 +78,7 @@ error_t HostModulesRouter::register_host(PHostModule host) {
     return SUCCESS;
 }
 
-PHostModule HostModulesRouter::find_host(const std::string& host) {
+PHostModule HostModulesRouter::find_host(const std::string &host) {
     auto it = exact_hosts.find(host);
     if (it != exact_hosts.end()) {
         return it->second;
@@ -91,4 +97,4 @@ PHostModule HostModulesRouter::find_host(const std::string& host) {
     return default_host;
 }
 
-}
+}  // namespace sps

@@ -26,9 +26,12 @@ SOFTWARE.
 
 #include <librtmp/rtmp.h>
 
+#include <memory>
+#include <string>
+
 #include <sps_host_phase_handler.hpp>
-#include <librtmp/sps_librtmp.hpp>
-#include <librtmp/sps_librtmp_packet.hpp>
+#include <sps_librtmp.hpp>
+#include <sps_librtmp_packet.hpp>
 
 namespace sps {
 
@@ -83,6 +86,6 @@ class RtmpPreRequest {
     bool              publishing = false;
 };
 
-}
+}  // namespace sps
 
 #endif  // SPS_RTMP_SERVER_HANDLER_HPP

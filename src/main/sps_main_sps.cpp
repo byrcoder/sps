@@ -22,7 +22,7 @@ SOFTWARE.
 *****************************************************************************/
 
 #include <sps_co.hpp>
-#include <sps_core_module.hpp>
+#include <sps_root_module.hpp>
 
 #include <sps_install.hpp>
 #include <sps_log.hpp>
@@ -31,7 +31,7 @@ SOFTWARE.
 #include <sps_typedef.hpp>
 #include <sps_url_protocol.hpp>
 
-sps::PCoreModule core_module;
+sps::PRootModule core_module;
 
 error_t init_co() {
     return sps::ICoFactory::get_instance().init();
@@ -47,9 +47,9 @@ error_t init_config(const char* filename) {
         return ERROR_URL_PROTOCOL_NOT_EXISTS;
     }
 
-    core_module = std::dynamic_pointer_cast<sps::CoreModule>(
+    core_module = std::dynamic_pointer_cast<sps::RootModule>(
             SingleInstance<sps::ModuleFactoryRegister>::get_instance()
-            .create("core", "",  nullptr));
+            .create("root", "",  nullptr));
 
     if ((ret = file_reader->open(std::string(filename))) != SUCCESS) {
         sp_error("Failed open file %s", filename);

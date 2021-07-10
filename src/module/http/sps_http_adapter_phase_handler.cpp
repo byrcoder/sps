@@ -29,7 +29,8 @@ SOFTWARE.
 
 namespace sps {
 
-HttpAdapterPhaseHandler::HttpAdapterPhaseHandler() : IPhaseHandler("adapter-handler") {
+HttpAdapterPhaseHandler::HttpAdapterPhaseHandler()
+        : IPhaseHandler("adapter-handler") {
     proxy_handler  = std::make_unique<HttpProxyPhaseHandler>();
     stream_handler = std::make_unique<StreamPhaseHandler>();
 }
@@ -42,4 +43,4 @@ error_t HttpAdapterPhaseHandler::handler(ConnContext &ctx) {
     }
 }
 
-}
+}  // namespace sps

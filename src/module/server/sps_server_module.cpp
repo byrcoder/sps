@@ -27,7 +27,7 @@ SOFTWARE.
 namespace sps {
 
 error_t ServerModule::post_sub_module(PIModule sub) {
-    if (sub->module_type == "host") {
+    if (sub->is_module("host")) {
         auto h = std::dynamic_pointer_cast<HostModule>(sub);
         if (!h || sub->module_name.empty()) {
             sp_error("server not found host type %s", sub->module_name.c_str());
@@ -36,7 +36,8 @@ error_t ServerModule::post_sub_module(PIModule sub) {
 
         return hosts_router->register_host(h);
     } else {
-        sp_error("server not found sub module type %s", sub->module_type.c_str());
+        sp_error("server not found sub module type %s",
+                  sub->module_type.c_str());
         exit(-1);
     }
 
@@ -59,7 +60,8 @@ error_t ServerModule::install() {
         t = Transport::SRT;
     }
 #endif
-    ret = server->init(socket_handler, t, server_conf->send_timeout, server_conf->recv_timeout);
+    ret = server->init(socket_handler, t, server_conf->send_timeout,
+                        server_conf->recv_timeout);
 
     if (ret != SUCCESS) {
         sp_error("fail install transport %u", t);
@@ -69,7 +71,9 @@ error_t ServerModule::install() {
     if ((ret = server->listen("", server_conf->listen_port,
             server_conf->reuse_port, server_conf->backlog)) != SUCCESS) {
         sp_error("failed http listen port: %d, reuse: %u, backlog: %d, ret: %d",
-                server_conf->listen_port, server_conf->reuse_port, server_conf->backlog, ret);
+                  server_conf->listen_port, server_conf->reuse_port,
+                  server_conf->backlog, ret);
+
         return ret;
     }
 
@@ -79,7 +83,8 @@ error_t ServerModule::install() {
     }
 
     sp_info("success listen port: %d, reuse: %u, backlog: %d",
-            server_conf->listen_port, server_conf->reuse_port, server_conf->backlog);
+             server_conf->listen_port, server_conf->reuse_port,
+             server_conf->backlog);
 
     servers.push_back(server);
     return ret;
@@ -92,4 +97,4 @@ error_t ServerModule::pre_install(PIConnHandlerFactory factory) {
 
 std::vector<PServer> ServerModule::servers;
 
-}
+}  // namespace sps

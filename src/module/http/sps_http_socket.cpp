@@ -28,11 +28,13 @@ SOFTWARE.
 #include <sstream>
 
 #include <sps_http_parser.hpp>
-#include <log/sps_log.hpp>
+#include <sps_log.hpp>
 
 namespace sps {
 
-HttpResponseSocket::HttpResponseSocket(PIReaderWriter rw, const std::string &ip, int p) :
+HttpResponseSocket::HttpResponseSocket(PIReaderWriter rw,
+                                       const std::string &ip,
+                                       int p) :
         Socket(std::move(rw), ip, p) {
 }
 
@@ -72,11 +74,12 @@ error_t HttpResponseSocket::write_header() {
     ss << CRCN;
 
     std::string http_header = ss.str();
-
     sent_header = true;
 
     ret = Socket::write((void*) http_header.c_str(), http_header.size());
-    sp_info("http wrote rsp header ret: %d,  chunked: %d, %s.", ret, chunked, http_header.c_str());
+
+    sp_info("http wrote rsp header ret: %d,  chunked: %d, %s.",
+             ret, chunked, http_header.c_str());
 
     return ret;
 }
@@ -93,11 +96,14 @@ error_t HttpResponseSocket::write(void *buf, size_t size) {
         std::stringstream ss;
         ss << std::hex << size << "\r\n";
         std::string tmp = ss.str();
-        if ((ret = Socket::write((void *) tmp.c_str(), tmp.size())) != SUCCESS) {
-            sp_error("failed write http chunked length size:%lu, %s, ret:%d", size, tmp.c_str(), ret);
+        if ((ret = Socket::write((void *) tmp.c_str(),
+                tmp.size())) != SUCCESS) {
+            sp_error("failed write http chunked length size:%lu, %s, ret:%d",
+                      size, tmp.c_str(), ret);
             return ret;
         }
-        sp_debug("success write http chunked length size: %lu(%x), %s, ret:%d", size, size, tmp.c_str(), ret);
+        sp_debug("success write http chunked length size: %lu(%x), %s, ret:%d",
+                   size, size, tmp.c_str(), ret);
     }
 
     if (size > 0) {
@@ -110,7 +116,8 @@ error_t HttpResponseSocket::write(void *buf, size_t size) {
     }
 
     if (chunked) {
-        if ((ret = Socket::write((void*) "\r\n", sizeof("\r\n")-1)) != SUCCESS) {
+        if ((ret = Socket::write((void*) "\r\n",
+                sizeof("\r\n")-1)) != SUCCESS) {
             sp_error("failed write http chunked end Buffer ret:%d", ret);
             return ret;
         }
@@ -120,4 +127,4 @@ error_t HttpResponseSocket::write(void *buf, size_t size) {
     return ret;
 }
 
-}
+}  // namespace sps

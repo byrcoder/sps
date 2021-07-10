@@ -41,6 +41,6 @@ class RtmpServerStreamHandler : public IPhaseHandler {
     error_t play(ConnContext &ctx);
 };
 
-}
+}  // namespace sps
 
 #endif  // SPS_RTMP_STREAM_HANDLER_HPP

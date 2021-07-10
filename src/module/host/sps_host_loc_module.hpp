@@ -24,16 +24,16 @@ SOFTWARE.
 #ifndef SPS_HOST_LOC_MODULE_HPP
 #define SPS_HOST_LOC_MODULE_HPP
 
+#include <memory>
 #include <string>
 #include <sps_module.hpp>
 
 namespace sps {
 
 // TODO: ADD add location for request
-
 struct LocationConfCtx : public ConfCtx {
-    std::string pattern;    // 匹配模式或者路径
-    std::string proxy_pass; // 代理路径
+    std::string pattern;     // 匹配模式或者路径
+    std::string proxy_pass;  // 代理路径
 };
 
 #define OFFSET(x) offsetof(LocationConfCtx, x)
@@ -55,6 +55,6 @@ typedef std::shared_ptr<LocationModule> PLocationModule;
 MODULE_FACTORY(Location)
 class LocationModuleFactory;
 
-}
+}  // namespace sps
 
 #endif  // SPS_HOST_LOC_MODULE_HPP

@@ -33,7 +33,8 @@ SOFTWARE.
 
 namespace sps {
 
-RtmpServer404Handler::RtmpServer404Handler() : IPhaseHandler("rtmp-404-handler") {
+RtmpServer404Handler::RtmpServer404Handler()
+    : IPhaseHandler("rtmp-404-handler") {
 }
 
 error_t RtmpServer404Handler::handler(ConnContext &ctx) {
@@ -41,8 +42,8 @@ error_t RtmpServer404Handler::handler(ConnContext &ctx) {
     return ERROR_UPSTREAM_NOT_FOUND;
 }
 
-RtmpPrepareHandler::RtmpPrepareHandler() : IPhaseHandler("rtmp-handshake-handler") {
-
+RtmpPrepareHandler::RtmpPrepareHandler()
+    : IPhaseHandler("rtmp-handshake-handler") {
 }
 
 error_t RtmpPrepareHandler::handler(ConnContext &ctx) {
@@ -114,7 +115,8 @@ error_t RtmpPreRequest::connect() {
         return ret;
     }
 
-    tc_url = std::string(conn_packet->tc_url.av_val, conn_packet->tc_url.av_len);
+    tc_url = std::string(conn_packet->tc_url.av_val,
+                         conn_packet->tc_url.av_len);
     txn    = conn_packet->transaction_id;
 
     ret = hook->send_ack_window_size();
@@ -172,7 +174,8 @@ error_t RtmpPreRequest::connect() {
         }
 
         // releaseStream
-        auto release_stream = dynamic_cast<ReleaseStreamRtmpPacket*>(conn.get());
+        auto release_stream = dynamic_cast<ReleaseStreamRtmpPacket*>(
+                                conn.get());
         if (release_stream) {
             if ((ret = on_recv_release_stream(release_stream)) != SUCCESS) {
                 return ret;
@@ -194,13 +197,14 @@ error_t RtmpPreRequest::connect() {
     return ret;
 }
 
-error_t RtmpPreRequest::on_recv_create_stream(CreateStreamRtmpPacket* create_stream) const {
+error_t RtmpPreRequest::on_recv_create_stream(
+        CreateStreamRtmpPacket* create_stream) const {
     error_t ret  = SUCCESS;
     ret = hook->send_result(create_stream->transaction_id, 1.0);
 
     if (ret != SUCCESS) {
-        sp_error("fail res __result %.*s failed, ret %d", create_stream->name.av_len,
-                 create_stream->name.av_val, ret);
+        sp_error("fail res __result %.*s failed, ret %d",
+                  create_stream->name.av_len, create_stream->name.av_val, ret);
         return ret;
     }
     sp_info("send __result %.*s, txn %lf, i. %d", create_stream->name.av_len,
@@ -220,8 +224,9 @@ error_t RtmpPreRequest::on_recv_play(PlayRtmpPacket* play) {
                  play->name.av_val, ret);
         return ret;
     }
-    sp_info("success send play __result %.*s, txn %lf, i. %d", play->name.av_len,
-            play->name.av_val, play->transaction_id, 0);
+    sp_info("success send play __result %.*s, txn %lf, i. %d",
+            play->name.av_len, play->name.av_val,
+            play->transaction_id, 0);
 
     if ((ret = hook->send_sample_access()) != SUCCESS) {
         sp_error("fail send sample access ret %d", ret);
@@ -239,25 +244,31 @@ error_t RtmpPreRequest::on_recv_play(PlayRtmpPacket* play) {
 error_t RtmpPreRequest::on_recv_publish(PublishRtmpPacket* publish) {
     error_t ret = SUCCESS;
     stream_params = "/" + publish->stream_params;
+
     sp_info("publish stream %s, %s, playing %d",
-            stream_params.c_str(), publish->publish_type.c_str(), hook->get_rtmp()->m_bPlaying);
+             stream_params.c_str(), publish->publish_type.c_str(),
+             hook->get_rtmp()->m_bPlaying);
+
     if ((ret = hook->send_publish_start(publish->transaction_id)) != SUCCESS) {
-        sp_error("fail resp __result %.*s failed, ret %d", publish->name.av_len,
-                 publish->name.av_val, ret);
+        sp_error("fail resp __result %.*s failed, ret %d",
+                  publish->name.av_len, publish->name.av_val, ret);
         return ret;
     }
-    sp_info("success send publish __result %.*s, txn %lf, i. %d", publish->name.av_len,
-            publish->name.av_val, publish->transaction_id, 0);
+
+    sp_info("success send publish __result %.*s, txn %lf, i. %d",
+             publish->name.av_len, publish->name.av_val,
+             publish->transaction_id, 0);
 
     if ((ret = hook->send_stream_begin()) != SUCCESS) {
         sp_error("fail send stream begin access ret %d", ret);
         return ret;
     }
+
     sp_info("success send stream begin");
     return ret;
 }
 
-error_t RtmpPreRequest::on_recv_fcpublish(FCPublishRtmpPacket* p) const{
+error_t RtmpPreRequest::on_recv_fcpublish(FCPublishRtmpPacket* p) const {
     auto ret = hook->send_result(p->transaction_id, 0);
 
     if (ret != SUCCESS) {
@@ -269,7 +280,8 @@ error_t RtmpPreRequest::on_recv_fcpublish(FCPublishRtmpPacket* p) const{
     return ret;
 }
 
-error_t RtmpPreRequest::on_recv_release_stream(ReleaseStreamRtmpPacket* p) const {
+error_t RtmpPreRequest::on_recv_release_stream(
+        ReleaseStreamRtmpPacket* p) const {
     auto ret = hook->send_result(p->transaction_id, 0);
 
     if (ret != SUCCESS) {
@@ -281,4 +293,4 @@ error_t RtmpPreRequest::on_recv_release_stream(ReleaseStreamRtmpPacket* p) const
     return ret;
 }
 
-}
+}  // namespace sps

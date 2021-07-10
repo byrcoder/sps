@@ -24,6 +24,8 @@ SOFTWARE.
 #ifndef SPS_HTTP_MODULE_HPP
 #define SPS_HTTP_MODULE_HPP
 
+#include <list>
+#include <memory>
 #include <string>
 
 #include <sps_module.hpp>
@@ -31,11 +33,9 @@ SOFTWARE.
 
 namespace sps {
 
-using namespace std;
-
 struct HttpConfCtx : public ConfCtx {
-    int       keepalive_timeout;
-    string    access_log;
+    int            keepalive_timeout;
+    std::string    access_log;
 };
 
 #define OFFSET(x) offsetof(HttpConfCtx, x)
@@ -68,6 +68,6 @@ typedef std::shared_ptr<HttpModule> PHttpModule;
 MODULE_FACTORY(Http)
 class HttpModuleFactory;
 
-}
+}  // namespace sps
 
 #endif  // SPS_HTTP_MODULE_HPP

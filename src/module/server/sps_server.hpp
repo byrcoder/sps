@@ -26,6 +26,8 @@ SOFTWARE.
 
 #include <memory>
 #include <set>
+#include <string>
+#include <utility>
 
 #include <sps_co.hpp>
 #include <sps_io_socket.hpp>
@@ -39,13 +41,13 @@ typedef std::shared_ptr<IConnHandler> PIConnHandler;
  * the assemble for all connections
  */
 class ConnManager : public Registers<ConnManager, PIConnHandler> {
-
 };
 
 /**
  * this work for every connection
  */
-class IConnHandler: public ICoHandler, public std::enable_shared_from_this<IConnHandler> {
+class IConnHandler: public ICoHandler,
+                    public std::enable_shared_from_this<IConnHandler> {
  public:
     explicit IConnHandler(PSocket io);
 
@@ -74,13 +76,14 @@ typedef std::shared_ptr<IConnHandlerFactory> PIConnHandlerFactory;
  */
 class Server : public ICoHandler {
  public:
-    explicit Server() = default;
+    Server() = default;
     ~Server() override = default;
 
  public:
     error_t init(PIConnHandlerFactory factory, Transport transport,
                  utime_t send_timeout, utime_t  rcv_timeout);
-    error_t listen(std::string ip, int port, bool reuse_port = true, int backlog = 1024);
+    error_t listen(std::string ip, int port, bool reuse_port = true,
+                   int backlog = 1024);
 
  public:
     virtual error_t accept();
@@ -95,6 +98,6 @@ class Server : public ICoHandler {
 };
 typedef std::shared_ptr<Server> PServer;
 
-}
+}  // namespace sps
 
 #endif  // SPS_SERVER_HPP

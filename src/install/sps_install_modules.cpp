@@ -21,7 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#include <sps_core_module.hpp>
+#include <sps_root_module.hpp>
 #include <sps_host_module.hpp>
 #include <sps_host_loc_module.hpp>
 #include <sps_http_module.hpp>
@@ -34,7 +34,7 @@ namespace sps {
 #define MODULE_INSTANCE(NAME) (std::make_shared<NAME##ModuleFactory>())
 
 PIModuleFactory sps_modules[] = {
-        MODULE_INSTANCE(Core),
+        MODULE_INSTANCE(Root),
 
         MODULE_INSTANCE(Http),
         MODULE_INSTANCE(Server),

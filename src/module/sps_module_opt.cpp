@@ -64,7 +64,7 @@ error_t ConfigOption::opt_set(void *obj, const char *val, int len) const {
 
             break;
         }
-        case CONF_OPT_TYPE_FLOAT:{
+        case CONF_OPT_TYPE_FLOAT: {
             float num = len > 0 ? atof(val) : 0;
             memcpy(dst, (void*) &num, sizeof(num));
 
@@ -89,7 +89,8 @@ error_t ConfigOption::opt_set(void *obj, const char *val, int len) const {
             bool num = memcmp(val, "on", 2) == 0;
             memcpy(dst, (void*) &num, sizeof(num));
 
-            sp_info("------------------bool val %s -> %d-----------", val, num);
+            sp_info("------------------bool val %s -> %d-----------",
+                     val, num);
             break;
         }
         case CONF_OPT_TYPE_SUBMODULE:
@@ -101,6 +102,4 @@ error_t ConfigOption::opt_set(void *obj, const char *val, int len) const {
     return SUCCESS;
 }
 
-
-
-}
+}  // namespace sps
