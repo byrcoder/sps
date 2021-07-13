@@ -77,7 +77,7 @@ error_t RtmpServerStreamHandler::publish(ConnContext &ctx) {
 
     if (stream_ctx->edge) {
         sp_error("fatal edge cannot publish %d, url: %s, pass_proxy: %s",
-                  stream_ctx->edge, stream_ctx->upstream_url.c_str(),
+                  stream_ctx->edge, stream_ctx->avformat.c_str(),
                   stream_ctx->pass_proxy.c_str());
         return ERROR_AVFORMAT_SOURCE_NOT_SUPPORT;
     }

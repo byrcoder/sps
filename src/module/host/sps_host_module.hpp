@@ -31,20 +31,29 @@ SOFTWARE.
 #include <sps_module.hpp>
 #include <sps_stream_module.hpp>
 
+#define HOST_OPTIONS \
+            { "enabled",    "enabled",    OFFSET(enabled), CONF_OPT_TYPE_BOOL,   {.str = "on"} }, \
+            { "pass_proxy", "pass_proxy",    OFFSET(pass_proxy), CONF_OPT_TYPE_STRING,   {.str = "- pass_proxy"} }, \
+            { "pass_url",   "pass_url",      OFFSET(pass_url),   CONF_OPT_TYPE_STRING,   {.str = "- pass_url"} }, \
+            { "role",       "proxy/source",  OFFSET(role),       CONF_OPT_TYPE_STRING, {.str = "proxy"} }, \
+            { "streaming",  "streaming",     OFFSET(streaming),  CONF_OPT_TYPE_BOOL,   { .str = "on" }, }, \
+            { "stream_avformat",  "stream_avformat",     OFFSET(stream_avformat),  CONF_OPT_TYPE_STRING,   { .str = "flv" }, }
+
 namespace sps {
 
 struct HostConfCtx : public ConfCtx {
-    std::string hostname;         // 域名
-    std::string pass_proxy;   // 代理地址
-    std::string pass_url;     // pass_url 正则
+    int         enabled;  // off when disabled, on enabled
+    std::string pass_proxy;   // address
+    std::string pass_url;     // pass_url
+    std::string role;         // edge or source
+
+    int streaming;  // on, edge or source is rtmp/flv
+    std::string stream_avformat;  // edge avformat
 };
 
 #define OFFSET(x) offsetof(HostConfCtx, x)
 static const ConfigOption host_options[] = {
-        { "hostname",   "hostname",      OFFSET(hostname),   CONF_OPT_TYPE_STRING,   {.str = "- hostname"} },
-        { "pass_proxy", "pass_proxy",    OFFSET(pass_proxy), CONF_OPT_TYPE_STRING,   {.str = "- pass_proxy"} },
-        { "pass_url",   "pass_url",      OFFSET(pass_url),   CONF_OPT_TYPE_STRING,   {.str = "- pass_url"} },
-        { "stream",     "stream module",    0,       CONF_OPT_TYPE_SUBMODULE, {.str = "-"} },
+        HOST_OPTIONS,
         { nullptr }
 };
 #undef OFFSET
@@ -78,11 +87,12 @@ class HostModulesRouter {
 
     PHostModule find_host(const std::string& host);
 
+    error_t merge(HostModulesRouter* router);
+
  private:
-    std::map<std::string, PHostModule> hosts;
-    std::map<std::string, PHostModule> exact_hosts;   // 完全匹配
-    std::map<std::string, PHostModule> wildcard_hosts;    // *.匹配
-    PHostModule                        default_host;  // 默认匹配
+    std::map<std::string, PHostModule> exact_hosts;   // exact match
+    std::map<std::string, PHostModule> wildcard_hosts;    // *. path match
+    PHostModule                        default_host;  // default module
 };
 
 typedef std::shared_ptr<HostModulesRouter> PHostModulesRouter;

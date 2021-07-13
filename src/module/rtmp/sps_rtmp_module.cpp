@@ -57,18 +57,33 @@ error_t RtmpModule::install() {
             SingleInstance<sps::RtmpServer404Handler>::get_instance_share_ptr();
 
     for (auto& s : server_modules) {
-        auto handler     = std::make_shared<sps::ServerPhaseHandler>();
+        PServerModule ps = ServerModule::get_server(s.get());
+        PHostModulesRouter hr;
 
-        // http header parser
-        handler->reg(std::make_shared<sps::RtmpPrepareHandler>());
+        if (ps) {
+            if ((ret = ps->merge_server(s)) != SUCCESS) {
+                sp_error("fail merge ret %d", ret);
+                return ret;
+            }
+            continue;
+        }
 
-        // host router -> do host handler or default return 404
-        handler->reg(std::make_shared<sps::HostRouterPhaseHandler>(
-                s->hosts_router,
-                std::make_shared<sps::RtmpServerStreamHandler>(),
+        if ((ret = ServerModule::get_router(s.get(), hr))
+            != SUCCESS) {
+            sp_error("fail get router ret %d", ret);
+            return ret;
+        }
+
+        auto rtmp_handler = std::make_shared<sps::ServerPhaseHandler>();
+
+        // rtmp handshake, play/publish
+        rtmp_handler->reg(std::make_shared<sps::RtmpPrepareHandler>());
+        // rtmp host router -> do host handler or default rtmp 404
+        rtmp_handler->reg(std::make_shared<sps::HostRouterPhaseHandler>(
+                hr, std::make_shared<sps::RtmpServerStreamHandler>(),
                 rtmp_404));
 
-        s->pre_install(std::make_shared<RtmpConnHandlerFactory>(handler));
+        s->pre_install(std::make_shared<RtmpConnHandlerFactory>(rtmp_handler));
 
         if ((ret = s->install()) != SUCCESS) {
             sp_error("failed install %s rtmp server", s->module_name.c_str());

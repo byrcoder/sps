@@ -60,21 +60,36 @@ std::string HostModulesRouter::get_wildcard_host(std::string host) {
 
 error_t HostModulesRouter::register_host(PHostModule host) {
     if (host->module_name[0] != '*') {
+        if (exact_hosts.count(host->module_name)) {
+            sp_error("dup host %s", host->module_name.c_str());
+            return ERROR_CONFIG_PARSE_INVALID;
+        }
+
         // full match
         exact_hosts[host->module_name] = std::move(host);
         return SUCCESS;
     } else if (host->module_name[1] == '\0') {
-        // default
+        if (default_host) {
+            sp_error("dup default %s", host->module_name.c_str());
+            return ERROR_CONFIG_PARSE_INVALID;
+        }
+
+        // * default
         default_host = host;
     } else if (host->module_name[1] != '.' || host->module_name[2] == '\0') {
         // illegal match
         sp_error("Unsupported Host start with %s", host->module_name.c_str());
         return ERROR_CONFIG_PARSE_INVALID;
+    } else {
+        // host *.github.com; -> moc.buhtig
+        std::string wildcard_host = get_wildcard_host(host->module_name);
+
+        if (wildcard_hosts.count(wildcard_host)) {
+            sp_error("dup wildcard host %s", wildcard_host.c_str());
+            return ERROR_CONFIG_PARSE_INVALID;
+        }
+        wildcard_hosts[wildcard_host] = host;
     }
-    // else
-    // host *.github.com; -> moc.buhtig
-    std::string wildcard_host = get_wildcard_host(host->module_name);
-    wildcard_hosts[wildcard_host] = host;
     return SUCCESS;
 }
 
@@ -95,6 +110,32 @@ PHostModule HostModulesRouter::find_host(const std::string &host) {
     }
 
     return default_host;
+}
+
+error_t HostModulesRouter::merge(HostModulesRouter *router) {
+    error_t ret = SUCCESS;
+    if (router->default_host && default_host) {
+        sp_error("fail host merge dup default");
+        return ERROR_CONFIG_PARSE_INVALID;
+    }
+
+    for (auto& it : router->exact_hosts) {
+        if (exact_hosts.count(it.first)) {
+            sp_error("fail host merge dup exact %s", it.first.c_str());
+            return ERROR_CONFIG_PARSE_INVALID;
+        }
+        exact_hosts[it.first] = it.second;
+    }
+
+    for (auto& it : router->wildcard_hosts) {
+        if (wildcard_hosts.count(it.first)) {
+            sp_error("fail host merge dup wildcard %s", it.first.c_str());
+            return ERROR_CONFIG_PARSE_INVALID;
+        }
+        wildcard_hosts[it.first] = it.second;
+    }
+
+    return SUCCESS;
 }
 
 }  // namespace sps

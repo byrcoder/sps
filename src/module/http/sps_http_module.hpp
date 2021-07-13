@@ -24,7 +24,7 @@ SOFTWARE.
 #ifndef SPS_HTTP_MODULE_HPP
 #define SPS_HTTP_MODULE_HPP
 
-#include <list>
+#include <set>
 #include <memory>
 #include <string>
 
@@ -42,13 +42,19 @@ struct HttpConfCtx : public ConfCtx {
 static const ConfigOption http_options[] = {
         {"keepalive_timeout",   "location name",    OFFSET(keepalive_timeout),     CONF_OPT_TYPE_INT,    { .str = "10" }, },
         {"access_log",          "proxy pass",       OFFSET(access_log),            CONF_OPT_TYPE_STRING, { .str = "access.log" },   },
-        {"server",              "server sub module",       0,              CONF_OPT_TYPE_SUBMODULE, { .str = "" },   },
-
+        {"server",              "server module",   0,              CONF_OPT_TYPE_SUBMODULE, { .str = "" },   },
         {nullptr }
 };
 #undef OFFSET
 
+class HttpModule;
+typedef std::shared_ptr<HttpModule> PHttpModule;
+
 class HttpModule : public IModule {
+ public:
+    // merge http servers with same listen port
+    static std::list<PServerModule> http_servers;
+
  public:
     MODULE_CONSTRUCT(Http, http_options);
 
@@ -58,12 +64,8 @@ class HttpModule : public IModule {
 
  public:
     error_t install() override;
-
- public:
-    std::list<PServerModule> server_modules;
 };
 
-typedef std::shared_ptr<HttpModule> PHttpModule;
 
 MODULE_FACTORY(Http)
 class HttpModuleFactory;

@@ -80,9 +80,11 @@ typedef std::shared_ptr<ConfCtx> PConfCtx;
 class IModule;
 typedef std::shared_ptr<IModule> PIModule;
 
+typedef std::string ModuleType;
+
 class IModule : public std::enable_shared_from_this<IModule> {
  public:
-    IModule(std::string module_type, std::string module_name,
+    IModule(ModuleType module_type, std::string module_name,
             const ConfigOption* opts, PIModule parent);
     virtual ~IModule() = default;
 
@@ -93,7 +95,7 @@ class IModule : public std::enable_shared_from_this<IModule> {
     // every thing work in
     virtual error_t install();
 
-    virtual error_t merge_brother(PIModule& module);
+    virtual error_t merge_parent();
 
  public:
     virtual error_t pre_conf();
@@ -108,23 +110,20 @@ class IModule : public std::enable_shared_from_this<IModule> {
                   LineType &lt);
 
  public:
-    error_t add_submodule(std::string module_type, PIModule module);
-
- public:
     bool is_module(const std::string& name);
 
  private:
     error_t set_default();
 
  public:
-    std::string            module_type;
+    ModuleType             module_type;
     std::string            module_name;
     PConfCtx               conf;
     const ConfigOption*    opts;
     PIModule               parent;
 
  protected:
-    std::map<std::string, std::list<PIModule> > submodules;
+    std::map<ModuleType, std::list<PIModule> > subs;
 };
 
 class IModuleFactory {

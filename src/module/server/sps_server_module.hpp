@@ -25,8 +25,8 @@ SOFTWARE.
 #define SPS_SERVER_MODULE_HPP
 
 #include <memory>
+#include <set>
 #include <string>
-#include <vector>
 
 #include <sps_module.hpp>
 #include <sps_host_module.hpp>
@@ -53,7 +53,6 @@ static const ConfigOption server_options[] = {
         {"recv_timeout",    "recv_timeout",     OFFSET(recv_timeout), CONF_OPT_TYPE_UINT64,   { .str = "-1" }, },
         {"send_timeout",    "send_timeout",     OFFSET(send_timeout), CONF_OPT_TYPE_UINT64,   { .str = "-1" }, },
 
-
         {"reuse_port",      "reuse_port",       OFFSET(reuse_port),             CONF_OPT_TYPE_BOOL,   { .str = "off" }, },
         {"backlog",         "backlog",          OFFSET(backlog),             CONF_OPT_TYPE_INT,   { .str = "1024" }, },
         {"host",            "host sub module",       0,             CONF_OPT_TYPE_SUBMODULE,   { .str = "" }, },
@@ -61,7 +60,22 @@ static const ConfigOption server_options[] = {
 };
 #undef OFFSET
 
+class ServerCompare {
+ public:
+    bool operator()(const ServerConfCtx& s1, const ServerConfCtx& s2) const;
+};
+
+class ServerModule;
+typedef std::shared_ptr<ServerModule> PServerModule;
+
 class ServerModule : public IModule {
+ public:
+    static std::map<ServerConfCtx, PServerModule, ServerCompare> server_modules;
+
+ public:
+    static PServerModule get_server(ServerModule* sm);
+    static error_t       get_router(ServerModule* sm, PHostModulesRouter &hr);
+
  public:
     MODULE_CONSTRUCT(Server, server_options);
 
@@ -75,16 +89,17 @@ class ServerModule : public IModule {
  public:
     error_t pre_install(PIConnHandlerFactory factory);
 
+    error_t merge_server(PServerModule server_module);
+
+    error_t merge_hosts(std::vector<PHostModule>& hosts);
+
  public:
-    PHostModulesRouter hosts_router = std::make_shared<HostModulesRouter>();
+    std::vector<PHostModule> host_modules;
 
  private:
     PIConnHandlerFactory socket_handler;
-
- public:
-    static std::vector<PServer> servers;
+    PServer              server;
 };
-typedef std::shared_ptr<ServerModule> PServerModule;
 
 MODULE_FACTORY(Server)
 

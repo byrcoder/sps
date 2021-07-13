@@ -26,21 +26,19 @@ SOFTWARE.
 
 #include <memory>
 #include <string>
+
+#include <sps_host_module.hpp>
 #include <sps_module.hpp>
 
 namespace sps {
 
 // TODO: ADD add location for request
-struct LocationConfCtx : public ConfCtx {
-    std::string pattern;     // 匹配模式或者路径
-    std::string proxy_pass;  // 代理路径
+struct LocationConfCtx : public HostConfCtx {
 };
 
 #define OFFSET(x) offsetof(LocationConfCtx, x)
 static const ConfigOption loc_options[] = {
-        {"pattern",        "location name",    OFFSET(pattern),     CONF_OPT_TYPE_STRING, { .str = "/" }, },
-        {"proxy_pass",     "proxy pass",       OFFSET(proxy_pass),  CONF_OPT_TYPE_STRING, { .str = "" }, },
-        {nullptr }
+        HOST_OPTIONS,
 };
 #undef OFFSET
 

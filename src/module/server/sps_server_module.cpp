@@ -26,6 +26,34 @@ SOFTWARE.
 
 namespace sps {
 
+bool ServerCompare::operator()(const ServerConfCtx& s1, const ServerConfCtx& s2) const {
+    return s1.listen_port < s2.listen_port;
+}
+
+std::map<ServerConfCtx, PServerModule, ServerCompare> ServerModule::server_modules;
+
+PServerModule ServerModule::get_server(ServerModule *sm) {
+    auto server_conf = std::static_pointer_cast<sps::ServerConfCtx>(sm->conf);
+    if (server_modules.count(*server_conf)) {
+        return server_modules[*server_conf];
+    }
+    return nullptr;
+}
+
+error_t ServerModule::get_router(ServerModule* sm, PHostModulesRouter& hr) {
+    error_t ret = SUCCESS;
+    hr  = std::make_shared<HostModulesRouter>();
+
+    for (auto& h : sm->host_modules) {
+        if ((ret = hr->register_host(h)) != SUCCESS) {
+            sp_error("fail register host %s ret %d",
+                      h->module_name.c_str(), ret);
+            return ret;
+        }
+    }
+    return ret;
+}
+
 error_t ServerModule::post_sub_module(PIModule sub) {
     if (sub->is_module("host")) {
         auto h = std::dynamic_pointer_cast<HostModule>(sub);
@@ -34,7 +62,8 @@ error_t ServerModule::post_sub_module(PIModule sub) {
             exit(-1);
         }
 
-        return hosts_router->register_host(h);
+        host_modules.push_back(h);
+        return SUCCESS;
     } else {
         sp_error("server not found sub module type %s",
                   sub->module_type.c_str());
@@ -47,7 +76,7 @@ error_t ServerModule::post_sub_module(PIModule sub) {
 error_t ServerModule::install() {
     error_t ret         = SUCCESS;
     auto    server_conf = std::static_pointer_cast<sps::ServerConfCtx>(conf);
-    auto    server      = std::make_shared<Server>();
+    server              = std::make_shared<Server>();
 
     if (!socket_handler) {
         sp_error("fail install empty handler server!");
@@ -60,8 +89,8 @@ error_t ServerModule::install() {
         t = Transport::SRT;
     }
 #endif
-    ret = server->init(socket_handler, t, server_conf->send_timeout,
-                        server_conf->recv_timeout);
+    ret = server->init(socket_handler,
+            server_conf->send_timeout, server_conf->recv_timeout);
 
     if (ret != SUCCESS) {
         sp_error("fail install transport %u", t);
@@ -69,7 +98,7 @@ error_t ServerModule::install() {
     }
 
     if ((ret = server->listen("", server_conf->listen_port,
-            server_conf->reuse_port, server_conf->backlog)) != SUCCESS) {
+            server_conf->reuse_port, server_conf->backlog, t)) != SUCCESS) {
         sp_error("failed http listen port: %d, reuse: %u, backlog: %d, ret: %d",
                   server_conf->listen_port, server_conf->reuse_port,
                   server_conf->backlog, ret);
@@ -86,7 +115,8 @@ error_t ServerModule::install() {
              server_conf->listen_port, server_conf->reuse_port,
              server_conf->backlog);
 
-    servers.push_back(server);
+    server_modules[*server_conf] =
+            std::dynamic_pointer_cast<ServerModule>(shared_from_this());
     return ret;
 }
 
@@ -95,6 +125,14 @@ error_t ServerModule::pre_install(PIConnHandlerFactory factory) {
     return SUCCESS;
 }
 
-std::vector<PServer> ServerModule::servers;
+error_t ServerModule::merge_server(PServerModule server_module) {
+    return merge_hosts(server_module->host_modules);
+}
+
+error_t ServerModule::merge_hosts(std::vector<PHostModule>& hosts) {
+    host_modules.insert(host_modules.end(), hosts.begin(), hosts.end());
+    return SUCCESS;
+}
+
 
 }  // namespace sps

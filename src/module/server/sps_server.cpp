@@ -35,17 +35,21 @@ void IConnHandler::on_stop() {
     SingleInstance<ConnManager>::get_instance().cancel(shared_from_this());
 }
 
-error_t Server::init(PIConnHandlerFactory f, Transport transport,
-                     utime_t send_timeout, utime_t rcv_timeout) {
+error_t Server::init(PIConnHandlerFactory f,
+                     utime_t stm, utime_t rtm) {
     factory         = std::move(f);
-    tran            = transport;
+    recv_timeout    = rtm;
+    send_timeout    = stm;
 
-    this->recv_timeout   = rcv_timeout;
-    this->send_timeout   = send_timeout;
     return SUCCESS;
 }
 
-int Server::listen(std::string ip, int port, bool reuse_port, int backlog) {
+int Server::listen(std::string ip, int port, bool reuse_port, int backlog,
+                   Transport transport) {
+    tran        = transport;
+    listen_ip   = ip;
+    listen_port = port;
+
     server_socket = SingleInstance<ServerSocketFactory>::get_instance()
             .create_ss(tran);
     return server_socket->listen(ip, port, reuse_port, backlog);

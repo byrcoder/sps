@@ -29,6 +29,8 @@ SOFTWARE.
 
 namespace sps {
 
+std::list<PServerModule> HttpModule::http_servers;
+
 error_t HttpModule::post_sub_module(PIModule sub) {
     if (sub->is_module("server")) {
         auto s = std::dynamic_pointer_cast<ServerModule>(sub);
@@ -37,7 +39,7 @@ error_t HttpModule::post_sub_module(PIModule sub) {
             exit(-1);
         }
 
-        server_modules.push_back(s);
+        http_servers.push_back(s);
     } else {
         sp_error("http sub module %s not found", sub->module_type.c_str());
         exit(-1);
@@ -52,19 +54,34 @@ error_t HttpModule::install() {
     const auto& http_404_phase =
             SingleInstance<sps::Http404PhaseHandler>::get_instance_share_ptr();
 
-    for (auto& s : server_modules) {
-        auto handler     = std::make_shared<sps::ServerPhaseHandler>();
+    for (auto& s : http_servers) {
+        PServerModule ps = ServerModule::get_server(s.get());
+        PHostModulesRouter hr;
+
+        if (ps) {
+            if ((ret = ps->merge_server(s)) != SUCCESS) {
+                sp_error("fail merge ret %d", ret);
+                return ret;
+            }
+            continue;
+        }
+
+        if ((ret = ServerModule::get_router(s.get(), hr))
+                != SUCCESS) {
+            sp_error("fail get router ret %d", ret);
+            return ret;
+        }
+
+        auto http_handler = std::make_shared<sps::ServerPhaseHandler>();
 
         // http header parser
-        handler->reg(std::make_shared<sps::HttpParsePhaseHandler>());
-
+        http_handler->reg(std::make_shared<sps::HttpParsePhaseHandler>());
         // host router -> do host handler or default return 404
-        handler->reg(std::make_shared<sps::HostRouterPhaseHandler>(
-            s->hosts_router,
-            std::make_shared<sps::HttpAdapterPhaseHandler>(),
-            http_404_phase));
+        http_handler->reg(std::make_shared<sps::HostRouterPhaseHandler>(
+                          hr, std::make_shared<sps::HttpAdapterPhaseHandler>(),
+                          http_404_phase));
 
-        s->pre_install(std::make_shared<HttpConnHandlerFactory>(handler));
+        s->pre_install(std::make_shared<HttpConnHandlerFactory>(http_handler));
 
         if ((ret = s->install()) != SUCCESS) {
             sp_error("failed install %s http server",

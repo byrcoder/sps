@@ -41,7 +41,7 @@ IModule::IModule(std::string module_type, std::string module_name,
 error_t IModule::install() {
     error_t ret = SUCCESS;
 
-    for (auto& it : submodules) {
+    for (auto& it : subs) {
         for (auto& sub : it.second) {
             if ((ret = sub->install()) != SUCCESS) {
                 return ret;
@@ -51,7 +51,7 @@ error_t IModule::install() {
     return SUCCESS;
 }
 
-error_t IModule::merge_brother(PIModule &module) {
+error_t IModule::merge_parent() {
     return SUCCESS;
 }
 
@@ -64,7 +64,8 @@ error_t IModule::post_conf() {
 }
 
 error_t IModule::post_sub_module(PIModule sub) {
-    return add_submodule(sub->module_type, sub);
+    subs[sub->module_type].push_back(sub);
+    return SUCCESS;
 }
 
 error_t IModule::init_conf(PIReader rd) {
@@ -190,8 +191,12 @@ error_t IModule::init_conf(PIReader rd) {
         return ERROR_CONFIG_PARSE_INVALID;
     }
 
-    ret = post_conf();  // post the value
+    ret = merge_parent();
+    if (ret != SUCCESS) {
+        return ret;
+    }
 
+    ret = post_conf();  // post the value
     if (ret != SUCCESS) {
         return ret;
     }
@@ -288,11 +293,6 @@ error_t IModule::parse(const std::string &line, std::string &cmd,
 
     sp_debug("parse line (%s)->(%s) size:%lu", cmd.c_str(),
               arg.c_str(), args.size());
-    return SUCCESS;
-}
-
-error_t IModule::add_submodule(std::string module_type, PIModule module) {
-    submodules[module_type].push_back(module);
     return SUCCESS;
 }
 

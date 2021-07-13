@@ -80,10 +80,11 @@ class Server : public ICoHandler {
     ~Server() override = default;
 
  public:
-    error_t init(PIConnHandlerFactory factory, Transport transport,
+    error_t init(PIConnHandlerFactory factory,
                  utime_t send_timeout, utime_t  rcv_timeout);
+
     error_t listen(std::string ip, int port, bool reuse_port = true,
-                   int backlog = 1024);
+                   int backlog = 1024, Transport t = DEFAULT);
 
  public:
     virtual error_t accept();
@@ -95,6 +96,8 @@ class Server : public ICoHandler {
     utime_t                    recv_timeout = -1;
     utime_t                    send_timeout = -1;
     Transport                  tran;
+    std::string                listen_ip;
+    std::string                listen_port;
 };
 typedef std::shared_ptr<Server> PServer;
 
