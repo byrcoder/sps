@@ -22,6 +22,8 @@ SOFTWARE.
 *****************************************************************************/
 
 #include <sps_server_module.hpp>
+
+#include <sps_host_global_module.hpp>
 #include <sps_log.hpp>
 
 namespace sps {
@@ -68,6 +70,54 @@ error_t ServerModule::post_sub_module(PIModule sub) {
         sp_error("server not found sub module type %s",
                   sub->module_type.c_str());
         exit(-1);
+    }
+
+    return SUCCESS;
+}
+
+error_t ServerModule::merge(PIModule& module) {
+    error_t ret = SUCCESS;
+
+    if (!module) {
+        sp_warn("merge null!");
+        return ret;
+    }
+
+    if (module->is_module("globalhost")) {
+        sp_info("merge globalhost");
+        merge_global(module);
+    }
+
+    if (module->is_module("root")) {
+        for (auto it : module->subs) {
+            if (it.first != "globalhost") {
+                continue;
+            }
+
+            for (auto m : it.second) {
+                merge_global(m);
+            }
+        }
+    }
+
+    return ret;
+}
+
+error_t ServerModule::merge_global(PIModule& module) {
+    if (!module->is_module("globalhost")) {
+        return SUCCESS;
+    }
+
+    auto dm = dynamic_cast<GlobalHostModule*>(module.get());
+
+    if (!dm) {
+        sp_error("not globalhost module!");
+        exit(-1);
+    }
+
+    for (auto& hm : dm->host_modules) {
+        sp_info("server merge global host %s", hm->module_name.c_str());
+        host_modules.push_back(hm);
     }
 
     return SUCCESS;

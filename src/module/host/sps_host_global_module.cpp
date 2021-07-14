@@ -21,33 +21,40 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#include <sps_root_module.hpp>
-#include <sps_host_module.hpp>
+//
+// Created by byrcoder on 2021/7/14.
+//
+
 #include <sps_host_global_module.hpp>
-#include <sps_host_loc_module.hpp>
-#include <sps_http_module.hpp>
-#include <sps_server_module.hpp>
-#include <sps_stream_module.hpp>
-#include <sps_upstream_module.hpp>
 
 namespace sps {
 
-#define MODULE_INSTANCE(NAME) (std::make_shared<NAME##ModuleFactory>())
+std::vector<PGlobalHostModule> GlobalHostModule::global_hosts;
 
-PIModuleFactory sps_modules[] = {
-        MODULE_INSTANCE(Root),
+error_t GlobalHostModule::post_sub_module(PIModule sub) {
+    if (sub->is_module("host")) {
+        auto h = std::dynamic_pointer_cast<HostModule>(sub);
+        if (!h || sub->module_name.empty()) {
+            sp_error("server not found host type %s", sub->module_name.c_str());
+            exit(-1);
+        }
 
-        MODULE_INSTANCE(Http),
-        MODULE_INSTANCE(Server),
-        MODULE_INSTANCE(Host),
-        MODULE_INSTANCE(GlobalHost),
-        MODULE_INSTANCE(Location),
-        MODULE_INSTANCE(Stream),
+        host_modules.push_back(h);
+        return SUCCESS;
+    } else {
+        sp_error("global host not found sub module type %s",
+                 sub->module_type.c_str());
+        exit(-1);
+    }
 
-        MODULE_INSTANCE(Rtmp),
+    return SUCCESS;
+}
 
-        MODULE_INSTANCE(UpStream),
-        nullptr
-};
+error_t GlobalHostModule::post_conf() {
+    global_hosts.push_back(std::dynamic_pointer_cast<GlobalHostModule>(
+            shared_from_this()));
+    return SUCCESS;
+}
 
-}  // namespace sps
+
+}

@@ -33,7 +33,7 @@ namespace sps {
 IModule::IModule(std::string module_type, std::string module_name,
                  const ConfigOption *opts, PIModule parent) {
     this->module_type   = std::move(module_type);
-    this->module_name    = std::move(module_name);
+    this->module_name   = std::move(module_name);
     this->opts   = opts;
     this->parent = std::move(parent);
 }
@@ -51,21 +51,33 @@ error_t IModule::install() {
     return SUCCESS;
 }
 
-error_t IModule::merge_parent() {
-    return SUCCESS;
-}
-
 error_t IModule::pre_conf() {
     return SUCCESS;
 }
 
 error_t IModule::post_conf() {
+    error_t ret = SUCCESS;
+    auto self   = shared_from_this();
+
+    sp_info("%s -> post conf", module_type.c_str());
+    for (auto& sub : subs) {
+        for (auto& v : sub.second) {
+            if ((ret = v->merge(self)) != SUCCESS) {
+                sp_error("failed merge parent ret %d", ret);
+                return ret;
+            }
+        }
+    }
     return SUCCESS;
 }
 
 error_t IModule::post_sub_module(PIModule sub) {
     subs[sub->module_type].push_back(sub);
     return SUCCESS;
+}
+
+error_t IModule::merge(PIModule& module) {
+   return SUCCESS;
 }
 
 error_t IModule::init_conf(PIReader rd) {
@@ -191,11 +203,6 @@ error_t IModule::init_conf(PIReader rd) {
         return ERROR_CONFIG_PARSE_INVALID;
     }
 
-    ret = merge_parent();
-    if (ret != SUCCESS) {
-        return ret;
-    }
-
     ret = post_conf();  // post the value
     if (ret != SUCCESS) {
         return ret;
@@ -221,6 +228,9 @@ error_t IModule::parse(const std::string &line, std::string &cmd,
         }
 
         if (found_end) {
+            if (tmp_arg[0] == '#') {
+                break; // ignore #
+            }
             sp_error("Fatal at least two end flag found %s.", line.c_str());
             return ERROR_CONFIG_PARSE_INVALID;
         }

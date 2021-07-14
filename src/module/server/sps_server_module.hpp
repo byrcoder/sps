@@ -83,6 +83,11 @@ class ServerModule : public IModule {
 
     error_t post_sub_module(PIModule sub) override;
 
+    error_t merge(PIModule& module) override;
+
+ public:
+    error_t merge_global(PIModule& module);
+
  public:
     error_t install() override;
 

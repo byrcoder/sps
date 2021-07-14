@@ -95,14 +95,14 @@ class IModule : public std::enable_shared_from_this<IModule> {
     // every thing work in
     virtual error_t install();
 
-    virtual error_t merge_parent();
-
  public:
     virtual error_t pre_conf();
 
     virtual error_t post_conf();
 
     virtual error_t post_sub_module(PIModule sub);
+
+    virtual error_t merge(PIModule& module);
 
     error_t init_conf(PIReader rd);
 
@@ -122,7 +122,7 @@ class IModule : public std::enable_shared_from_this<IModule> {
     const ConfigOption*    opts;
     PIModule               parent;
 
- protected:
+ public:
     std::map<ModuleType, std::list<PIModule> > subs;
 };
 

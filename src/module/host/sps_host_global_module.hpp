@@ -21,57 +21,49 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_HTTP_MODULE_HPP
-#define SPS_HTTP_MODULE_HPP
+#ifndef SPS_HOST_GLOBAL_MODULE_HPP
+#define SPS_HOST_GLOBAL_MODULE_HPP
 
-#include <set>
 #include <memory>
-#include <string>
+#include <vector>
 
-#include <sps_module.hpp>
-#include <sps_server_module.hpp>
+#include <sps_host_module.hpp>
 
 namespace sps {
 
-struct HttpConfCtx : public ConfCtx {
-    int            keepalive_timeout;
-    std::string    access_log;
+struct GlobalHostConfCtx : public ConfCtx {
+
 };
 
-#define OFFSET(x) offsetof(HttpConfCtx, x)
-static const ConfigOption http_options[] = {
-        {"keepalive_timeout",   "location name",    OFFSET(keepalive_timeout),     CONF_OPT_TYPE_INT,    { .str = "10" }, },
-        {"access_log",          "proxy pass",       OFFSET(access_log),            CONF_OPT_TYPE_STRING, { .str = "access.log" },   },
-        {"server",              "server module",   0,              CONF_OPT_TYPE_SUBMODULE, { .str = "" },   },
+#define OFFSET(x) offsetof(GlobalHostConfCtx, x)
+static const ConfigOption global_host_options[] = {
+        {"host",            "host sub module",       0,             CONF_OPT_TYPE_SUBMODULE,   { .str = "" }, },
         {nullptr }
 };
 #undef OFFSET
 
-class HttpModule;
-typedef std::shared_ptr<HttpModule> PHttpModule;
+class GlobalHostModule;
+typedef std::shared_ptr<GlobalHostModule> PGlobalHostModule;
 
-class HttpModule : public IModule {
+class GlobalHostModule : public IModule {
  public:
-    // merge http servers with same listen port
-    static std::list<PServerModule> http_servers;
+    static std::vector<PGlobalHostModule> global_hosts;
 
  public:
-    MODULE_CONSTRUCT(Http, http_options);
+    MODULE_CONSTRUCT(GlobalHost, global_host_options);
 
-    MODULE_CREATE_CTX(Http);
+    MODULE_CREATE_CTX(GlobalHost);
 
     error_t post_sub_module(PIModule sub) override;
 
-    error_t merge(PIModule& module) override;
+    error_t post_conf() override;
 
  public:
-    error_t install() override;
+    std::vector<PHostModule> host_modules;
 };
 
-
-MODULE_FACTORY(Http)
-class HttpModuleFactory;
+MODULE_FACTORY(GlobalHost)
 
 }  // namespace sps
 
-#endif  // SPS_HTTP_MODULE_HPP
+#endif  // SPS_HOST_GLOBAL_MODULE_HPP

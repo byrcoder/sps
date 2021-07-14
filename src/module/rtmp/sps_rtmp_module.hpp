@@ -63,11 +63,13 @@ class RtmpModule : public IModule {
 
     error_t post_sub_module(PIModule sub) override;
 
+    error_t merge(PIModule& module) override;
+
  public:
     error_t install() override;
 
  public:
-    std::list<PServerModule> server_modules;
+    std::list<PServerModule> rtmp_servers;
 };
 
 typedef std::shared_ptr<RtmpModule> PRtmpModule;

@@ -48,6 +48,19 @@ error_t HttpModule::post_sub_module(PIModule sub) {
     return SUCCESS;
 }
 
+error_t HttpModule::merge(PIModule& module) {
+    error_t ret = SUCCESS;
+
+    sp_info("http server merge %s", module->module_type.c_str());
+    for (auto& hs : http_servers) {
+        if ((ret = hs->merge(module)) != SUCCESS) {
+            sp_error("http server merge fail ret %d", ret);
+            return ret;
+        }
+    }
+    return ret;
+}
+
 error_t HttpModule::install() {
     error_t ret = SUCCESS;
 

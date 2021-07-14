@@ -42,7 +42,7 @@ error_t RtmpModule::post_sub_module(PIModule sub) {
             exit(-1);
         }
 
-        server_modules.push_back(s);
+        rtmp_servers.push_back(s);
     } else {
         sp_error("http sub module %s not found", sub->module_type.c_str());
         exit(-1);
@@ -51,12 +51,26 @@ error_t RtmpModule::post_sub_module(PIModule sub) {
     return SUCCESS;
 }
 
+error_t RtmpModule::merge(PIModule& module) {
+    error_t ret = SUCCESS;
+
+    sp_info("rtmp server merge %s %lu", module->module_type.c_str(),
+             rtmp_servers.size());
+    for (auto& rs : rtmp_servers) {
+        if ((ret = rs->merge(module)) != SUCCESS) {
+            sp_error("rtmp server merge fail ret %d", ret);
+            return ret;
+        }
+    }
+    return ret;
+}
+
 error_t RtmpModule::install() {
     error_t ret = SUCCESS;
     const auto& rtmp_404 =
             SingleInstance<sps::RtmpServer404Handler>::get_instance_share_ptr();
 
-    for (auto& s : server_modules) {
+    for (auto& s : rtmp_servers) {
         PServerModule ps = ServerModule::get_server(s.get());
         PHostModulesRouter hr;
 
