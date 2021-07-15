@@ -32,11 +32,11 @@ namespace sps {
 HttpAdapterPhaseHandler::HttpAdapterPhaseHandler()
         : IPhaseHandler("adapter-handler") {
     proxy_handler  = std::make_unique<HttpProxyPhaseHandler>();
-    stream_handler = std::make_unique<StreamPhaseHandler>();
+    stream_handler = std::make_unique<HttpStreamPhaseHandler>();
 }
 
 error_t HttpAdapterPhaseHandler::handler(ConnContext &ctx) {
-    if (ctx.host->stream_module) {
+    if (ctx.host->is_streaming()) {
         return stream_handler->handler(ctx);
     } else {
         return proxy_handler->handler(ctx);

@@ -57,6 +57,8 @@ class AVDumpCacheStream : public CacheStream<PAVPacket> {
     utime_t recv_timeout;
 };
 
+typedef std::shared_ptr<AVDumpCacheStream> PAVDumpCacheStream;
+
 }  // namespace sps
 
 #endif  // SPS_AVFORMAT_CACHE_HPP

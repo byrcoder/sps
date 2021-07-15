@@ -21,12 +21,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-//
-// Created by byrcoder on 2021/6/15.
-//
-
-#ifndef SPS_STREAM_PHASE_HANDLER_HPP
-#define SPS_STREAM_PHASE_HANDLER_HPP
+#ifndef SPS_HTTP_STREAM_PHASE_HANDLER_HPP
+#define SPS_HTTP_STREAM_PHASE_HANDLER_HPP
 
 #include <sps_host_phase_handler.hpp>
 
@@ -35,13 +31,9 @@ SOFTWARE.
 
 namespace sps {
 
-class StreamCache : public InfiniteCache<PAVPacket>,
-                    public SingleInstance<StreamCache> {
-};
-
-class StreamPhaseHandler : public IPhaseHandler {
+class HttpStreamPhaseHandler : public IPhaseHandler {
  public:
-    StreamPhaseHandler();
+    HttpStreamPhaseHandler();
 
  public:
     error_t handler(ConnContext& ctx) override;
@@ -49,4 +41,4 @@ class StreamPhaseHandler : public IPhaseHandler {
 
 }  // namespace sps
 
-#endif  // SPS_STREAM_PHASE_HANDLER_HPP
+#endif  // SPS_HTTP_STREAM_PHASE_HANDLER_HPP

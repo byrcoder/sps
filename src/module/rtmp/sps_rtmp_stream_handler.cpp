@@ -35,7 +35,7 @@ SOFTWARE.
 #include <sps_avformat_rtmpdec.hpp>
 #include <sps_avformat_rtmpenc.hpp>
 
-#include <librtmp/sps_librtmp_packet.hpp>
+#include <sps_librtmp_packet.hpp>
 #include <sps_rtmp_server.hpp>
 #include <sps_rtmp_server_handler.hpp>
 
@@ -65,20 +65,16 @@ error_t RtmpServerStreamHandler::handler(ConnContext &ctx) {
 }
 
 error_t RtmpServerStreamHandler::publish(ConnContext &ctx) {
-    auto stream_ctx = ctx.host->stream_module ?
-            std::static_pointer_cast<StreamConfCtx>(
-                    ctx.host->stream_module->conf) : nullptr;
-
     // cannot publish when edge
-    if (!stream_ctx) {
+    if (!ctx.host->is_streaming()) {
         sp_error("fatal not support rtmp stream publish source! conf null");
         return ERROR_STREAM_NOT_CONF;
     }
 
-    if (stream_ctx->edge) {
-        sp_error("fatal edge cannot publish %d, url: %s, pass_proxy: %s",
-                  stream_ctx->edge, stream_ctx->avformat.c_str(),
-                  stream_ctx->pass_proxy.c_str());
+    if (!ctx.host->publish()) {
+        sp_error("fatal edge cannot publish format: %s, role: %s",
+                  ctx.host->stream_format().c_str(),
+                  ctx.host->role().c_str());
         return ERROR_AVFORMAT_SOURCE_NOT_SUPPORT;
     }
 
@@ -88,18 +84,15 @@ error_t RtmpServerStreamHandler::publish(ConnContext &ctx) {
     RtmpDemuxer demuxer(io);
 
     std::string url    =  ctx.req->host + ctx.req->get_path();
-    auto& stream_store = StreamCache::SingleInstance().get_instance();
-    auto cache         = stream_store.get(url);
+    auto cache         = StreamCache::get_streamcache(url);
 
     if (cache) {
         sp_error("cannot publish twice");
         return ERROR_RTMP_HAS_SOURCE;
     }
 
-    cache = std::make_shared<AVGopCacheStream>();
-    stream_store.put(url, cache);
-
-    sp_trace("create stream cache url %s", url.c_str());
+    cache = StreamCache::create_av_streamcache(url);
+    sp_trace("Publish url %s", url.c_str());
 
     do {
         PSpsAVPacket packet;
@@ -111,7 +104,7 @@ error_t RtmpServerStreamHandler::publish(ConnContext &ctx) {
     } while (true);
 
 final:
-    stream_store.erase(url);
+    StreamCache::release_av_streamcache(url);
     return ret;  // ignore
 }
 
@@ -119,23 +112,20 @@ error_t RtmpServerStreamHandler::play(ConnContext &ctx) {
     auto    rt  = dynamic_cast<RtmpConnHandler*>(ctx.conn);
     error_t ret = SUCCESS;
 
+    std::string url  =  ctx.req->host + ctx.req->get_path();
+    auto cache       =  StreamCache::get_streamcache(url);
+    auto cc          =  StreamCache::get_client_streamcache(url, 10 * 1000 * 1000);
+
     rt->hk->set_recv_timeout(SPS_IO_NO_TIMEOUT);
 
-    std::string url    =  ctx.req->host + ctx.req->get_path();
-    auto& stream_store =  StreamCache::SingleInstance().get_instance();
-    auto cache         =  stream_store.get(url);
-    auto stream_ctx = ctx.host->stream_module ?
-                      std::static_pointer_cast<StreamConfCtx>(
-                              ctx.host->stream_module->conf) : nullptr;
-
-    if (!stream_ctx) {
+    if (!ctx.host->is_streaming()) {
         sp_error("rtmp stream has no config!");
         return ERROR_STREAM_NOT_CONF;
     }
 
     if (!cache) {
         // cannot publish when edge
-        if (!stream_ctx->edge) {
+        if (ctx.host->publish()) {
             sp_error("rtmp stream has no source! url %s", url.c_str());
             return ERROR_RTMP_NO_SOURCE;
         }
@@ -143,17 +133,14 @@ error_t RtmpServerStreamHandler::play(ConnContext &ctx) {
         sp_error("rtmp edge not support!");
         return ERROR_RTMP_NOT_IMPL;
     }
-    auto client_cache = std::make_shared<AVDumpCacheStream>(10 * 1000 * 1000);
-    cache->sub(client_cache);
-    auto& obj_cache = *cache.get();
-    client_cache->copy_from(obj_cache);
-
     auto    io  = std::make_shared<RtmpUrlProtocol>(rt->hk);
     RtmpAVMuxer muxer(io);
 
+    sp_trace("Playing url %s", url.c_str());
+
     do {
         std::list<PAVPacket> vpb;
-        int n = client_cache->dump(vpb, false);
+        int n = cc->dump(vpb, false);
 
         if (n == 0) {
             ret = ERROR_SOCKET_TIMEOUT;
@@ -170,7 +157,7 @@ error_t RtmpServerStreamHandler::play(ConnContext &ctx) {
     } while (ret == SUCCESS);
 
 final:
-    cache->cancel(client_cache);
+    cache->cancel(cc);
     return ret;  // ignore
 }
 

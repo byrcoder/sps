@@ -46,7 +46,7 @@ error_t FlvAVMuxer::write_header(PSpsAVPacket& buffer) {
             'F', 'L', 'V',
             0x01,  // version
             0x05,     // FLV_HEADER_FLAG_HASVIDEO | FLV_HEADER_FLAG_HASAUDIO
-            0x00, 0x00, 0x00, 0x04     // HEADER size
+            0x00, 0x00, 0x00, 0x09     // HEADER size
     };
 
     error_t ret = SUCCESS;

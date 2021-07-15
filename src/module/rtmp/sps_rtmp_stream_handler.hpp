@@ -24,7 +24,7 @@ SOFTWARE.
 #ifndef SPS_RTMP_STREAM_HANDLER_HPP
 #define SPS_RTMP_STREAM_HANDLER_HPP
 
-#include <sps_stream_phase_handler.hpp>
+#include <sps_stream_cache.hpp>
 
 namespace sps {
 

@@ -79,7 +79,7 @@ include_directories(
         ${PROJECT_SOURCE_DIR}/src/log
 
         ${PROJECT_SOURCE_DIR}/src/module/
-        ${PROJECT_SOURCE_DIR}/src/module/core/
+        ${PROJECT_SOURCE_DIR}/src/module/root/
         ${PROJECT_SOURCE_DIR}/src/module/host/
         ${PROJECT_SOURCE_DIR}/src/module/http/
         ${PROJECT_SOURCE_DIR}/src/module/rtmp/
@@ -100,7 +100,7 @@ file(GLOB SRC_LIST
 
         "${PROJECT_SOURCE_DIR}/src/module/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/module/module/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/module/core/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/module/root/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/module/host/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/module/http/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/module/rtmp/*.cpp"

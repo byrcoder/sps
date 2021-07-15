@@ -41,6 +41,9 @@ SOFTWARE.
 
 namespace sps {
 
+extern const char* krole_proxy;
+extern const char* krole_source;
+
 struct HostConfCtx : public ConfCtx {
     int         enabled;  // off when disabled, on enabled
     std::string pass_proxy;   // address
@@ -68,6 +71,18 @@ class HostModule : public IModule {
     error_t post_sub_module(PIModule sub) override;
 
  public:
+    bool        enabled();
+    bool        publish();
+    bool        proxy();
+    bool        is_streaming();
+    std::string stream_format();
+    std::string pass_proxy();
+    std::string role();
+
+ public:
+    /**
+     * @deprecated stream module not used
+     */
     PStreamModule stream_module;
 };
 typedef std::shared_ptr<HostModule> PHostModule;

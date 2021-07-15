@@ -25,6 +25,9 @@ SOFTWARE.
 
 namespace sps {
 
+const char* krole_proxy = "proxy";
+const char* krole_source = "source";
+
 error_t HostModule::post_sub_module(PIModule sub) {
     if (sub->is_module("stream")) {
         stream_module = std::dynamic_pointer_cast<StreamModule>(sub);
@@ -42,6 +45,41 @@ error_t HostModule::post_sub_module(PIModule sub) {
         sp_error("http not found sub module type %s", sub->module_type.c_str());
         return ERROR_MODULE_TYPE_NOT_MATCH;
     }
+}
+
+bool HostModule::enabled() {
+    auto host = static_cast<HostConfCtx*>(conf.get());
+    return host->enabled != 0;
+}
+
+bool HostModule::publish() {
+    auto host = static_cast<HostConfCtx*>(conf.get());
+    return host->role == krole_source;
+}
+
+bool HostModule::proxy() {
+    auto host = static_cast<HostConfCtx*>(conf.get());
+    return host->role == krole_proxy;
+}
+
+bool HostModule::is_streaming() {
+    auto host = static_cast<HostConfCtx*>(conf.get());
+    return host->streaming != 0;
+}
+
+std::string HostModule::stream_format() {
+    auto host = static_cast<HostConfCtx*>(conf.get());
+    return host->stream_avformat;
+}
+
+std::string HostModule::pass_proxy() {
+    auto host = static_cast<HostConfCtx*>(conf.get());
+    return host->pass_proxy;
+}
+
+std::string HostModule::role() {
+    auto host = static_cast<HostConfCtx*>(conf.get());
+    return host->role;
 }
 
 std::string HostModulesRouter::get_wildcard_host(std::string host) {

@@ -21,56 +21,53 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#include <sps_avformat_enc.hpp>
+//
+// Created by byrcoder on 2021/6/15.
+//
 
-#include <algorithm>
+#ifndef SPS_STREAM_CACHE_HPP
+#define SPS_STREAM_CACHE_HPP
 
-#include <sps_log.hpp>
+#include <sps_host_phase_handler.hpp>
+
+#include <sps_avformat_cache.hpp>
+#include <sps_cache.hpp>
 
 namespace sps {
 
-const IAVOutputFormat * IAVMuxer::name() {
-    return fmt;
-}
+class StreamCache : public InfiniteCache<PAVPacket>,
+                    public SingleInstance<StreamCache> {
+ public:
+    typedef typename ICacheStream<PAVPacket>::PICacheStream PICacheStream;
 
-IAVOutputFormat::IAVOutputFormat(const char *name, const char *ext) {
-    this->name = name;
-    this->ext  = ext;
-}
-
-bool IAVOutputFormat::match(const char *e) const {
-    int n = strlen(ext);
-    int m = strlen(ext);
-    return memcmp(ext, e, std::max(n, m)) == 0;
-}
-
-PIAVMuxer IAVOutputFormat::create2(PIWriter pw) {
-    auto muxer = _create(std::move(pw));
-    if (muxer) {
-        muxer->fmt = this;
+ public:
+    static PICacheStream get_streamcache(const std::string& url) {
+        return get_instance().get(url);
     }
-    return muxer;
-}
 
-PIAVMuxer AVEncoderFactory::create(PIWriter p, PRequestUrl &url) {
-    auto& fmts = refs();
+    static PICacheStream create_av_streamcache(const std::string& url) {
+        auto cache = std::make_shared<AVGopCacheStream>();
+        get_instance().put(url, cache);
+        return cache;
+    }
 
-    for (auto& f : fmts) {
-        if (f->match(url->get_ext())) {
-            return f->create2(std::move(p));
+    static void release_av_streamcache(const std::string& url) {
+        get_instance().erase(url);
+    }
+
+    static PAVDumpCacheStream get_client_streamcache(const std::string& url, utime_t timeout) {
+        auto cache = get_streamcache(url);
+        if (!cache) {
+            return nullptr;
         }
+        auto client_cache = std::make_shared<AVDumpCacheStream>(timeout);
+        cache->sub(client_cache);
+        auto& obj_cache = *cache.get();
+        client_cache->copy_from(obj_cache);
+        return client_cache;
     }
-    return nullptr;
-}
-
-PIAVMuxer AVEncoderFactory::create(PIWriter p, const std::string &url) {
-    PRequestUrl purl = std::make_shared<RequestUrl>();
-
-    if (purl->parse_url(url) != SUCCESS) {
-        sp_error("Invalid url %s.", url.c_str());
-        return nullptr;
-    }
-    return create(std::move(p), purl);
-}
+};
 
 }  // namespace sps
+
+#endif  // SPS_STREAM_CACHE_HPP
