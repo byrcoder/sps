@@ -95,6 +95,7 @@ error_t FlvDemuxer::read_packet(PSpsAVPacket& buffer) {
         sp_error("flv head not enough %d", ret);
         return ret;
     }
+
     previous_size = rd->read_int32();  // previous
     tag_type      = rd->read_int8();   // tag_type
     data_size     = rd->read_int24();  // data_size
@@ -170,9 +171,20 @@ error_t FlvDemuxer::read_packet(PSpsAVPacket& buffer) {
             pts = dts + cts;
             data_size = data_size - 4;
         }
+
+        if (frame_type == 0x10) {
+            sp_info("%d. flv encode video stream pkt: %d, flag: %2X, "
+                    "data_size: %10.d, dts: %lld, pts: %lld, cts: %lld",
+                    buffer->number, pkt_type, buffer->flags,
+                    buffer->size(), buffer->dts,  buffer->pts,
+                    buffer->pts - buffer->dts);
+        }
+
         sp_debug("frametype: %2X, codecid: %2X, dts: %12lld, "
                  "pts: %12lld, cts: %11d, data_size: %11u",
                 frame_type, codecid, dts, pts, cts, data_size);
+    } else if (stream_type == AV_STREAM_TYPE_SUBTITLE) {
+        sp_trace("metadata recv");
     }
 
     if (data_size <= 0) {
@@ -188,7 +200,7 @@ error_t FlvDemuxer::read_packet(PSpsAVPacket& buffer) {
 
     rd->skip_bytes(data_size);
 
-    sp_info("packet stream: %u, pkt: %d, flag: %2X, previous: %10u, "
+    sp_debug("packet stream: %u, pkt: %d, flag: %2X, previous: %10u, "
             "data_size: %10.u, dts: %11lld, pts: %11lld, cts: %11d",
             stream_type, pkt_type, flags, previous_size, data_size,
             dts, pts, cts);

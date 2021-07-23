@@ -129,12 +129,14 @@ error_t HttpRequestSocket::read_chunked_data(void* buf, size_t size, size_t& nre
     error_t ret  =  SUCCESS;
 
     if (nb_chunked_size != 0) {
-        ret = get_io()->read_fully(buf, size, (ssize_t *) &nread);
+        ret = get_io()->read(buf, size, nread);
     }
 
     nb_chunked_left -= nread;  // ignore ret
 
-    sp_debug("read chunked data ret:%d, nread:%lu", ret, nread);
+    sp_debug("read chunked data nb_chunked_size: %lu, "
+            "nb_chunked_left: %lu, ret: %d, nread: %lu",
+            nb_chunked_size, nb_chunked_left, ret, nread);
 
     if (ret == SUCCESS && nb_chunked_left == 0) {
         char tail[2];

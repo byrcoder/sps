@@ -21,39 +21,29 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-//
-// Created by byrcoder on 2021/6/16.
-//
+#ifndef SPS_AVFORMAT_TSDEC_HPP
+#define SPS_AVFORMAT_TSDEC_HPP
 
 #include <sps_avformat_dec.hpp>
-#include <sps_avformat_enc.hpp>
-
-#include <sps_avformat_flvdec.hpp>
-#include <sps_avformat_flvenc.hpp>
-
-#include <sps_avformat_rtmpdec.hpp>
-#include <sps_avformat_rtmpenc.hpp>
-
-#include <sps_avformat_tsdec.hpp>
 
 namespace sps {
 
-#define AVINPUTFORMAT_INSTANCE(NAME) (std::make_shared<NAME##AVInputFormat>())
+class TsDemuxer : public IAVDemuxer {
+ public:
+    explicit TsDemuxer(PIReader rd);
 
-PIAVInputFormat av_input_formats[] = {
-        AVINPUTFORMAT_INSTANCE(Flv),
-        AVINPUTFORMAT_INSTANCE(Rtmp),
-        AVINPUTFORMAT_INSTANCE(Ts),
-        nullptr,
+ public:
+    error_t read_header(PSpsAVPacket & buffer)  override;
+    error_t read_packet(PSpsAVPacket& buffer)   override;
+    error_t read_tail(PSpsAVPacket& buffer)    override;
+    error_t probe(PSpsAVPacket& buffer)        override;
+
+ private:
+    PIReader  io;
 };
 
-
-#define AVOUTPUTFORMAT_INSTANCE(NAME) (std::make_shared<NAME##AVOutputFormat>())
-
-PIAVOutputFormat av_output_formats[] = {
-        AVOUTPUTFORMAT_INSTANCE(Flv),
-        AVOUTPUTFORMAT_INSTANCE(Rtmp),
-        nullptr,
-};
+AVInputFormat(Ts, "ts", "ts");
 
 }  // namespace sps
+
+#endif  // SPS_AVFORMAT_TSDEC_HPP

@@ -122,6 +122,7 @@ error_t FlvAVMuxer::write_message(PSpsAVPacket& buffer) {
      *(pos+2)  = n & 0XFF;
 
     if (buffer->stream_type == AV_STREAM_TYPE_SUBTITLE) {
+        // skip
     } else if (buffer->stream_type == AV_STREAM_TYPE_AUDIO) {
         // (10. aac 14. mp3) high 4-bits
         uint8_t codecid = (buffer->flags & 0xf0) >> 4;

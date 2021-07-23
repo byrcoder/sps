@@ -22,38 +22,31 @@ SOFTWARE.
 *****************************************************************************/
 
 //
-// Created by byrcoder on 2021/6/16.
+// Created by byrcoder on 2021/7/23.
 //
-
-#include <sps_avformat_dec.hpp>
-#include <sps_avformat_enc.hpp>
-
-#include <sps_avformat_flvdec.hpp>
-#include <sps_avformat_flvenc.hpp>
-
-#include <sps_avformat_rtmpdec.hpp>
-#include <sps_avformat_rtmpenc.hpp>
 
 #include <sps_avformat_tsdec.hpp>
 
 namespace sps {
 
-#define AVINPUTFORMAT_INSTANCE(NAME) (std::make_shared<NAME##AVInputFormat>())
+TsDemuxer::TsDemuxer(PIReader rd) {
+    this->io = std::move(rd);
+}
 
-PIAVInputFormat av_input_formats[] = {
-        AVINPUTFORMAT_INSTANCE(Flv),
-        AVINPUTFORMAT_INSTANCE(Rtmp),
-        AVINPUTFORMAT_INSTANCE(Ts),
-        nullptr,
-};
+error_t TsDemuxer::read_header(PSpsAVPacket & buffer) {
+    return SUCCESS;
+}
 
+error_t TsDemuxer::read_packet(PSpsAVPacket& buffer) {
+    return ERROR_STREAM_NOT_IMPL;
+}
 
-#define AVOUTPUTFORMAT_INSTANCE(NAME) (std::make_shared<NAME##AVOutputFormat>())
+error_t TsDemuxer::read_tail(PSpsAVPacket& buffer) {
+    return SUCCESS;
+}
 
-PIAVOutputFormat av_output_formats[] = {
-        AVOUTPUTFORMAT_INSTANCE(Flv),
-        AVOUTPUTFORMAT_INSTANCE(Rtmp),
-        nullptr,
-};
+error_t TsDemuxer::probe(PSpsAVPacket& buffer) {
+    return ERROR_STREAM_NOT_IMPL;
+}
 
-}  // namespace sps
+}

@@ -186,6 +186,8 @@ error_t HttpStreamPhaseHandler::handler_publish(ConnContext& ctx) {
             sp_error("fail publishing recv ret %d", ret);
             break;
         }
+
+        // packet->debug();
         cache->put(packet);
     } while (true);
 
