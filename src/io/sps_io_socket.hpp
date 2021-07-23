@@ -66,7 +66,22 @@ class Socket : public IReaderWriter {
 
  public:
     error_t read_fully(void* buf, size_t size, ssize_t* nread) override {
-        return io->read_fully(buf, size, nread);
+        error_t ret = SUCCESS;
+        ssize_t n   = 0;
+        size_t  nr  = 0;
+
+        do {
+            nr  = 0;
+            ret = this->read((char*)buf+n, size-n, nr);
+
+            if (ret != SUCCESS) {
+                return ret;
+            }
+
+            n += nr;
+        } while (n < size);
+
+        return ret;
     }
 
     error_t read(void* buf, size_t size, size_t& nread) override   {

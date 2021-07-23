@@ -34,6 +34,29 @@ SOFTWARE.
 
 namespace sps {
 
+class HttpRequestSocket : public Socket {
+ public:
+    HttpRequestSocket(PIReaderWriter rw, const std::string& ip,
+                      int port, bool chunked, int content_length);
+
+ public:
+    error_t read(void* buf, size_t size, size_t& nread) override;
+    bool    eof();
+
+ private:
+    error_t read_chunked(void* buf, size_t size, size_t& nread);
+    error_t read_chunked_length();
+    error_t read_chunked_data(void* buf, size_t size, size_t& nread);
+
+ public:
+    bool   chunked;
+    int    content_length;
+    bool   is_eof          = false;
+    size_t nread           = 0;
+    size_t nb_chunked_size = 0;
+    size_t nb_chunked_left = 0;
+};
+
 class HttpResponseSocket : public Socket {
  public:
     HttpResponseSocket(PIReaderWriter rw, const std::string& ip, int port);

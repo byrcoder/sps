@@ -73,8 +73,15 @@ error_t RtmpServerStreamHandler::publish(ConnContext &ctx) {
 
     if (!ctx.host->publish()) {
         sp_error("fatal edge cannot publish format: %s, role: %s",
-                  ctx.host->stream_format().c_str(),
+                 ctx.host->edge_format().c_str(),
                   ctx.host->role().c_str());
+        return ERROR_AVFORMAT_SOURCE_NOT_SUPPORT;
+    }
+
+    if (!ctx.host->support_publish("rtmp")) {
+        sp_error("not support rtmp publish format: %s, role: %s",
+                 ctx.host->edge_format().c_str(),
+                 ctx.host->role().c_str());
         return ERROR_AVFORMAT_SOURCE_NOT_SUPPORT;
     }
 

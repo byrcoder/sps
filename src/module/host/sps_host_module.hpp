@@ -37,7 +37,7 @@ SOFTWARE.
             { "pass_url",   "pass_url",      OFFSET(pass_url),   CONF_OPT_TYPE_STRING,   {.str = "- pass_url"} }, \
             { "role",       "proxy/source",  OFFSET(role),       CONF_OPT_TYPE_STRING, {.str = "proxy"} }, \
             { "streaming",  "streaming",     OFFSET(streaming),  CONF_OPT_TYPE_BOOL,   { .str = "on" }, }, \
-            { "stream_avformat",  "stream_avformat",     OFFSET(stream_avformat),  CONF_OPT_TYPE_STRING,   { .str = "flv" }, }
+            { "edge_avformat",  "stream_avformat",     OFFSET(edge_avformat),  CONF_OPT_TYPE_STRING,   { .str = "-" }, }
 
 namespace sps {
 
@@ -51,7 +51,7 @@ struct HostConfCtx : public ConfCtx {
     std::string role;         // edge or source
 
     int streaming;  // on, edge or source is rtmp/flv
-    std::string stream_avformat;  // edge avformat
+    std::string edge_avformat;  // edge avformat
 };
 
 #define OFFSET(x) offsetof(HostConfCtx, x)
@@ -75,7 +75,8 @@ class HostModule : public IModule {
     bool        publish();
     bool        proxy();
     bool        is_streaming();
-    std::string stream_format();
+    bool        support_publish(const std::string& format);
+    std::string edge_format();
     std::string pass_proxy();
     std::string role();
 

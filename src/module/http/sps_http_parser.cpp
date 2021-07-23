@@ -81,6 +81,7 @@ int HttpParserContext::parse_request() {
     sp_debug("=======parse url:%s=======", full_url.c_str());
 
     req->headers = headers;
+    req->method  = method();
     return req->parse_url(full_url);
 }
 

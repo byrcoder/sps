@@ -33,10 +33,17 @@ namespace sps {
 
 class HttpStreamPhaseHandler : public IPhaseHandler {
  public:
+    static std::string get_cache_key(PRequestUrl& url);
+
+ public:
     HttpStreamPhaseHandler();
 
  public:
     error_t handler(ConnContext& ctx) override;
+
+    error_t handler_play(ConnContext& ctx);
+
+    error_t handler_publish(ConnContext& ctx);
 };
 
 }  // namespace sps

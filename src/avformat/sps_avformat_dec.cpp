@@ -37,7 +37,7 @@ IAVInputFormat::IAVInputFormat(const char *name, const char *ext) {
 bool IAVInputFormat::match(const char *e) const {
     int n = strlen(ext);
     int m = strlen(ext);
-    return  memcmp(ext, e, std::max(n, m));
+    return  memcmp(ext, e, std::max(n, m)) == 0;
 }
 
 PIAVDemuxer IAVInputFormat::create2(PIReader p) {

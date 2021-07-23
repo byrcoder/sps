@@ -32,6 +32,126 @@ SOFTWARE.
 
 namespace sps {
 
+HttpRequestSocket::HttpRequestSocket(PIReaderWriter rw,
+                                     const std::string &ip,
+                                     int port,
+                                     bool chunked,
+                                     int cl) :
+        Socket(std::move(rw), ip, port) {
+    this->chunked        = chunked;
+    this->content_length = cl;
+}
+
+error_t HttpRequestSocket::read(void* buf, size_t size, size_t& nr) {
+    if (eof()) {
+        return ERROR_HTTP_RES_EOF;
+    }
+
+    if (chunked) {
+        return read_chunked(buf, size, nr);
+    }
+
+    // Content-Length default -1, no limited
+    if (content_length >= 0) {
+        size = std::min(content_length-nread, size);
+    }
+
+    nr = 0;
+    error_t ret  = get_io()->read(buf, size, nr);
+
+    if (ret == SUCCESS) {
+        nread += nr;
+
+        if (content_length >= 0) {
+            is_eof = nread >= content_length;
+        }
+    }
+
+    return ret;
+}
+
+bool HttpRequestSocket::eof() {
+    return is_eof;
+}
+
+error_t HttpRequestSocket::read_chunked(void* buf, size_t size, size_t& nread) {
+    error_t ret = SUCCESS;
+    nread       = 0;
+
+    // nb_chunked_left size
+    if (nb_chunked_left == 0) {
+        ret = read_chunked_length();
+    }
+
+    if (ret != SUCCESS) {
+        return ret;
+    }
+
+    ret = read_chunked_data(buf, size, nread);
+
+    return ret;
+}
+
+error_t HttpRequestSocket::read_chunked_length() {
+    error_t    ret = SUCCESS;
+    size_t     nr  = 0;
+    char       tmp_buf[34];
+
+    int i = 0;
+    do {
+        ret = get_io()->read(tmp_buf+i, 1, nr);
+        ++i;
+    } while (ret == SUCCESS && tmp_buf[i-1] != '\n' && i < sizeof(tmp_buf)-1);
+
+    if (ret != SUCCESS) {
+        return ret;
+    }
+
+    if (tmp_buf[i-1] != '\n') {
+        return ERROR_HTTP_CHUNKED_LENGTH_LARGE;
+    }
+
+    if (i < 2 || tmp_buf[i-2] != '\r') {
+        sp_error("invalid read chunked length i:%d", i);
+        return ERROR_HTTP_CHUNKED_INVALID;
+    }
+
+    tmp_buf[i-2] = '\0';  // \r
+
+    nb_chunked_left = nb_chunked_size = std::strtoul(tmp_buf, nullptr, 16);
+
+    sp_debug("read chunked length %lu", nb_chunked_size);
+    return ret;  // SUCCESS
+}
+
+error_t HttpRequestSocket::read_chunked_data(void* buf, size_t size, size_t& nread) {
+    size         = std::min(nb_chunked_left, size);
+    error_t ret  =  SUCCESS;
+
+    if (nb_chunked_size != 0) {
+        ret = get_io()->read_fully(buf, size, (ssize_t *) &nread);
+    }
+
+    nb_chunked_left -= nread;  // ignore ret
+
+    sp_debug("read chunked data ret:%d, nread:%lu", ret, nread);
+
+    if (ret == SUCCESS && nb_chunked_left == 0) {
+        char tail[2];
+        ret = get_io()->read_fully(tail, 2, nullptr);
+
+        if (ret == SUCCESS && (tail[0] != '\r' || tail[1] != '\n')) {
+            sp_error("invalid read http chunked data");
+            ret = ERROR_HTTP_CHUNKED_INVALID;
+        }
+    }
+
+    if (ret == SUCCESS && nb_chunked_size == 0) {
+        is_eof = true;
+    }
+    return ret;
+}
+
 HttpResponseSocket::HttpResponseSocket(PIReaderWriter rw,
                                        const std::string &ip,
                                        int p) :

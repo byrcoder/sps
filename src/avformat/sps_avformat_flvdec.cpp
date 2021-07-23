@@ -49,6 +49,10 @@ error_t FlvDemuxer::read_header(PSpsAVPacket &buffer) {
 
     if (pos[0] != 'F' || pos[1] != 'L' || pos[2] != 'V') {
         sp_error("Not flv head %.*s", 9, pos);
+
+        sp_info("Not flv head %c, %c, %c, %c, %c, %c, %c, %c, %c",
+                 pos[0], pos[1], pos[2],
+                 pos[3], pos[4], pos[5], pos[6], pos[7], pos[8]);
         return ERROR_FLV_PROBE;
     }
 

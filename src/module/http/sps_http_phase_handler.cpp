@@ -46,8 +46,13 @@ error_t HttpParsePhaseHandler::handler(ConnContext &ctx) {
     }
 
     ctx.req = http_parser->get_request();
-    sp_trace("request info %s, %s", ctx.req->host.c_str(),
-              ctx.req->url.c_str());
+    ctx.socket = std::make_shared<HttpRequestSocket>(ctx.socket,
+            ctx.ip, ctx.port, ctx.req->is_chunked(),
+            ctx.req->get_content_length());
+
+    sp_trace("request info %s, %s, chunked %d, content-length cl %d",
+              ctx.req->host.c_str(), ctx.req->url.c_str(),
+              ctx.req->is_chunked(), ctx.req->get_content_length());
 
     return SPS_PHASE_CONTINUE;
 }

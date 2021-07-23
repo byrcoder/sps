@@ -115,7 +115,10 @@ error_t HttpUrlProtocol::read(void *buf, size_t size, size_t& nr) {
 
     if (ret == SUCCESS) {
         nread += nr;
-        is_eof = nread >= rsp->content_length;
+
+        if (rsp->content_length >= 0) {
+            is_eof = nread >= rsp->content_length;
+        }
     }
 
     return ret;

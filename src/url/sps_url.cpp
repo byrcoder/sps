@@ -186,6 +186,19 @@ std::string RequestUrl::get_param(const std::string& key) {
     return "";
 }
 
+bool RequestUrl::is_chunked() {
+    return get_header("Transfer-Encoding") == "chunked";
+}
+
+int RequestUrl::get_content_length() {
+    std::string cl = get_header("Content-Length");
+    if (cl.empty()) {
+        return -1;
+    }
+
+    return atoi(cl.c_str());
+}
+
 utime_t RequestUrl::get_timeout() {
     return tm;
 }

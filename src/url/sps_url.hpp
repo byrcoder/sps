@@ -78,6 +78,10 @@ class RequestUrl {
     std::string get_param(const std::string& key);
 
  public:
+    bool is_chunked();
+    int  get_content_length();
+
+ public:
     utime_t get_timeout();
     std::string  get_ip();
 

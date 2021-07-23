@@ -67,9 +67,16 @@ bool HostModule::is_streaming() {
     return host->streaming != 0;
 }
 
-std::string HostModule::stream_format() {
+bool HostModule::support_publish(const std::string& format) {
     auto host = static_cast<HostConfCtx*>(conf.get());
-    return host->stream_avformat;
+
+    return host->edge_avformat == "all" || host->edge_avformat == format;
+}
+
+
+std::string HostModule::edge_format() {
+    auto host = static_cast<HostConfCtx*>(conf.get());
+    return host->edge_avformat;
 }
 
 std::string HostModule::pass_proxy() {
