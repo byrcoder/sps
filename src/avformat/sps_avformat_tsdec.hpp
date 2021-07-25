@@ -24,7 +24,10 @@ SOFTWARE.
 #ifndef SPS_AVFORMAT_TSDEC_HPP
 #define SPS_AVFORMAT_TSDEC_HPP
 
+#include <memory>
+
 #include <sps_avformat_dec.hpp>
+#include <sps_avformat_ts.hpp>
 
 namespace sps {
 

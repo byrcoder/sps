@@ -82,7 +82,12 @@ class AVBuffer {
 
 typedef std::unique_ptr<AVBuffer> PAVBuffer;
 
+class SpsBytesReader;
+typedef std::unique_ptr<SpsBytesReader> PSpsBytesReader;
 class SpsBytesReader {
+ public:
+    static PSpsBytesReader create_reader(uint8_t* buf, int len);
+
  public:
     SpsBytesReader(PIReader& io, PAVBuffer& buf);
     ~SpsBytesReader();
@@ -104,9 +109,10 @@ class SpsBytesReader {
 
  private:
     PIReader& io;
+
+ public:
     PAVBuffer& buf;
 };
-typedef std::unique_ptr<SpsBytesReader> PSpsBytesReader;
 
 class SpsBytesWriter {
  public:

@@ -77,14 +77,14 @@ size_t AVBuffer::size() const {
 }
 
 size_t AVBuffer::no_rewind_cap_size() const {
-    return  buf_cap - buf_ptr; // size() + buf_cap - buf_end;
+    return  buf_cap - buf_ptr;  // size() + buf_cap - buf_end;
 }
 
 size_t AVBuffer::cap_size() const {
     if (!rewindable) {
         return no_rewind_cap_size();
     } else {
-        return  buf_cap;
+        return buf_cap;
     }
 }
 
@@ -108,6 +108,14 @@ void AVBuffer::append(size_t n) {
 
 void AVBuffer::clear() {
     buf_ptr = buf_end = 0;
+}
+
+PSpsBytesReader SpsBytesReader::create_reader(uint8_t* buf, int len) {
+    static PIReader null_reader;
+
+    auto av_buffer = std::make_unique<AVBuffer>(
+            buf, len, len, false);
+    return std::make_unique<SpsBytesReader>(null_reader, av_buffer);
 }
 
 SpsBytesReader::SpsBytesReader(PIReader& io, PAVBuffer& buf): io(io), buf(buf) {
@@ -157,7 +165,8 @@ error_t SpsBytesReader::acquire(uint32_t n) {
     assert(buf->no_rewind_cap_size() >= n);
 
     do {
-        if (!io || (ret = io->read(buf->end(), buf->remain(), nread)) != SUCCESS) {
+        if (!io || (ret = io->read(buf->end(),
+                buf->remain(), nread)) != SUCCESS) {
             sp_error("fail increase buffer read ret: %d", ret);
             return ret == SUCCESS ? ERROR_IO_EOF : ret;
         }

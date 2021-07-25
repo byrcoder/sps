@@ -132,5 +132,7 @@ SOFTWARE.
 #define ERROR_FLV_VIDEO_CODECID             3205
 #define ERROR_FLV_UNKNOWN_TAG_TYPE          3206
 
+#define ERROR_TS_PACKET_SIZE                3300
+#define ERROR_TS_PACKET_DECODE              3301
 
 #endif  // SPS_SPS_ERROR_HPP

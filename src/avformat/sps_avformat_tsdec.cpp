@@ -27,6 +27,12 @@ SOFTWARE.
 
 #include <sps_avformat_tsdec.hpp>
 
+#include <utility>
+
+#include <sps_io_bytes.hpp>
+
+#include <sps_log.hpp>
+
 namespace sps {
 
 TsDemuxer::TsDemuxer(PIReader rd) {
@@ -49,4 +55,4 @@ error_t TsDemuxer::probe(PSpsAVPacket& buffer) {
     return ERROR_STREAM_NOT_IMPL;
 }
 
-}
+}  // namespace sps
