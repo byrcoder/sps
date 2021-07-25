@@ -28,6 +28,7 @@ SOFTWARE.
 #include <map>
 #include <memory>
 
+#include <sps_cache_buffer.hpp>
 #include <sps_io_bytes.hpp>
 
 #define SPS_TS_PACKET_SIZE 188
@@ -197,7 +198,7 @@ struct PesHeaderInfo {
 
 struct PesInfo {
     PesHeaderInfo header;
-    std::unique_ptr<uint8_t[]> pes_desc;
+    PCharBuffer pes_dec;
 };
 typedef std::shared_ptr<PesInfo> PPesInfo;
 
@@ -216,12 +217,23 @@ class TsPmtProgram : public TsPsiProgram {
         uint32_t program_info_length : 12;
     } pmt_flag;
 
-    std::unique_ptr<uint8_t[]> program_info_desc;
+    PCharBuffer program_info_desc;
     std::list<PPesInfo> pes_infos;
 };
 
 class TsPesContext {
  public:
+    void reset();
+    void init();
+
+ public:
+    error_t dump(PSpsBytesReader& rd);
+
+ public:
+    int64_t pts = -1;
+    int64_t dts = -1;
+    uint16_t pes_packet_length = 0;
+    PCharBuffer pes_packets;
 };
 typedef std::unique_ptr<TsPesContext> PTsPesContext;
 
@@ -234,6 +246,74 @@ class TsPesProgram : public TsProgram {
     error_t decode(TsPacket* pkt, PSpsBytesReader& rd) override;
 
  private:
+    struct {
+        uint32_t packet_start_code_prefix : 24;  // 24bit
+        uint32_t stream_id : 8;  // 8bit
+        uint16_t pes_packet_length = 0;  // 16bit
+    } pes_packet_header;
+
+    struct {
+        uint8_t const_value10 : 2;
+        uint8_t pes_scrambling_control : 2;
+        uint8_t pes_priority : 1;
+        uint8_t data_alignment_indicator : 1;
+        uint8_t copyright : 1;
+        uint8_t original_or_copy : 1;
+
+        uint8_t pts_dts_flags : 2;
+        uint8_t escr_flag : 1;
+        uint8_t es_rate_flag : 1;
+        uint8_t dsm_trick_mode_flag : 1;
+        uint8_t additional_copy_info_flag : 1;
+        uint8_t pes_crc_flag : 1;
+        uint8_t pes_extension_flag : 1;
+
+        uint8_t pes_header_data_length;
+    } pes_header;
+
+    struct {
+        uint8_t const_value_0010 : 4;
+        uint8_t pts1 : 3;  // pts[32..30]
+        uint8_t marker_bit1: 1;
+
+        uint16_t pts2 : 15;  // PTS [29..15]
+        uint16_t marker_bit2: 1;
+
+        uint16_t pts3 : 15;  // PTS [14..0]
+        uint16_t marker_bit3 : 1;
+    } pts;
+
+    struct {
+        uint8_t const_value_0001 : 4;
+        uint8_t dts1 : 3;  // DTS[32..30]
+        uint8_t marker_bit1: 1;
+
+        uint16_t dts2 : 15;  // DTS [29..15]
+        uint16_t marker_bit2: 1;
+
+        uint16_t dts3 : 15;  // DTS [14..0]
+        uint16_t marker_bit3 : 1;
+    } dts;
+
+    // 48 bit 32bit + 16bit
+    struct {
+        uint8_t reserved;  // 2bit
+        uint8_t escr_base1;  // 3bit  // ESCR_base[32..30]
+        uint8_t marker_bit1;  // 1bit
+        uint16_t escr_base2;   // 15bit   // ESCR_base[29..15]
+        uint8_t marker_bit2;  // 1bit
+        uint16_t escr_base3;   // 15bit  // ESCR_base[14..0]
+        uint16_t marker_bit3;  // 1bit
+        uint16_t escr_extension;  // 9bit
+        uint8_t marker_bit4;     // 1bit
+    } escr;
+
+    struct {
+        uint8_t marker_bit1;  // 1bit
+        uint32_t es_rate;    // 22bit
+        uint32_t mark_bit2;  // 1bit
+    } es_rate;
+
     PTsPesContext pes_ctx;
     int stream_type;
     int pcr_pid;

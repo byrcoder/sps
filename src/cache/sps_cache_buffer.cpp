@@ -32,11 +32,23 @@ PCharBuffer CharBuffer::deep_copy(uint8_t *buf, uint32_t len,
     return std::make_shared<CharBuffer>(buf, len, head_len);
 }
 
+PCharBuffer CharBuffer::create_buf(uint32_t cap) {
+    return std::make_shared<CharBuffer>(cap);
+}
+
 CharBuffer::CharBuffer(uint8_t *buf, uint32_t len, uint32_t head_len) {
     this->buf = new uint8_t[len+head_len];
     this->len = len;
     this->head_len = head_len;
     memcpy(this->buf + head_len, buf, len);
+    cap_len = len;
+}
+
+CharBuffer::CharBuffer(uint32_t cap) {
+    buf      = new uint8_t[cap];
+    len      = 0;
+    head_len = 0;
+    cap_len  = cap;
 }
 
 CharBuffer::~CharBuffer() {

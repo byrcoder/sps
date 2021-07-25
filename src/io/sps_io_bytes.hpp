@@ -93,6 +93,15 @@ class SpsBytesReader {
     ~SpsBytesReader();
 
  public:
+    size_t size() {
+        return buf->size();
+    }
+
+    uint8_t* pos() {
+        return buf->pos();
+    }
+
+ public:
     // call acquire then call following functions
     void     read_bytes(uint8_t* c, size_t n);
     void     skip_bytes(size_t n);

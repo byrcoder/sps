@@ -36,6 +36,10 @@ class IBuffer {
     virtual uint8_t *buffer() = 0;
 
     virtual uint32_t size() = 0;
+
+    virtual uint32_t cap() {
+        return size();
+    }
 };
 
 typedef std::shared_ptr<IBuffer> PIBuffer;
@@ -48,20 +52,32 @@ class CharBuffer : public IBuffer {
     static PCharBuffer deep_copy(uint8_t* buf, uint32_t len,
                                  uint32_t head_len = 0);
 
+    static PCharBuffer create_buf(uint32_t cap);
+
  public:
     CharBuffer(uint8_t* buf, uint32_t len, uint32_t head_len = 0);
+    CharBuffer(uint32_t cap);
     ~CharBuffer() override;
 
  public:
     uint8_t*   buffer() override      { return buf+head_len; }
     uint32_t   size() override        { return len; }
 
+ public:
+    void  append(uint8_t* p, uint32_t sz) {
+        assert(remain() >= sz);
+        memcpy(pos(), p, sz);
+        len += sz;
+    }
+    uint8_t*   pos()              { return buf + len; }
+    uint32_t   remain()           { return cap_len - len; }
     uint8_t*   head_pos()         { return head_len ? buf : nullptr; }
     uint32_t   head_size()            { return head_len; }
  private:
-    uint8_t*      buf = nullptr;
-    uint32_t      len = 0;
-    uint32_t head_len = 0;
+    uint8_t*      buf      = nullptr;
+    uint32_t      len      = 0;
+    uint32_t      head_len = 0;
+    uint32_t      cap_len  = 0;
 };
 
 }  // namespace sps
