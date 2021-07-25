@@ -314,6 +314,95 @@ class TsPesProgram : public TsProgram {
         uint32_t mark_bit2;  // 1bit
     } es_rate;
 
+    struct {
+        uint8_t trick_mode_control : 3;
+
+        union {
+            struct {
+                uint8_t field_id : 2;
+                uint8_t intra_slice_refresh : 1;
+                uint8_t frequency_truncation : 2;
+            } fast_forward;
+
+            struct {
+                uint8_t rep_cntrl : 5;
+            } slow_motion;
+
+            struct {
+                uint8_t field_id : 2;
+                uint8_t reserved : 3;
+            } freeze_frame;
+
+            struct {
+                uint8_t field_id : 2;
+                uint8_t intra_slice_refresh : 1;
+                uint8_t frequency_truncation : 2;
+            } fast_reverse;
+
+            struct {
+                uint8_t rep_cntrl : 5;
+            } slow_reverse;
+
+            struct {
+                uint8_t reserved : 5;
+            } reserved;
+        } flag;
+    } dsm_trick_mode;
+
+    struct {
+        uint8_t marker_bit : 1;
+        uint8_t additional_copy_info : 7;
+    } additional_copy_info;
+
+    struct {
+        uint16_t previous_pes_packet_crc;
+    } pes_crc;
+
+    struct {
+        struct {
+            uint8_t pes_private_data_flag : 1;
+            uint8_t pack_header_field_flag : 1;
+            uint8_t program_packet_sequence_counter_flag : 1;
+            uint8_t p_std_buffer_flag : 1;
+            uint8_t reserved : 3;
+            uint8_t pes_extension_flag_2 : 1;
+        } flags;
+
+        struct {
+            PCharBuffer buffer;  // 128bit, 16bytes
+        } pes_private_data;
+
+        struct {
+            uint8_t pack_field_length;  // 8bit
+            PCharBuffer buffer;  //
+        } pack_header_field;
+
+        struct {
+            uint8_t marker_bit1 : 1;
+            uint8_t program_packet_sequence_counter : 7;
+
+            uint8_t marker_bit2 : 1;
+            uint8_t mpeg1_mpeg2_identifier : 1;
+            uint8_t original_stuff_length : 6;
+        } program_packet_sequence_counter;
+
+        struct {
+            uint16_t const_01 : 2; //'01'
+            uint16_t p_std_buffer_scale : 1;
+            uint16_t p_std_buffer_size : 13;
+        } p_std_buffer;
+
+        struct {
+            struct {
+                uint8_t marker_bit : 1;
+                uint8_t pes_extension_field_length : 7;
+            } header;
+
+            PCharBuffer buffer;
+        } pes_extension2;
+
+    } pes_extension;
+
     PTsPesContext pes_ctx;
     int stream_type;
     int pcr_pid;

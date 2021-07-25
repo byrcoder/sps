@@ -265,6 +265,13 @@ error_t TsPesProgram::decode(TsPacket *pkt, PSpsBytesReader &rd) {
             }
 
             rd->read_bytes((uint8_t*) &pts, 5);
+
+            int64_t tmp_pts = 0;
+            tmp_pts |= (((uint64_t) pts.pts1) << 30) & 0x1c0000000LL;
+            tmp_pts |= ((uint64_t) pts.pts2) << 15;
+            tmp_pts |= ((uint64_t) pts.pts3);
+
+            pes_ctx->dts = pes_ctx->pts = tmp_pts;
         }
 
         if (pes_header.pts_dts_flags == 0x03) {
@@ -274,6 +281,17 @@ error_t TsPesProgram::decode(TsPacket *pkt, PSpsBytesReader &rd) {
             }
 
             rd->read_bytes((uint8_t*) &dts, 5);
+
+            int64_t tmp_dts = 0;
+            tmp_dts |= (((uint64_t) dts.dts1) << 30) & 0x1c0000000LL;
+            tmp_dts |= ((uint64_t) dts.dts2) << 15;
+            tmp_dts |= ((uint64_t) dts.dts3);
+
+            pes_ctx->dts = tmp_dts;
+
+            if (std::abs(pes_ctx->dts - pes_ctx->pts) > 90000) {
+                sp_warn("ts: sync dts=%lld pts=%lld", pes_ctx->dts, pes_ctx->pts);
+            }
         }
 
         if (pes_header.escr_flag) {
@@ -315,19 +333,111 @@ error_t TsPesProgram::decode(TsPacket *pkt, PSpsBytesReader &rd) {
         }
 
         if (pes_header.dsm_trick_mode_flag) {
+            if ((ret = rd->acquire(1)) != SUCCESS) {
+                sp_error("not enough size %d, ret %d", 1, ret);
+                return ret;
+            }
 
+            rd->read_bytes((uint8_t*) &dsm_trick_mode, 1);
         }
 
         if (pes_header.additional_copy_info_flag) {
+            if ((ret = rd->acquire(1)) != SUCCESS) {
+                sp_error("not enough size %d, ret %d", 1, ret);
+                return ret;
+            }
 
+            rd->read_bytes((uint8_t*) &additional_copy_info, 1);
         }
 
         if (pes_header.pes_crc_flag) {
+            if ((ret = rd->acquire(2)) != SUCCESS) {
+                sp_error("not enough size %d, ret %d", 2, ret);
+                return ret;
+            }
 
+            pes_crc.previous_pes_packet_crc = rd->read_int16();
         }
 
         if (pes_header.pes_extension_flag) {
+            if ((ret = rd->acquire(1)) != SUCCESS) {
+                sp_error("not enough size %d, ret %d", 1, ret);
+                return ret;
+            }
 
+            rd->read_bytes((uint8_t*) &pes_extension.flags, 1);
+
+            if (pes_extension.flags.pes_private_data_flag) {
+                if ((ret = rd->acquire(16)) != SUCCESS) {
+                    sp_error("not enough size %d, ret %d", 16, ret);
+                    return ret;
+                }
+
+                pes_extension.pes_private_data.buffer = CharBuffer::create_buf(16);
+                pes_extension.pes_private_data.buffer->append(rd->pos(), 16);
+                rd->skip_bytes(16);
+            }
+
+            if (pes_extension.flags.pack_header_field_flag) {
+                if ((ret = rd->acquire(1)) != SUCCESS) {
+                    sp_error("not enough size %d, ret %d", 1, ret);
+                    return ret;
+                }
+
+                pes_extension.pack_header_field.pack_field_length = rd->read_int8();
+                pes_extension.pack_header_field.buffer = CharBuffer::create_buf(
+                        pes_extension.pack_header_field.pack_field_length);
+
+                if ((ret = rd->acquire(pes_extension.pack_header_field.pack_field_length)) != SUCCESS) {
+                    sp_error("not enough size %d, ret %d", 1, ret);
+                    return ret;
+                }
+
+                pes_extension.pack_header_field.buffer->append(rd->pos(),
+                        pes_extension.pack_header_field.pack_field_length);
+                rd->skip_bytes(pes_extension.pack_header_field.pack_field_length);
+            }
+
+            if (pes_extension.flags.program_packet_sequence_counter_flag) {
+                if ((ret = rd->acquire(2)) != SUCCESS) {
+                    sp_error("not enough size %d, ret %d", 2, ret);
+                    return ret;
+                }
+
+                rd->read_bytes((uint8_t*) &pes_extension.program_packet_sequence_counter, 2);
+            }
+
+            if (pes_extension.flags.p_std_buffer_flag) {
+                if ((ret = rd->acquire(2)) != SUCCESS) {
+                    sp_error("not enough size %d, ret %d", 2, ret);
+                    return ret;
+                }
+
+                rd->read_bytes((uint8_t*) &pes_extension.p_std_buffer, 2);
+            }
+
+            if (pes_extension.flags.pes_extension_flag_2) {
+                if ((ret = rd->acquire(1)) != SUCCESS) {
+                    sp_error("not enough size %d, ret %d", 1, ret);
+                    return ret;
+                }
+
+                rd->read_bytes((uint8_t*) &pes_extension.pes_extension2.header, 1);
+
+                if ((ret = rd->acquire(pes_extension.pes_extension2.header.pes_extension_field_length)) != SUCCESS) {
+                    sp_error("not enough size %d, ret %d",
+                            pes_extension.pes_extension2.header.pes_extension_field_length,
+                            ret);
+                    return ret;
+                }
+
+                pes_extension.pes_extension2.buffer = CharBuffer::create_buf(
+                        pes_extension.pes_extension2.header.pes_extension_field_length);
+
+                pes_extension.pes_extension2.buffer->append(rd->pos(),
+                        pes_extension.pes_extension2.header.pes_extension_field_length);
+                rd->skip_bytes(pes_extension.pes_extension2.header.pes_extension_field_length);
+            }
         }
 
         uint8_t* end_pos = rd->pos();
