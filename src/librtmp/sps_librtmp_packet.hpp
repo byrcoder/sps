@@ -125,6 +125,14 @@ class IRtmpPacket {
 
 typedef std::unique_ptr<IRtmpPacket> PIRTMPPacket;
 
+class SetChunkSizeRtmpPacket : public IRtmpPacket {
+ public:
+    error_t decode(WrapRtmpPacket &packet) override;
+
+ private:
+    int chunk_size = 128;
+};
+
 class AmfRtmpPacket : public IRtmpPacket {
  public:
     AmfRtmpPacket();

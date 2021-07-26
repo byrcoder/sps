@@ -452,13 +452,13 @@ class TsAdaptationFiled {
     } flags;
 
     // PCR reference https://blog.csdn.net/zp704393004/article/details/82225892
-    uint8_t pcr[48];
+    uint8_t pcr[6];
     //    uint64_t program_clock_reference_base;  // 33bit
     //    uint8_t  pcr_reserved;  // 6bit
     //    uint8_t  program_clock_reference_extension;  // 9bit
 
     // OPCR
-    uint8_t opcr[48];
+    uint8_t opcr[6];
     //    uint64_t original_program_clock_reference_base;  // 33bit
     //    uint8_t  opcr_reserved;  // 6bit
     //    uint8_t  original_program_clock_reference_extension;  // 9bit

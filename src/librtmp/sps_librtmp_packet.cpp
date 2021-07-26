@@ -428,6 +428,14 @@ error_t IRtmpPacket::encode(WrapRtmpPacket& /** packet **/) {
     return ERROR_RTMP_NOT_IMPL;
 }
 
+error_t SetChunkSizeRtmpPacket::decode(WrapRtmpPacket &packet) {
+    if (packet.packet.m_nBodySize >= 4) {
+        chunk_size = (int) AMF_DecodeInt32(packet.packet.m_body);
+        sp_info("recv set chunked size %d", chunk_size);
+    }
+    return SUCCESS;
+}
+
 bool RtmpPacketDecoder::is_set_chunked_size(int pkt_type) {
     return pkt_type == RTMP_PACKET_TYPE_CHUNK_SIZE;
 }
@@ -475,6 +483,8 @@ error_t RtmpPacketDecoder::decode(WrapRtmpPacket &pkt, PIRTMPPacket &result) {
     sp_info("pkt_type: %d", pkt_type);
     switch (pkt_type) {
         case RTMP_PACKET_TYPE_SET_CHUNK_SIZE:
+            result = std::make_unique<SetChunkSizeRtmpPacket>();
+            ret = result->decode(pkt);
             break;
         case RTMP_PACKET_TYPE_ABORT_STREAM:
 

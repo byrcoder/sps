@@ -98,26 +98,29 @@ error_t RtmpPreRequest::connect() {
     WrapRtmpPacket   pkt;
     PIRTMPPacket     connect_packet;
 
-    if ((ret = hook->recv_packet(pkt)) != SUCCESS) {
-        return ret;
-    }
+    do {
+        if ((ret = hook->recv_packet(pkt)) != SUCCESS) {
+            return ret;
+        }
 
-    ret = RtmpPacketDecoder::decode(pkt, connect_packet);
-    if (ret != SUCCESS) {
-        sp_error("conn decoded failed ret: %d", ret);
-        return ret;
-    }
+        ret = RtmpPacketDecoder::decode(pkt, connect_packet);
+        if (ret != SUCCESS) {
+            sp_error("conn decoded failed ret: %d", ret);
+            return ret;
+        }
 
-    auto conn_packet = dynamic_cast<ConnectRtmpPacket*>(connect_packet.get());
-    if (!conn_packet) {
-        ret = ERROR_RTMP_AMF_DECODE;
-        sp_error("expect amf conn ret: %d", ret);
-        return ret;
-    }
+        auto conn_packet = dynamic_cast<ConnectRtmpPacket *>(connect_packet.get());
+        if (!conn_packet) {
+            // ret = ERROR_RTMP_AMF_DECODE;
+            sp_error("expect amf conn ret: %d", ret);
+            continue;;
+        }
 
-    tc_url = std::string(conn_packet->tc_url.av_val,
+        tc_url = std::string(conn_packet->tc_url.av_val,
                          conn_packet->tc_url.av_len);
-    txn    = conn_packet->transaction_id;
+        txn    = conn_packet->transaction_id;
+        break;
+    } while (true);
 
     ret = hook->send_ack_window_size();
     if (ret != SUCCESS) {
