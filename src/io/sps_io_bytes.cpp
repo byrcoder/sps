@@ -113,12 +113,13 @@ void AVBuffer::clear() {
 PSpsBytesReader SpsBytesReader::create_reader(uint8_t* buf, int len) {
     static PIReader null_reader;
 
-    auto av_buffer = std::make_unique<AVBuffer>(
+    auto av_buffer = std::make_shared<AVBuffer>(
             buf, len, len, false);
     return std::make_unique<SpsBytesReader>(null_reader, av_buffer);
 }
 
-SpsBytesReader::SpsBytesReader(PIReader& io, PAVBuffer& buf): io(io), buf(buf) {
+SpsBytesReader::SpsBytesReader(PIReader io, PAVBuffer buf):
+    io(std::move(io)), buf(std::move(buf)) {
 }
 
 SpsBytesReader::~SpsBytesReader() {
@@ -165,10 +166,15 @@ error_t SpsBytesReader::acquire(uint32_t n) {
     assert(buf->no_rewind_cap_size() >= n);
 
     do {
-        if (!io || (ret = io->read(buf->end(),
+        if (!io) {
+            sp_error("fail error io eof");
+            return ERROR_IO_EOF;
+        }
+
+        if ((ret = io->read(buf->end(),
                 buf->remain(), nread)) != SUCCESS) {
             sp_error("fail increase buffer read ret: %d", ret);
-            return ret == SUCCESS ? ERROR_IO_EOF : ret;
+            return ret;
         }
 
         buf->buf_end += nread;

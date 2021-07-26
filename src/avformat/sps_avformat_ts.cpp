@@ -582,7 +582,7 @@ TsPacket::TsPacket(TsContext* ctx, int packet_size) {
 error_t TsPacket::decode(PSpsBytesReader& rd) {
     error_t ret = SUCCESS;
 
-    if (rd->acquire(pkt_size)) {
+    if ((ret = rd->acquire(pkt_size)) != SUCCESS) {
         sp_error("not match packet size %d, actual %lu",
                   pkt_size, rd->size());
         return ERROR_TS_PACKET_SIZE;

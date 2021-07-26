@@ -221,6 +221,9 @@ class TsPmtProgram : public TsPsiProgram {
     std::list<PPesInfo> pes_infos;
 };
 
+/**
+ * ts context
+ */
 class TsPesContext {
  public:
     void reset();

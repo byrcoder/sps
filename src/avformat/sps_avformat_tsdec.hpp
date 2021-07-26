@@ -42,7 +42,9 @@ class TsDemuxer : public IAVDemuxer {
     error_t probe(PSpsAVPacket& buffer)        override;
 
  private:
-    PIReader  io;
+    PAVBuffer buf;
+    PSpsBytesReader rd;
+    TsContext ts_ctx;
 };
 
 AVInputFormat(Ts, "ts", "ts");

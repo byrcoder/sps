@@ -45,7 +45,6 @@ class FlvDemuxer : public IAVDemuxer {
 
  private:
     PAVBuffer buf;
-    PIReader  io;
     PSpsBytesReader rd;
 };
 

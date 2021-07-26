@@ -70,7 +70,7 @@ error_t RtmpDemuxer::read_packet(PSpsAVPacket& buffer) {
             return ret;
         }
 
-        auto av_buffer = std::make_unique<AVBuffer>(
+        auto av_buffer = std::make_shared<AVBuffer>(
                 packet.data(), packet.size(), packet.size(), true);
         PIReader null_reader;
         SpsBytesReader stream(null_reader, av_buffer);

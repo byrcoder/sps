@@ -36,7 +36,8 @@ SOFTWARE.
 namespace sps {
 
 TsDemuxer::TsDemuxer(PIReader rd) {
-    this->io = std::move(rd);
+    buf       = std::make_shared<AVBuffer>(SPS_TS_PACKET_SIZE, false);
+    this->rd  = std::make_unique<SpsBytesReader>(rd, buf);
 }
 
 error_t TsDemuxer::read_header(PSpsAVPacket & buffer) {
@@ -44,7 +45,26 @@ error_t TsDemuxer::read_header(PSpsAVPacket & buffer) {
 }
 
 error_t TsDemuxer::read_packet(PSpsAVPacket& buffer) {
-    return ERROR_STREAM_NOT_IMPL;
+    error_t ret = ERROR_STREAM_NOT_IMPL;
+
+    do {
+        if ((ret = rd->acquire(SPS_TS_PACKET_SIZE)) != SUCCESS) {
+            sp_error("fail read ts packet ret %d", ret);
+            return ret;
+        }
+
+        sp_info("get packet size %lu(%c), (%lu~%lu)",
+                buf->size(), *buf->buffer(), buf->buf_ptr, buf->buf_end);
+
+        if ((ret = ts_ctx.decode(buf->buffer(), SPS_TS_PACKET_SIZE)) != SUCCESS) {
+            sp_error("fail decode ts packet ret %d", ret);
+            return ret;
+        }
+
+        rd->buf->clear();
+    } while (true);
+
+    return ret;
 }
 
 error_t TsDemuxer::read_tail(PSpsAVPacket& buffer) {
