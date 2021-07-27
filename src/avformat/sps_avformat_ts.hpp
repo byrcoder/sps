@@ -29,7 +29,7 @@ SOFTWARE.
 #include <memory>
 
 #include <sps_cache_buffer.hpp>
-#include <sps_io_bytes.hpp>
+#include <sps_io_bits.hpp>
 
 #define SPS_TS_PACKET_SIZE 188
 
@@ -97,7 +97,7 @@ class TsProgram : public std::enable_shared_from_this<TsProgram> {
     TsProgram(int pid, TsContext* ctx);
 
  public:
-    virtual error_t decode(TsPacket* pkt, PSpsBytesReader& rd) = 0;
+    virtual error_t decode(TsPacket* pkt, BitContext& rd) = 0;
 
  public:
     int pid;
@@ -117,10 +117,10 @@ class TsPsiProgram : public TsProgram {
     TsPsiProgram(int pid, TsContext* ctx);
 
  public:
-    error_t decode(TsPacket* pkt, PSpsBytesReader& rd) override;
+    error_t decode(TsPacket* pkt, BitContext& rd) override;
 
  protected:
-    virtual error_t psi_decode(TsPacket* pkt, PSpsBytesReader& rd) = 0;
+    virtual error_t psi_decode(TsPacket* pkt, BitContext& rd) = 0;
 
  public:
     /*
@@ -179,7 +179,7 @@ class TsPatProgram : public TsPsiProgram {
     TsPatProgram(int pid, TsContext* ctx);
 
  public:
-    error_t psi_decode(TsPacket* pkt, PSpsBytesReader& rd) override;
+    error_t psi_decode(TsPacket* pkt, BitContext& rd) override;
 
     std::list<PmtInfo> pmt_infos;
     /**
@@ -211,7 +211,7 @@ class TsPmtProgram : public TsPsiProgram {
     TsPmtProgram(int pid, TsContext* ctx);
 
  public:
-    error_t psi_decode(TsPacket* pkt, PSpsBytesReader& rd) override;
+    error_t psi_decode(TsPacket* pkt, BitContext& rd) override;
 
  public:
     struct {
@@ -234,7 +234,7 @@ class TsPesContext {
     void init();
 
  public:
-    error_t dump(PSpsBytesReader& rd);
+    error_t dump(BitContext& rd);
 
  public:
     int64_t pts = -1;
@@ -250,7 +250,7 @@ class TsPesProgram : public TsProgram {
             int pcr_pid);
 
  public:
-    error_t decode(TsPacket* pkt, PSpsBytesReader& rd) override;
+    error_t decode(TsPacket* pkt, BitContext& rd) override;
 
  private:
     struct {
@@ -435,7 +435,7 @@ class TsContext {
  */
 class TsAdaptationFiled {
  public:
-    error_t decode(PSpsBytesReader& rd);
+    error_t decode(BitContext& rd);
 
  public:
     // The adaptation_field_length is an 8-bit field specifying the number
@@ -511,7 +511,7 @@ class TsPacket {
     explicit TsPacket(TsContext* ctx, int packet_size = SPS_TS_PACKET_SIZE);
 
  public:
-    error_t decode(PSpsBytesReader& rd);
+    error_t decode(BitContext& rd);
 
  private:
     int pkt_size;

@@ -41,20 +41,28 @@ TsProgram::TsProgram(int pid, TsContext *ctx) {
 TsPsiProgram::TsPsiProgram(int pid, TsContext *ctx) : TsProgram(pid, ctx) {
 }
 
-error_t TsPsiProgram::decode(TsPacket *pkt, PSpsBytesReader &rd) {
-    auto ret = rd->acquire(8);
+error_t TsPsiProgram::decode(TsPacket *pkt, BitContext& rd) {
+    auto ret = rd.acquire(8);
 
     if (ret != SUCCESS) {
         sp_error("no enough size ret %d", ret);
         return ret;
     }
 
-    table_id = rd->read_int8();
+    table_id = rd.read_int8();
 
-    rd->read_reverse_bytes((uint8_t*) &flags1, 4);
-    rd->read_bytes((uint8_t*) &flags2, 1);
-    section_number = rd->read_int8();
-    last_section_number = rd->read_int8();
+    flags1.section_syntax_indicator = rd.read_bits(1);
+    flags1.const_value0 = rd.read_bits(1);
+    flags1.reserved = rd.read_bits(2);
+    flags1.section_length = rd.read_bits(12);
+    flags1.transport_stream_id = rd.read_bits(16);
+
+    flags2.reserved = rd.read_bits(2);
+    flags2.version_number = rd.read_bits(5);
+    flags2.current_next_indicator = rd.read_bits(1);
+
+    section_number = rd.read_int8();
+    last_section_number = rd.read_int8();
 
     // 5 pre size, 4 crc32
     int left_length = flags1.section_length - 5 - 4;
@@ -66,7 +74,7 @@ error_t TsPsiProgram::decode(TsPacket *pkt, PSpsBytesReader &rd) {
 
     ret = psi_decode(pkt, rd);
 
-    crc_32 = rd->read_int32();
+    crc_32 = rd.read_int32();
 
     return ret;
 }
@@ -75,14 +83,14 @@ TsPatProgram::TsPatProgram(int pid, TsContext *ctx) : TsPsiProgram(pid, ctx) {
     filter_type = TS_PROGRAM_PAT;
 }
 
-error_t TsPatProgram::psi_decode(TsPacket *pkt, PSpsBytesReader &rd) {
+error_t TsPatProgram::psi_decode(TsPacket *pkt, BitContext &rd) {
     error_t ret = SUCCESS;
     // 5 pre size, 4 crc32
     int left_length = flags1.section_length - 5 - 4;
 
     pmt_infos.clear();
     if (left_length > 0) {
-        ret = rd->acquire(left_length);
+        ret = rd.acquire(left_length);
 
         if (ret != SUCCESS) {
             sp_error("no enough %d size ret %d", left_length, ret);
@@ -91,7 +99,7 @@ error_t TsPatProgram::psi_decode(TsPacket *pkt, PSpsBytesReader &rd) {
 
         while (left_length > 0) {
             PmtInfo info;
-            rd->read_bytes((uint8_t*) &info, 4);
+            rd.read_bytes((uint8_t*) &info, 4);
             pmt_infos.push_back(info);
             left_length -= 4;
         }
@@ -103,18 +111,18 @@ TsPmtProgram::TsPmtProgram(int pid, TsContext *ctx) : TsPsiProgram(pid, ctx) {
     filter_type = TS_PROGRAM_PMT;
 }
 
-error_t TsPmtProgram::psi_decode(TsPacket *pkt, PSpsBytesReader &rd) {
+error_t TsPmtProgram::psi_decode(TsPacket *pkt, BitContext &rd) {
     error_t ret = SUCCESS;
 
-    if ((ret = rd->acquire(4)) != SUCCESS) {
+    if ((ret = rd.acquire(4)) != SUCCESS) {
         sp_error("not enough size ret %d", ret);
         return ret;
     }
 
-    rd->read_bytes((uint8_t*) &pmt_flag, 4);
+    rd.read_bytes((uint8_t*) &pmt_flag, 4);
 
     if (pmt_flag.program_info_length > 0) {
-        if ((ret = rd->acquire(pmt_flag.program_info_length)) != SUCCESS) {
+        if ((ret = rd.acquire(pmt_flag.program_info_length)) != SUCCESS) {
             sp_error("not enough size %d ret %d", pmt_flag.program_info_length,
                       ret);
             return ret;
@@ -122,8 +130,8 @@ error_t TsPmtProgram::psi_decode(TsPacket *pkt, PSpsBytesReader &rd) {
 
         program_info_desc = CharBuffer::create_buf(
                 pmt_flag.program_info_length);
-        program_info_desc->append(rd->pos(), pmt_flag.program_info_length);
-        rd->skip_bytes(pmt_flag.program_info_length);
+        program_info_desc->append(rd.pos(), pmt_flag.program_info_length);
+        rd.skip_bytes(pmt_flag.program_info_length);
     }
     // 5 pre size, 4 pmt_flag, program_info_length, 4 crc32
     int left_length = flags1.section_length - 5
@@ -134,9 +142,12 @@ error_t TsPmtProgram::psi_decode(TsPacket *pkt, PSpsBytesReader &rd) {
     while (left_length > 0) {
         auto info = std::make_shared<PesInfo>();
 
-        rd->read_bytes((uint8_t*) &info->header, sizeof(info->header));
+        info->header.stream_type = rd.read_int8();
+        info->header.reserved1   = rd.read_bits(3);
+        info->header.es_info_length = rd.read_bits(13);
+
         if (info->header.es_info_length > 0) {
-            if ((ret = rd->acquire(info->header.es_info_length)) != SUCCESS) {
+            if ((ret = rd.acquire(info->header.es_info_length)) != SUCCESS) {
                 sp_error("not enough size %d ret %d",
                           info->header.es_info_length, ret);
                 return ret;
@@ -144,8 +155,8 @@ error_t TsPmtProgram::psi_decode(TsPacket *pkt, PSpsBytesReader &rd) {
 
             info->pes_dec = CharBuffer::create_buf(
                     info->header.es_info_length);
-            info->pes_dec->append(rd->pos(), info->header.es_info_length);
-            rd->skip_bytes(info->header.es_info_length);
+            info->pes_dec->append(rd.pos(), info->header.es_info_length);
+            rd.skip_bytes(info->header.es_info_length);
         }
 
         pes_infos.push_back(info);
@@ -184,24 +195,24 @@ void TsPesContext::init() {
     pes_packets = CharBuffer::create_buf(pes_packet_length);
 }
 
-error_t TsPesContext::dump(PSpsBytesReader &rd) {
+error_t TsPesContext::dump(BitContext &rd) {
     if (!pes_packets && pes_packet_length > 0) {
         pes_packets = CharBuffer::create_buf(pes_packet_length);
     }
 
     if (!pes_packets) {
         sp_warn("pes packet null pes_packet_length %d", pes_packet_length);
-        rd->skip_bytes(rd->size());
+        rd.skip_bytes(rd.size());
         return SUCCESS;
     }
 
-    size_t left_size = std::min((size_t) pes_packet_length, rd->size());
-    pes_packets->append(rd->pos(), left_size);
-    rd->skip_bytes(left_size);
+    size_t left_size = std::min((size_t) pes_packet_length, rd.size());
+    pes_packets->append(rd.pos(), left_size);
+    rd.skip_bytes(left_size);
 
-    if (rd->size() > 0) {
-        sp_warn("has remain size %lu", rd->size());
-        rd->skip_bytes(rd->size());
+    if (rd.size() > 0) {
+        sp_warn("has remain size %lu", rd.size());
+        rd.skip_bytes(rd.size());
     }
 
     return SUCCESS;
@@ -215,7 +226,7 @@ TsPesProgram::TsPesProgram(int pid, TsContext *ctx,
     this->pcr_pid     = pcr_pid;
 }
 
-error_t TsPesProgram::decode(TsPacket *pkt, PSpsBytesReader &rd) {
+error_t TsPesProgram::decode(TsPacket *pkt, BitContext &rd) {
     error_t ret = SUCCESS;
 
     if (pkt->payload_unit_start_indicator == 0 && !pes_ctx->pes_packets) {
@@ -228,14 +239,17 @@ error_t TsPesProgram::decode(TsPacket *pkt, PSpsBytesReader &rd) {
     }
 
     if (pkt->payload_unit_start_indicator == 1) {
-        if ((ret = rd->acquire(9)) != SUCCESS) {
+        if ((ret = rd.acquire(9)) != SUCCESS) {
             sp_error("not enough size %d, ret %d", 6, ret);
             return ret;
         }
 
         pes_ctx->reset();
 
-        rd->read_bytes((uint8_t*) &pes_packet_header, 6);
+        pes_packet_header.packet_start_code_prefix = rd.read_int24();
+        pes_packet_header.stream_id = rd.read_int8();
+        pes_packet_header.pes_packet_length = rd.read_int16();
+
         pes_ctx->pes_packet_length = pes_packet_header.pes_packet_length;
 
         pes_ctx->init();
@@ -260,17 +274,40 @@ error_t TsPesProgram::decode(TsPacket *pkt, PSpsBytesReader &rd) {
         code != 0x1ff && code != 0x1f2 &&
         code != 0x1f8 && code != 0x1be) {
 
-        rd->read_bytes((uint8_t*) &pes_header, 3);
+        pes_header.const_value10 = rd.read_bits(2);
+        pes_header.pes_scrambling_control = rd.read_bits(2);
+        pes_header.pes_priority = rd.read_bits(1);
+        pes_header.data_alignment_indicator = rd.read_bits(1);
+        pes_header.copyright = rd.read_bits(1);
+        pes_header.original_or_copy = rd.read_bits(1);
 
-        uint8_t* pos = rd->pos();
+        pes_header.pts_dts_flags = rd.read_bits(2);
+        pes_header.escr_flag = rd.read_bits(1);
+        pes_header.es_rate_flag = rd.read_bits(1);
+        pes_header.dsm_trick_mode_flag = rd.read_bits(1);
+        pes_header.additional_copy_info_flag = rd.read_bits(1);
+        pes_header.pes_crc_flag = rd.read_bits(1);
+        pes_header.pes_extension_flag = rd.read_bits(1);
+
+        pes_header.pes_header_data_length = rd.read_int8();
+
+        uint8_t* pos = rd.pos();
 
         if ((pes_header.pts_dts_flags & 0x02) > 0) {
-            if ((ret = rd->acquire(5)) != SUCCESS) {
+            if ((ret = rd.acquire(5)) != SUCCESS) {
                 sp_error("not enough size %d, ret %d", 6, ret);
                 return ret;
             }
 
-            rd->read_bytes((uint8_t*) &pts, 5);
+            pts.const_value_0010 = rd.read_bits(4);
+            pts.pts1 = rd.read_bits(3);
+            pts.marker_bit1 = rd.read_bits(1);
+
+            pts.pts2 = rd.read_bits(15);
+            pts.marker_bit2 = rd.read_bits(1);
+
+            pts.pts3 = rd.read_bits(15);
+            pts.marker_bit3 = rd.read_bits(1);
 
             int64_t tmp_pts = 0;
             tmp_pts |= (((uint64_t) pts.pts1) << 30) & 0x1c0000000LL;
@@ -281,12 +318,20 @@ error_t TsPesProgram::decode(TsPacket *pkt, PSpsBytesReader &rd) {
         }
 
         if (pes_header.pts_dts_flags == 0x03) {
-            if ((ret = rd->acquire(5)) != SUCCESS) {
+            if ((ret = rd.acquire(5)) != SUCCESS) {
                 sp_error("not enough size %d, ret %d", 6, ret);
                 return ret;
             }
 
-            rd->read_bytes((uint8_t*) &dts, 5);
+            dts.const_value_0001 = rd.read_bits(4);
+            dts.dts1 = rd.read_bits(3);
+            dts.marker_bit1 = rd.read_bits(1);
+
+            dts.dts2 = rd.read_bits(15);
+            dts.marker_bit2 = rd.read_bits(1);
+
+            dts.dts3 = rd.read_bits(15);
+            dts.marker_bit3 = rd.read_bits(1);
 
             int64_t tmp_dts = 0;
             tmp_dts |= (((uint64_t) dts.dts1) << 30) & 0x1c0000000LL;
@@ -301,136 +346,150 @@ error_t TsPesProgram::decode(TsPacket *pkt, PSpsBytesReader &rd) {
         }
 
         if (pes_header.escr_flag) {
-            if ((ret = rd->acquire(6)) != SUCCESS) {
+            if ((ret = rd.acquire(6)) != SUCCESS) {
                 sp_error("not enough size %d, ret %d", 6, ret);
                 return ret;
             }
-            uint8_t u1 = rd->read_int8();
+            uint8_t u1 = rd.read_int8();
             escr.reserved = (u1 & 0xc0) >> 6;
             escr.escr_base1 = (u1 & 0x38) >> 3;
             escr.marker_bit1 = (u1 & 0x04) >> 1;
             // remain 2bit
 
-            uint16_t u2 = rd->read_int16();
+            uint16_t u2 = rd.read_int16();
             escr.escr_base2 = (((uint32_t) (u1 & 0x03)) << 13) | ((u2 & 0xFFF8) >> 3);
             escr.marker_bit2 = (u2 & 0x040) >> 1;
             // remain 2 bit
 
-            uint16_t u3 = rd->read_int16();
+            uint16_t u3 = rd.read_int16();
             escr.escr_base3 = (((uint32_t) (u2 & 0x03)) << 13) | ((u3 & 0xFFF8) >> 3);
             escr.marker_bit3 = (u3 & 0x040) >> 1;
             // remain 2bit
 
-            uint8_t u4 = rd->read_int8();
+            uint8_t u4 = rd.read_int8();
             escr.escr_extension = (((uint16_t) (u3 & 0x03)) << 7) | ((u4 & 0xFE) >> 1);
             escr.marker_bit4 = u4 & 0x01;
         }
 
         if (pes_header.es_rate_flag) {
-            if ((ret = rd->acquire(3)) != SUCCESS) {
+            if ((ret = rd.acquire(3)) != SUCCESS) {
                 sp_error("not enough size %d, ret %d", 3, ret);
                 return ret;
             }
 
-            uint32_t u1 = rd->read_int24();
+            uint32_t u1 = rd.read_int24();
             es_rate.marker_bit1 = u1 & 0x800000;
             es_rate.es_rate = u1 & 0x7ffffe;
             es_rate.mark_bit2 = u1 & 0x01;
         }
 
         if (pes_header.dsm_trick_mode_flag) {
-            if ((ret = rd->acquire(1)) != SUCCESS) {
+            if ((ret = rd.acquire(1)) != SUCCESS) {
                 sp_error("not enough size %d, ret %d", 1, ret);
                 return ret;
             }
 
-            rd->read_bytes((uint8_t*) &dsm_trick_mode, 1);
+            // TODO: FIXME
+            rd.skip_bytes(1);
+            // rd.read_bytes((uint8_t*) &dsm_trick_mode, 1);
         }
 
         if (pes_header.additional_copy_info_flag) {
-            if ((ret = rd->acquire(1)) != SUCCESS) {
+            if ((ret = rd.acquire(1)) != SUCCESS) {
                 sp_error("not enough size %d, ret %d", 1, ret);
                 return ret;
             }
 
-            rd->read_bytes((uint8_t*) &additional_copy_info, 1);
+            // TODO: FIXME
+            rd.skip_bytes(1);
+            // rd.read_bytes((uint8_t*) &additional_copy_info, 1);
         }
 
         if (pes_header.pes_crc_flag) {
-            if ((ret = rd->acquire(2)) != SUCCESS) {
+            if ((ret = rd.acquire(2)) != SUCCESS) {
                 sp_error("not enough size %d, ret %d", 2, ret);
                 return ret;
             }
 
-            pes_crc.previous_pes_packet_crc = rd->read_int16();
+            pes_crc.previous_pes_packet_crc = rd.read_int16();
         }
 
         if (pes_header.pes_extension_flag) {
-            if ((ret = rd->acquire(1)) != SUCCESS) {
+            if ((ret = rd.acquire(1)) != SUCCESS) {
                 sp_error("not enough size %d, ret %d", 1, ret);
                 return ret;
             }
 
-            rd->read_bytes((uint8_t*) &pes_extension.flags, 1);
+            pes_extension.flags.pes_private_data_flag = rd.read_bits(1);
+            pes_extension.flags.pack_header_field_flag = rd.read_bits(1);
+            pes_extension.flags.program_packet_sequence_counter_flag = rd.read_bits(1);
+            pes_extension.flags.p_std_buffer_flag = rd.read_bits(1);
+            pes_extension.flags.reserved = rd.read_bits(3);
+            pes_extension.flags.pes_extension_flag_2 = rd.read_bits(1);
 
             if (pes_extension.flags.pes_private_data_flag) {
-                if ((ret = rd->acquire(16)) != SUCCESS) {
+                if ((ret = rd.acquire(16)) != SUCCESS) {
                     sp_error("not enough size %d, ret %d", 16, ret);
                     return ret;
                 }
 
                 pes_extension.pes_private_data.buffer = CharBuffer::create_buf(16);
-                pes_extension.pes_private_data.buffer->append(rd->pos(), 16);
-                rd->skip_bytes(16);
+                pes_extension.pes_private_data.buffer->append(rd.pos(), 16);
+                rd.skip_bytes(16);
             }
 
             if (pes_extension.flags.pack_header_field_flag) {
-                if ((ret = rd->acquire(1)) != SUCCESS) {
+                if ((ret = rd.acquire(1)) != SUCCESS) {
                     sp_error("not enough size %d, ret %d", 1, ret);
                     return ret;
                 }
 
-                pes_extension.pack_header_field.pack_field_length = rd->read_int8();
+                pes_extension.pack_header_field.pack_field_length = rd.read_int8();
                 pes_extension.pack_header_field.buffer = CharBuffer::create_buf(
                         pes_extension.pack_header_field.pack_field_length);
 
-                if ((ret = rd->acquire(pes_extension.pack_header_field.pack_field_length)) != SUCCESS) {
+                if ((ret = rd.acquire(pes_extension.pack_header_field.pack_field_length)) != SUCCESS) {
                     sp_error("not enough size %d, ret %d", 1, ret);
                     return ret;
                 }
 
-                pes_extension.pack_header_field.buffer->append(rd->pos(),
+                pes_extension.pack_header_field.buffer->append(rd.pos(),
                         pes_extension.pack_header_field.pack_field_length);
-                rd->skip_bytes(pes_extension.pack_header_field.pack_field_length);
+                rd.skip_bytes(pes_extension.pack_header_field.pack_field_length);
             }
 
             if (pes_extension.flags.program_packet_sequence_counter_flag) {
-                if ((ret = rd->acquire(2)) != SUCCESS) {
+                if ((ret = rd.acquire(2)) != SUCCESS) {
                     sp_error("not enough size %d, ret %d", 2, ret);
                     return ret;
                 }
 
-                rd->read_bytes((uint8_t*) &pes_extension.program_packet_sequence_counter, 2);
+                // TODO: FIMXE
+                rd.skip_bytes(2);
+                // rd.read_bytes((uint8_t*) &pes_extension.program_packet_sequence_counter, 2);
             }
 
             if (pes_extension.flags.p_std_buffer_flag) {
-                if ((ret = rd->acquire(2)) != SUCCESS) {
+                if ((ret = rd.acquire(2)) != SUCCESS) {
                     sp_error("not enough size %d, ret %d", 2, ret);
                     return ret;
                 }
 
-                rd->read_bytes((uint8_t*) &pes_extension.p_std_buffer, 2);
+                // TODO: FIMXE
+                rd.skip_bytes(2);
+                // rd.read_bytes((uint8_t*) &pes_extension.p_std_buffer, 2);
             }
 
             if (pes_extension.flags.pes_extension_flag_2) {
-                if ((ret = rd->acquire(1)) != SUCCESS) {
+                if ((ret = rd.acquire(1)) != SUCCESS) {
                     sp_error("not enough size %d, ret %d", 1, ret);
                     return ret;
                 }
 
-                rd->read_bytes((uint8_t*) &pes_extension.pes_extension2.header, 1);
+                pes_extension.pes_extension2.header.marker_bit = rd.read_bits(1);
+                pes_extension.pes_extension2.header.pes_extension_field_length = rd.read_bits(7);
 
-                if ((ret = rd->acquire(pes_extension.pes_extension2.header.pes_extension_field_length)) != SUCCESS) {
+                if ((ret = rd.acquire(pes_extension.pes_extension2.header.pes_extension_field_length)) != SUCCESS) {
                     sp_error("not enough size %d, ret %d",
                             pes_extension.pes_extension2.header.pes_extension_field_length,
                             ret);
@@ -440,28 +499,28 @@ error_t TsPesProgram::decode(TsPacket *pkt, PSpsBytesReader &rd) {
                 pes_extension.pes_extension2.buffer = CharBuffer::create_buf(
                         pes_extension.pes_extension2.header.pes_extension_field_length);
 
-                pes_extension.pes_extension2.buffer->append(rd->pos(),
+                pes_extension.pes_extension2.buffer->append(rd.pos(),
                         pes_extension.pes_extension2.header.pes_extension_field_length);
-                rd->skip_bytes(pes_extension.pes_extension2.header.pes_extension_field_length);
+                rd.skip_bytes(pes_extension.pes_extension2.header.pes_extension_field_length);
             }
         }
 
-        uint8_t* end_pos = rd->pos();
-        int stuff_head_size = pes_header.pes_header_data_length-(end_pos-pos);
+        uint8_t* end_pos = rd.pos();
+        int stuff_head_size = pes_header.pes_header_data_length - (end_pos - pos);
 
-        if ((ret = rd->acquire(stuff_head_size)) != SUCCESS) {
+        if ((ret = rd.acquire(stuff_head_size)) != SUCCESS) {
             sp_error("not enough size %d, ret %d", stuff_head_size, ret);
             return ret;
         }
 
-        rd->skip_bytes(stuff_head_size);
+        rd.skip_bytes(stuff_head_size);
 
         if ((ret = pes_ctx->dump(rd)) != SUCCESS) {
             sp_error("fail dump pes ret %d", ret);
             return ret;
         }
     } else if (code == 0x1be) {  // padding stream
-        rd->skip_bytes(rd->size());
+        rd.skip_bytes(rd.size());
     } else if (code == 0x1bc || code == 0x1bf ||
                code == 0x1f0 || code == 0x1f1 ||
                code == 0x1ff || code == 0x1f2 ||
@@ -482,7 +541,7 @@ TsContext::TsContext() {
 }
 
 error_t TsContext::decode(uint8_t* p, size_t len) {
-    auto rd = SpsBytesReader::create_reader(p, len);
+    BitContext rd(p, len);
     TsPacket pkt(this);
     error_t  ret = pkt.decode(rd);
 
@@ -528,56 +587,63 @@ error_t TsContext::add_program(int pid, PTsProgram filter) {
     return SUCCESS;
 }
 
-error_t TsAdaptationFiled::decode(PSpsBytesReader& rd) {
-    auto ret = rd->acquire(1);
+error_t TsAdaptationFiled::decode(BitContext& rd) {
+    auto ret = rd.acquire(1);
 
     if (ret != SUCCESS) {
         return ret;
     }
-    adaption_field_length = rd->read_int8();
+    adaption_field_length = rd.read_int8();
 
-    uint8_t *pos = rd->pos();
+    uint8_t *pos = rd.pos();
 
     if (adaption_field_length <= 0) {
         return ret;
     }
 
-    ret = rd->acquire(adaption_field_length);
+    ret = rd.acquire(adaption_field_length);
 
     if (ret != SUCCESS) {
         return ret;
     }
 
-    rd->read_bytes((uint8_t*) &flags, 1);
+    flags.discontinuity_indicator = rd.read_bits(1);
+    flags.random_access_indicator = rd.read_bits(1);
+    flags.elementary_stream_priority_indicator = rd.read_bits(1);
+    flags.PCR_flag = rd.read_bits(1);
+    flags.OPCR_flag = rd.read_bits(1);
+    flags.splicing_point_flag = rd.read_bits(1);
+    flags.transport_private_data_flag = rd.read_bits(1);
+    flags.adaptation_field_extension_flag = rd.read_bits(1);
 
     if (flags.PCR_flag) {
-        rd->read_bytes(pcr, 6);
+        rd.read_bytes(pcr, 6);
     }
 
     if (flags.OPCR_flag) {
-        rd->read_bytes(opcr, 6);
+        rd.read_bytes(opcr, 6);
     }
 
     if (flags.splicing_point_flag) {
-        splice_countdown = rd->read_int8();
+        splice_countdown = rd.read_int8();
     }
 
     if (flags.adaptation_field_extension_flag) {
-        transport_private_data_length = rd->read_int8();
+        transport_private_data_length = rd.read_int8();
 
-        if ((ret = rd->acquire(transport_private_data_length)) != SUCCESS) {
+        if ((ret = rd.acquire(transport_private_data_length)) != SUCCESS) {
             return ret;
         }
 
         transport_private_data = std::make_unique<uint8_t[]>(
                 transport_private_data_length);
-        rd->read_bytes(transport_private_data.get(),
+        rd.read_bytes(transport_private_data.get(),
                        transport_private_data_length);
     }
 
     // stuffing_byte
-    stuffing_length = adaption_field_length - (rd->pos() - pos);
-    rd->skip_bytes(stuffing_length);
+    stuffing_length = adaption_field_length - (rd.pos() - pos);
+    rd.skip_bytes(stuffing_length);
 
     return ret;
 }
@@ -587,31 +653,29 @@ TsPacket::TsPacket(TsContext* ctx, int packet_size) {
     this->pkt_size = packet_size;
 }
 
-error_t TsPacket::decode(PSpsBytesReader& rd) {
+error_t TsPacket::decode(BitContext& rd) {
     error_t ret = SUCCESS;
 
-    if ((ret = rd->acquire(pkt_size)) != SUCCESS) {
+    if ((ret = rd.acquire(pkt_size)) != SUCCESS) {
         sp_error("not match packet size %d, actual %lu",
-                  pkt_size, rd->size());
+                  pkt_size, rd.size());
         return ERROR_TS_PACKET_SIZE;
     }
 
-    sync_byte = rd->read_int8();
+    sync_byte = rd.read_int8();
     if (sync_byte != 0x47) {
         sp_error("sync_byte %x not 0x47", sync_byte);
         return ERROR_TS_PACKET_DECODE;
     }
 
-    uint16_t tmp = rd->read_int16();
-    transport_error_indicator = (tmp & 0x8000) >> 15;
-    payload_unit_start_indicator = (tmp & 0x4000) >> 14;
-    transport_priority = (tmp & 0x2000) >> 13;
-    pid = tmp & 0x001F;
+    transport_error_indicator = rd.read_bits(1);
+    payload_unit_start_indicator = rd.read_bits(1);
+    transport_priority = rd.read_bits(1);
+    pid = rd.read_bits(13);
 
-    tmp = rd->read_int8();
-    transport_scrambling_control = (tmp & 0xC0) >> 6;
-    adaptation_filed_control = (tmp & 0x30) >> 4;
-    continuity_counter = tmp & 0x0F;
+    transport_scrambling_control = rd.read_bits(2);
+    adaptation_filed_control = rd.read_bits(2);
+    continuity_counter = rd.read_bits(4);
 
     if (adaptation_filed_control & 0x02) {
         adaptation_field = std::make_unique<TsAdaptationFiled>();
@@ -621,6 +685,7 @@ error_t TsPacket::decode(PSpsBytesReader& rd) {
         }
     }
 
+#if 1
     if (payload_unit_start_indicator && !adaptation_field) {
         sp_info("ts pkt sync_byte %x,  transport_error_indicator %d, "
                 "payload_unit_start_indicator %d, transport_priority %d, "
@@ -648,7 +713,7 @@ error_t TsPacket::decode(PSpsBytesReader& rd) {
                 adaptation_field->flags.splicing_point_flag,
                 adaptation_field->flags.adaptation_field_extension_flag);
     }
-
+#endif
     return ret;
 }
 

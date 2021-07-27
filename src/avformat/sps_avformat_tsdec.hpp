@@ -29,6 +29,8 @@ SOFTWARE.
 #include <sps_avformat_dec.hpp>
 #include <sps_avformat_ts.hpp>
 
+#include <sps_io_bytes.hpp>
+
 namespace sps {
 
 class TsDemuxer : public IAVDemuxer {

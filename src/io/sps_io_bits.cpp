@@ -41,8 +41,19 @@ void BitContext::init(uint8_t *p, size_t sz) {
     remain_bits = 0;
 }
 
+uint8_t* BitContext::pos() {
+    if (remain_bits > 0) {
+        return buf + buf_pos;
+    }
+    return buf + buf_pos + 1;
+}
+
 size_t BitContext::size_bits() {
     return (sz - buf_pos - 1) * 8 + remain_bits;
+}
+
+size_t BitContext::size() {
+    return size_bits() / 8;
 }
 
 error_t BitContext::acquire(uint32_t nbyte) {
@@ -50,7 +61,7 @@ error_t BitContext::acquire(uint32_t nbyte) {
 }
 
 error_t BitContext::acquire_bits(size_t nbit) {
-    return size_bits() > nbit ? SUCCESS : ERROR_IO_NOT_ENOUGH;
+    return size_bits() >= nbit ? SUCCESS : ERROR_IO_NOT_ENOUGH;
 }
 
 void BitContext::read_bytes(uint8_t* c, size_t n) {

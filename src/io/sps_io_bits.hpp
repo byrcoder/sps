@@ -34,9 +34,11 @@ class BitContext {
 
  public:
     void init(uint8_t* p, size_t sz);
+    uint8_t* pos();
 
  public:
     size_t size_bits();
+    size_t size();  // bytes
 
  public:
     error_t acquire(uint32_t nbyte);
