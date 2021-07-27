@@ -146,6 +146,13 @@ uint32_t SpsBytesReader::read_int32() {
     return ((uint32_t) read_int16()) << 16u |  read_int16();
 }
 
+void SpsBytesReader::read_reverse_bytes(uint8_t* c, size_t n) {
+    for (int i = 0; i < n; ++i) {
+        *c = read_int8();
+        --c;
+    }
+}
+
 error_t SpsBytesReader::acquire(uint32_t n) {
     error_t ret   = SUCCESS;
     size_t  nread = 0;

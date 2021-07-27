@@ -113,6 +113,7 @@ class SpsBytesReader {
     uint16_t read_int16();
     uint32_t read_int24();
     uint32_t read_int32();
+    void    read_reverse_bytes(uint8_t* c, size_t n);
 
     error_t  acquire(uint32_t n);
 

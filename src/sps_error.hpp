@@ -72,10 +72,11 @@ SOFTWARE.
 #define ERROR_URL_PROTOCOL_NOT_EXISTS       1340
 
 #define ERROR_FILE_OPEN                     1350
-#define ERROR_IO_EOF                        1351
-#define ERROR_FILE_READ                     1352
-#define ERROR_FILE_WRITE                    1353
+#define ERROR_FILE_READ                     1351
+#define ERROR_FILE_WRITE                    1352
+#define ERROR_IO_EOF                        1353
 #define ERROR_IO_BUFFER_FULL                1354
+#define ERROR_IO_NOT_ENOUGH                 1355
 
 // DNS 等解析错误
 #define ERROR_SYSTEM_IP_INVALID             1500

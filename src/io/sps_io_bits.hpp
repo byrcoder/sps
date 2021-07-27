@@ -21,58 +21,56 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-//
-// Created by byrcoder on 2021/7/23.
-//
+#ifndef SPS_IO_BITS_HPP
+#define SPS_IO_BITS_HPP
 
-#include <sps_avformat_tsdec.hpp>
-
-#include <utility>
-
-#include <sps_io_bytes.hpp>
-
-#include <sps_log.hpp>
+#include <sps_typedef.hpp>
 
 namespace sps {
 
-TsDemuxer::TsDemuxer(PIReader rd) {
-    buf       = std::make_shared<AVBuffer>(SPS_TS_PACKET_SIZE, false);
-    this->rd  = std::make_unique<SpsBytesReader>(rd, buf);
-}
+class BitContext {
+ public:
+    BitContext(uint8_t* p = nullptr, size_t sz = 0);
 
-error_t TsDemuxer::read_header(PSpsAVPacket & buffer) {
-    return SUCCESS;
-}
+ public:
+    void init(uint8_t* p, size_t sz);
 
-error_t TsDemuxer::read_packet(PSpsAVPacket& buffer) {
-    error_t ret = ERROR_STREAM_NOT_IMPL;
+ public:
+    size_t size_bits();
 
-    do {
-        if ((ret = rd->acquire(SPS_TS_PACKET_SIZE)) != SUCCESS) {
-            sp_error("fail read ts packet ret %d", ret);
-            return ret;
-        }
+ public:
+    error_t acquire(uint32_t nbyte);
+    error_t acquire_bits(size_t nbit);
 
-        sp_debug("get packet size %lu(%c), (%lu~%lu)",
-                buf->size(), *buf->buffer(), buf->buf_ptr, buf->buf_end);
+ public:
+    void     read_bytes(uint8_t* c, size_t n);
+    void     skip_bytes(size_t n);
 
-        if ((ret = ts_ctx.decode(buf->buffer(), SPS_TS_PACKET_SIZE)) != SUCCESS) {
-            sp_error("fail decode ts packet ret %d", ret);
-            return ret;
-        }
+    uint8_t  read_int8();
+    uint16_t read_int16();
+    uint32_t read_int24();
+    uint32_t read_int32();
 
-        rd->buf->clear();
-    } while (true);
+ public:
+    uint32_t read_bits(size_t n);
 
-    return ret;
-}
+ private:
+    void next();
 
-error_t TsDemuxer::read_tail(PSpsAVPacket& buffer) {
-    return SUCCESS;
-}
+ private:
+    // byte pos info
+    uint8_t* buf;
+    size_t   sz;
+    int32_t  buf_pos;  // current pos
 
-error_t TsDemuxer::probe(PSpsAVPacket& buffer) {
-    return ERROR_STREAM_NOT_IMPL;
-}
+    // last byte not read bit
+    size_t   remain_bits;
+    // remain bits high bit
+    // eg. remain_bits = 3,
+    // remain_value = 101 (00000) 101 is not read, 00000 has read
+    uint8_t  remain_value;
+};
 
 }  // namespace sps
+
+#endif  // SPS_IO_BITS_HPP

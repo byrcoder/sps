@@ -83,6 +83,7 @@ class TsContext;
 
 typedef std::unique_ptr<TsPacket> PTsPacket;
 
+// ts program has pes with data or psi
 enum TsProgramType {
     TS_PROGRAM_UNKNOWN,
     TS_PROGRAM_PES,
@@ -90,6 +91,7 @@ enum TsProgramType {
     TS_PROGRAM_PMT,
 };
 
+// base ts program
 class TsProgram : public std::enable_shared_from_this<TsProgram> {
  public:
     TsProgram(int pid, TsContext* ctx);
@@ -109,6 +111,7 @@ class TsProgram : public std::enable_shared_from_this<TsProgram> {
 };
 typedef std::shared_ptr<TsProgram> PTsProgram;
 
+// psi program
 class TsPsiProgram : public TsProgram {
  public:
     TsPsiProgram(int pid, TsContext* ctx);
@@ -132,15 +135,16 @@ class TsPsiProgram : public TsProgram {
      */
     uint8_t table_id;  // 8bit
 
+
     struct {
-        uint32_t section_syntax_indicator : 1;
-        uint32_t const_value0 : 1;
-        uint32_t reserved : 2;
-        uint32_t section_length : 12;
+        uint32_t section_syntax_indicator : 1;  // 1bit
+        uint32_t const_value0 : 1;  // 1bit
+        uint32_t reserved : 2;  // 2bit
+        uint32_t section_length : 12;  // 12bit
         // pat. self define
         // pmt. program_number
         // cat. reserved
-        uint32_t transport_stream_id : 16;
+        uint32_t transport_stream_id : 16;  // 16bit
     } flags1;
 
     struct {
@@ -433,7 +437,7 @@ class TsAdaptationFiled {
  public:
     error_t decode(PSpsBytesReader& rd);
 
- private:
+ public:
     // The adaptation_field_length is an 8-bit field specifying the number
     // of bytes in the adaptation_field immediately
     // following the adaptation_field_length

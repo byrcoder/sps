@@ -174,9 +174,9 @@ error_t FlvDemuxer::read_packet(PSpsAVPacket& buffer) {
         if (frame_type == 0x10) {
             sp_info("%d. flv encode video stream pkt: %d, flag: %2X, "
                     "data_size: %10.d, dts: %lld, pts: %lld, cts: %lld",
-                    buffer->number, pkt_type, buffer->flags,
-                    buffer->size(), buffer->dts,  buffer->pts,
-                    buffer->pts - buffer->dts);
+                    0, pkt_type, flags,
+                    data_size, dts,  pts,
+                    pts - dts);
         }
 
         sp_debug("frametype: %2X, codecid: %2X, dts: %12lld, "

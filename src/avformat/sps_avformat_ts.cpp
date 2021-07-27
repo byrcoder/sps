@@ -50,13 +50,19 @@ error_t TsPsiProgram::decode(TsPacket *pkt, PSpsBytesReader &rd) {
     }
 
     table_id = rd->read_int8();
-    rd->read_bytes((uint8_t*) &flags1, 4);
+
+    rd->read_reverse_bytes((uint8_t*) &flags1, 4);
     rd->read_bytes((uint8_t*) &flags2, 1);
     section_number = rd->read_int8();
     last_section_number = rd->read_int8();
 
     // 5 pre size, 4 crc32
     int left_length = flags1.section_length - 5 - 4;
+
+    sp_info("section_syntax_indicator %x, const_value0 %x, reserved %x"
+            "section_length %x, transport_stream_id %x ",
+            flags1.section_syntax_indicator, flags1.const_value0, flags1.reserved,
+            flags1.section_length, flags1.transport_stream_id);
 
     ret = psi_decode(pkt, rd);
 
@@ -486,9 +492,11 @@ error_t TsContext::decode(uint8_t* p, size_t len) {
     }
 
     // has no payload
-    if ((pkt.adaptation_filed_control & 0x01) != 0) {
+    if ((pkt.adaptation_filed_control & 0x01) == 0) {
         return ret;
     }
+
+    sp_info("...decode... payload");
 
     auto filter = get_program(pkt.pid);
     if (!filter) {
@@ -595,10 +603,10 @@ error_t TsPacket::decode(PSpsBytesReader& rd) {
     }
 
     uint16_t tmp = rd->read_int16();
-    transport_error_indicator = (tmp & 0x80) >> 15;
-    payload_unit_start_indicator = (tmp & 0x40) >> 14;
-    transport_priority = (tmp & 0x20) >> 13;
-    pid = tmp & 0x1F;
+    transport_error_indicator = (tmp & 0x8000) >> 15;
+    payload_unit_start_indicator = (tmp & 0x4000) >> 14;
+    transport_priority = (tmp & 0x2000) >> 13;
+    pid = tmp & 0x001F;
 
     tmp = rd->read_int8();
     transport_scrambling_control = (tmp & 0xC0) >> 6;
@@ -611,6 +619,34 @@ error_t TsPacket::decode(PSpsBytesReader& rd) {
         if (ret != SUCCESS) {
             return ret;
         }
+    }
+
+    if (payload_unit_start_indicator && !adaptation_field) {
+        sp_info("ts pkt sync_byte %x,  transport_error_indicator %d, "
+                "payload_unit_start_indicator %d, transport_priority %d, "
+                "pid %d, transport_scrambling_control %d, "
+                "continuity_counter: %2d, adaptation_filed_control: %x",
+                sync_byte, transport_error_indicator,
+                payload_unit_start_indicator, transport_priority,
+                pid, transport_scrambling_control,
+                continuity_counter, adaptation_filed_control);
+    } else if (payload_unit_start_indicator) {
+        sp_info("ts pkt sync_byte %x,  transport_error_indicator %d, "
+                "payload_unit_start_indicator %d, transport_priority %d, "
+                "pid %d, transport_scrambling_control %d, "
+                "continuity_counter: %2d, adaptation_filed_control: %x "
+                "ts adaption adaption_field_length %d, "
+                "PCR_flag %d, OPCR_flag %d, splicing_point_flag %d, "
+                "adaptation_field_extension_flag %d",
+                sync_byte, transport_error_indicator,
+                payload_unit_start_indicator, transport_priority,
+                pid, transport_scrambling_control,
+                continuity_counter, adaptation_filed_control,
+                adaptation_field->adaption_field_length,
+                adaptation_field->flags.PCR_flag,
+                adaptation_field->flags.OPCR_flag,
+                adaptation_field->flags.splicing_point_flag,
+                adaptation_field->flags.adaptation_field_extension_flag);
     }
 
     return ret;
