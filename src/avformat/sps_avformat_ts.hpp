@@ -75,6 +75,9 @@ SOFTWARE.
 #define TS_STREAM_TYPE_VIDEO_H264       0x1B
 #define TS_STREAM_TYPE_VIDEO_H265       0x24
 
+
+#define TS_DEFAULT_PES_PACKET_SIZE     1024 * 1024
+
 namespace sps {
 
 class TsPacket;
@@ -89,6 +92,7 @@ enum TsProgramType {
     TS_PROGRAM_PES,
     TS_PROGRAM_PAT,
     TS_PROGRAM_PMT,
+    TS_PROGRAM_SDT,
 };
 
 // base ts program
@@ -99,12 +103,14 @@ class TsProgram : public std::enable_shared_from_this<TsProgram> {
  public:
     virtual error_t decode(TsPacket* pkt, BitContext& rd) = 0;
 
+    bool is_section();
+
  public:
     int pid;
     int es_id = 0;
     int last_cc = -1;
     int discard = -1;
-    TsProgramType filter_type = TS_PROGRAM_UNKNOWN;
+    TsProgramType program_type = TS_PROGRAM_UNKNOWN;
 
  protected:
     TsContext* ctx;
@@ -123,6 +129,7 @@ class TsPsiProgram : public TsProgram {
     virtual error_t psi_decode(TsPacket* pkt, BitContext& rd) = 0;
 
  public:
+    uint8_t pointer_field;
     /*
      * Table 2-26 – table_id assignment values
      * 0x00. program_association_section
@@ -134,7 +141,6 @@ class TsPsiProgram : public TsProgram {
      * 0xFF. forbidden
      */
     uint8_t table_id;  // 8bit
-
 
     struct {
         uint32_t section_syntax_indicator : 1;  // 1bit
@@ -161,6 +167,29 @@ class TsPsiProgram : public TsProgram {
      */
 
     uint8_t crc_32;  // 4 bit
+};
+
+class TsSdtProgram : public TsPsiProgram {
+ public:
+    TsSdtProgram(int pid, TsContext* ctx);
+
+ public:
+    error_t psi_decode(TsPacket* pkt, BitContext& rd) override;
+
+ public:
+
+    uint8_t reserved_future_use;
+    uint16_t service_id;
+
+    struct {
+//        reserved_future_used : 6;
+//        EIT_schedule_flag : 1;
+//        EIT_present_following_flag : 1;
+//        running_status : 3;
+//        free_CA_mode : 1;
+    };
+
+
 };
 
 struct PmtInfo {
@@ -218,7 +247,9 @@ class TsPmtProgram : public TsPsiProgram {
         uint32_t reserved1 : 3;
         uint32_t pcr_pid : 13;
         uint32_t reserved2 : 4;
-        uint32_t program_info_length : 12;
+
+        uint32_t program_info_length_unused : 2;
+        uint32_t program_info_length : 10;
     } pmt_flag;
 
     PCharBuffer program_info_desc;
@@ -230,16 +261,23 @@ class TsPmtProgram : public TsPsiProgram {
  */
 class TsPesContext {
  public:
+    TsPesContext(int stream_type);
+
+ public:
     void reset();
     void init();
 
  public:
-    error_t dump(BitContext& rd);
+    error_t dump(BitContext& rd, int payload_unit_start_indicator);
+
+    error_t on_payload_complete();
 
  public:
+    int stream_type;
     int64_t pts = -1;
     int64_t dts = -1;
     uint16_t pes_packet_length = 0;
+    uint32_t pes_packet_cap    = 0;
     PCharBuffer pes_packets;
 };
 typedef std::unique_ptr<TsPesContext> PTsPesContext;
@@ -424,7 +462,7 @@ class TsContext {
 
  public:
     PTsProgram get_program(int pid);
-    error_t   add_program(int pid, PTsProgram filter);
+    error_t   add_program(int pid, PTsProgram program);
 
  private:
     std::map<int, PTsProgram> filters;

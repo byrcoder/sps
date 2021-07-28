@@ -38,9 +38,16 @@ TsProgram::TsProgram(int pid, TsContext *ctx) {
     this->ctx = ctx;
 }
 
+bool TsProgram::is_section() {
+    return program_type == TS_PROGRAM_PAT ||
+        program_type == TS_PROGRAM_PMT  ||
+        program_type == TS_PROGRAM_SDT;
+}
+
 TsPsiProgram::TsPsiProgram(int pid, TsContext *ctx) : TsProgram(pid, ctx) {
 }
 
+// work as ffmpeg parse_section_header
 error_t TsPsiProgram::decode(TsPacket *pkt, BitContext& rd) {
     auto ret = rd.acquire(8);
 
@@ -49,6 +56,11 @@ error_t TsPsiProgram::decode(TsPacket *pkt, BitContext& rd) {
         return ret;
     }
 
+    if (pkt->payload_unit_start_indicator) {
+        pointer_field = rd.read_int8();
+    }
+
+    // section header
     table_id = rd.read_int8();
 
     flags1.section_syntax_indicator = rd.read_bits(1);
@@ -67,9 +79,9 @@ error_t TsPsiProgram::decode(TsPacket *pkt, BitContext& rd) {
     // 5 pre size, 4 crc32
     int left_length = flags1.section_length - 5 - 4;
 
-    sp_info("section_syntax_indicator %x, const_value0 %x, reserved %x"
+    sp_debug("psi pid %d, section_syntax_indicator %x, const_value0 %x, reserved %x, "
             "section_length %x, transport_stream_id %x ",
-            flags1.section_syntax_indicator, flags1.const_value0, flags1.reserved,
+            pid, flags1.section_syntax_indicator, flags1.const_value0, flags1.reserved,
             flags1.section_length, flags1.transport_stream_id);
 
     ret = psi_decode(pkt, rd);
@@ -79,8 +91,23 @@ error_t TsPsiProgram::decode(TsPacket *pkt, BitContext& rd) {
     return ret;
 }
 
+TsSdtProgram::TsSdtProgram(int pid, TsContext *ctx) : TsPsiProgram(pid, ctx) {
+}
+
+error_t TsSdtProgram::psi_decode(TsPacket *pkt, BitContext &rd) {
+    error_t ret = SUCCESS;
+
+    reserved_future_use = rd.read_int8();
+
+    return ret; // TODO FIXME
+//    while (rd.size_bits() > 0) {
+//        uint16_t sid = rd.read_int16();
+//        return ret;
+//    }
+}
+
 TsPatProgram::TsPatProgram(int pid, TsContext *ctx) : TsPsiProgram(pid, ctx) {
-    filter_type = TS_PROGRAM_PAT;
+    program_type = TS_PROGRAM_PAT;
 }
 
 error_t TsPatProgram::psi_decode(TsPacket *pkt, BitContext &rd) {
@@ -99,16 +126,27 @@ error_t TsPatProgram::psi_decode(TsPacket *pkt, BitContext &rd) {
 
         while (left_length > 0) {
             PmtInfo info;
-            rd.read_bytes((uint8_t*) &info, 4);
+            info.program_number  = rd.read_int16();
+            info.reserved        = rd.read_bits(3);
+            info.program_map_pid = rd.read_bits(13);
+
             pmt_infos.push_back(info);
             left_length -= 4;
         }
     }
+
+    for (auto& pmt : pmt_infos) {
+        sp_debug("pmt pid %d", pmt.program_map_pid);
+        ctx->add_program(pmt.program_map_pid, std::make_shared<TsPmtProgram>(
+                (int) pmt.program_map_pid, ctx
+                ));
+    }
+
     return ret;
 }
 
 TsPmtProgram::TsPmtProgram(int pid, TsContext *ctx) : TsPsiProgram(pid, ctx) {
-    filter_type = TS_PROGRAM_PMT;
+    program_type = TS_PROGRAM_PMT;
 }
 
 error_t TsPmtProgram::psi_decode(TsPacket *pkt, BitContext &rd) {
@@ -119,7 +157,20 @@ error_t TsPmtProgram::psi_decode(TsPacket *pkt, BitContext &rd) {
         return ret;
     }
 
-    rd.read_bytes((uint8_t*) &pmt_flag, 4);
+    pmt_flag.reserved1 = rd.read_bits(3);
+    pmt_flag.pcr_pid   = rd.read_bits(13);
+    pmt_flag.reserved2 = rd.read_bits(4);
+    pmt_flag.program_info_length_unused = rd.read_bits(2);
+    pmt_flag.program_info_length = rd.read_bits(10);
+
+    sp_debug("pmt_flag pid %d, reserved1 %x, pcr_pid %d, "
+             "reserved2 %x,"
+             "program_info_length_unused %d, program_info_length %d",
+             pid, pmt_flag.reserved1, pmt_flag.pcr_pid,
+             pmt_flag.reserved2,
+             pmt_flag.program_info_length_unused,
+             pmt_flag.program_info_length);
+
 
     if (pmt_flag.program_info_length > 0) {
         if ((ret = rd.acquire(pmt_flag.program_info_length)) != SUCCESS) {
@@ -143,8 +194,19 @@ error_t TsPmtProgram::psi_decode(TsPacket *pkt, BitContext &rd) {
         auto info = std::make_shared<PesInfo>();
 
         info->header.stream_type = rd.read_int8();
+
         info->header.reserved1   = rd.read_bits(3);
-        info->header.es_info_length = rd.read_bits(13);
+        info->header.elementary_pid = rd.read_bits(13);
+        info->header.reserved2 = rd.read_bits(4);
+        info->header.es_info_length = rd.read_bits(12);
+
+        sp_debug("pmt got new stream_type %x, reserved1 %d, "
+                "elementary_pid %d, reserved2 %x, es_info_length %d, "
+                "left_size %d",
+                info->header.stream_type, info->header.reserved1,
+                info->header.elementary_pid, info->header.reserved2,
+                info->header.es_info_length,
+                left_length);
 
         if (info->header.es_info_length > 0) {
             if ((ret = rd.acquire(info->header.es_info_length)) != SUCCESS) {
@@ -160,7 +222,7 @@ error_t TsPmtProgram::psi_decode(TsPacket *pkt, BitContext &rd) {
         }
 
         pes_infos.push_back(info);
-        left_length -= (4 + info->header.es_info_length);
+        left_length -= (5 + info->header.es_info_length);
     }
 
     for (auto& pes_info : pes_infos) {
@@ -184,20 +246,35 @@ error_t TsPmtProgram::psi_decode(TsPacket *pkt, BitContext &rd) {
     return ret;
 }
 
+TsPesContext::TsPesContext(int stream_type) {
+    this->stream_type = stream_type;
+}
+
 void TsPesContext::reset() {
     pts = -1;
     dts = -1;
     pes_packet_length = 0;
+    pes_packet_cap    = 0;
     pes_packets.reset();
 }
 
 void TsPesContext::init() {
-    pes_packets = CharBuffer::create_buf(pes_packet_length);
+    if (pes_packet_length > 0) {
+        pes_packet_cap = pes_packet_length;
+        pes_packets = CharBuffer::create_buf(pes_packet_cap);
+    } else {
+        pes_packet_cap = TS_DEFAULT_PES_PACKET_SIZE;
+        pes_packets = CharBuffer::create_buf(pes_packet_cap);
+    }
 }
 
-error_t TsPesContext::dump(BitContext &rd) {
-    if (!pes_packets && pes_packet_length > 0) {
-        pes_packets = CharBuffer::create_buf(pes_packet_length);
+error_t TsPesContext::dump(BitContext &rd, int payload_unit_start_indicator) {
+    if (payload_unit_start_indicator == 1 && pes_packets) {
+        on_payload_complete();
+    }
+
+    if (!pes_packets) {
+        init();
     }
 
     if (!pes_packets) {
@@ -206,22 +283,48 @@ error_t TsPesContext::dump(BitContext &rd) {
         return SUCCESS;
     }
 
-    size_t left_size = std::min((size_t) pes_packet_length, rd.size());
+    size_t left_size = rd.size();
+    if (pes_packet_length > 0) {
+        left_size = std::min((size_t) pes_packet_length, rd.size());
+    }
+
+    if (pes_packets->remain() < left_size) {
+        sp_error("cap size %d remain %u < %lu", pes_packet_cap,
+                 pes_packets->remain(), left_size);
+        return ERROR_TS_PACKET_DECODE;
+    }
     pes_packets->append(rd.pos(), left_size);
     rd.skip_bytes(left_size);
 
     if (rd.size() > 0) {
-        sp_warn("has remain size %lu", rd.size());
+        sp_warn("pes_packet_length %d has remain size %lu, %lu",
+                pes_packet_length, rd.size(), left_size);
         rd.skip_bytes(rd.size());
+    }
+
+    if (pes_packet_length > 0 && pes_packets->size() == pes_packet_length) {
+        on_payload_complete();
     }
 
     return SUCCESS;
 }
 
+error_t TsPesContext::on_payload_complete() {
+    sp_trace("pes recv complete stream_type 0x%4x, size %d, "
+             "pes_packet_length %d, "
+             "pts %lld, dts %lld",
+             stream_type,
+             pes_packets->size(), pes_packet_length,
+             pts, dts);
+
+    reset();
+    return SUCCESS;
+}
+
 TsPesProgram::TsPesProgram(int pid, TsContext *ctx,
     int stream_type, int pcr_pid) : TsProgram(pid, ctx) {
-    filter_type       = TS_PROGRAM_PES;
-    pes_ctx           = std::make_unique<TsPesContext>();
+    program_type       = TS_PROGRAM_PES;
+    pes_ctx           = std::make_unique<TsPesContext>(stream_type);
     this->stream_type = stream_type;
     this->pcr_pid     = pcr_pid;
 }
@@ -235,7 +338,7 @@ error_t TsPesProgram::decode(TsPacket *pkt, BitContext &rd) {
     }
 
     if (pkt->payload_unit_start_indicator == 0) {
-        return pes_ctx->dump(rd);
+        return pes_ctx->dump(rd, pkt->payload_unit_start_indicator);
     }
 
     if (pkt->payload_unit_start_indicator == 1) {
@@ -515,17 +618,57 @@ error_t TsPesProgram::decode(TsPacket *pkt, BitContext &rd) {
 
         rd.skip_bytes(stuff_head_size);
 
-        if ((ret = pes_ctx->dump(rd)) != SUCCESS) {
+        if ((ret = pes_ctx->dump(rd, pkt->payload_unit_start_indicator)) != SUCCESS) {
             sp_error("fail dump pes ret %d", ret);
             return ret;
         }
+
+        sp_debug("got %s pes packet_start_code_prefix %x, "
+                "stream_id %x, pes_packet_length %d, \r\n"
+                ""
+                "pes_scrambling_control %x, "
+                "pes_priority %x, "
+                "data_alignment_indicator %x, "
+                "copyright %x,"
+                "original_or_copy %x, "
+                "pts_dts_flags %x, "
+                "escr_flag %x, "
+                "es_rate_flag %x, "
+                "dsm_trick_mode_flag %x, "
+                "additional_copy_info_flag %x, "
+                "pes_crc_flag %x, "
+                "pes_extension_flag %x, "
+                "pes_header_data_length %x, "
+                "pts %lld, dts %lld, "
+                "stuff_head_size %d, ",
+                pkt->payload_unit_start_indicator ? "new" : "old",
+                pes_packet_header.packet_start_code_prefix,
+                pes_packet_header.stream_id,
+                pes_packet_header.pes_packet_length,
+                pes_header.pes_scrambling_control,
+                pes_header.pes_priority,
+                pes_header.data_alignment_indicator,
+                pes_header.copyright,
+                pes_header.original_or_copy,
+
+                pes_header.pts_dts_flags,
+                pes_header.escr_flag,
+                pes_header.es_rate_flag,
+                pes_header.dsm_trick_mode_flag,
+                pes_header.additional_copy_info_flag,
+                pes_header.pes_crc_flag,
+                pes_header.pes_extension_flag,
+                pes_header.pes_header_data_length,
+                pes_ctx->pts, pes_ctx->dts,
+                stuff_head_size
+        );
     } else if (code == 0x1be) {  // padding stream
         rd.skip_bytes(rd.size());
     } else if (code == 0x1bc || code == 0x1bf ||
                code == 0x1f0 || code == 0x1f1 ||
                code == 0x1ff || code == 0x1f2 ||
                code == 0x1f8) {
-        if ((ret = pes_ctx->dump(rd)) != SUCCESS) {
+        if ((ret = pes_ctx->dump(rd, pkt->payload_unit_start_indicator)) != SUCCESS) {
             sp_error("fail dump pes ret %d", ret);
             return ret;
         }
@@ -536,7 +679,7 @@ error_t TsPesProgram::decode(TsPacket *pkt, BitContext &rd) {
 
 TsContext::TsContext() {
     add_program(PAT_PID, std::make_shared<TsPatProgram>(PAT_PID, this));
-    // add_filter(SDT_PID, nullptr);
+    add_program(SDT_PID, std::make_shared<TsSdtProgram>(SDT_PID, this));
     // add_filter(EIT_PID, nullptr);
 }
 
@@ -550,20 +693,18 @@ error_t TsContext::decode(uint8_t* p, size_t len) {
         return ret;
     }
 
-    // has no payload
-    if ((pkt.adaptation_filed_control & 0x01) == 0) {
-        return ret;
-    }
-
-    sp_info("...decode... payload");
-
-    auto filter = get_program(pkt.pid);
-    if (!filter) {
+    auto program = get_program(pkt.pid);
+    if (!program) {
         sp_warn("ignore pid %d unknown type", pkt.pid);
         return ret;
     }
 
-    if ((ret = filter->decode(&pkt, rd)) != SUCCESS) {
+    // has no payload
+    if ((pkt.adaptation_filed_control & 0x01) == 0 && !program->is_section()) {
+        return ret;
+    }
+
+    if ((ret = program->decode(&pkt, rd)) != SUCCESS) {
         sp_error("fail decode payload ret %d", ret);
         return ret;
     }
@@ -576,13 +717,13 @@ PTsProgram TsContext::get_program(int pid) {
     return it == filters.end() ? nullptr : it->second;
 }
 
-error_t TsContext::add_program(int pid, PTsProgram filter) {
+error_t TsContext::add_program(int pid, PTsProgram program) {
     auto old_filter = get_program(pid);
 
     if (old_filter) {
-        sp_warn("replace old_filter pid %d", pid);
+        sp_debug("replace old_filter pid %d", pid);
     }
-    filters[pid] = std::move(filter);
+    filters[pid] = std::move(program);
 
     return SUCCESS;
 }
@@ -662,6 +803,7 @@ error_t TsPacket::decode(BitContext& rd) {
         return ERROR_TS_PACKET_SIZE;
     }
 
+    // 4byte for header
     sync_byte = rd.read_int8();
     if (sync_byte != 0x47) {
         sp_error("sync_byte %x not 0x47", sync_byte);
@@ -685,7 +827,7 @@ error_t TsPacket::decode(BitContext& rd) {
         }
     }
 
-#if 1
+#if 0
     if (payload_unit_start_indicator && !adaptation_field) {
         sp_info("ts pkt sync_byte %x,  transport_error_indicator %d, "
                 "payload_unit_start_indicator %d, transport_priority %d, "
