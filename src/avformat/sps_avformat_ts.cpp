@@ -100,10 +100,6 @@ error_t TsSdtProgram::psi_decode(TsPacket *pkt, BitContext &rd) {
     reserved_future_use = rd.read_int8();
 
     return ret; // TODO FIXME
-//    while (rd.size_bits() > 0) {
-//        uint16_t sid = rd.read_int16();
-//        return ret;
-//    }
 }
 
 TsPatProgram::TsPatProgram(int pid, TsContext *ctx) : TsPsiProgram(pid, ctx) {
@@ -230,11 +226,14 @@ error_t TsPmtProgram::psi_decode(TsPacket *pkt, BitContext &rd) {
             case TS_STREAM_TYPE_AUDIO_AAC:
             case TS_STREAM_TYPE_VIDEO_H264:
             case TS_STREAM_TYPE_VIDEO_H265:
-                ctx->add_program(pes_info->header.elementary_pid,
-                     std::make_shared<TsPesProgram>(
-                                 (int) pes_info->header.elementary_pid,
-                                 ctx, pes_info->header.stream_type,
-                                 (int) pes_info->header.es_info_length));
+                // pat/pmt may send more than once
+                if (ctx->get_program(pes_info->header.elementary_pid) == nullptr) {
+                    ctx->add_program(pes_info->header.elementary_pid,
+                                     std::make_shared<TsPesProgram>(
+                                             (int) pes_info->header.elementary_pid,
+                                             ctx, pes_info->header.stream_type,
+                                             (int) pes_info->header.es_info_length));
+                }
                 break;
             default:
                 sp_warn("not support stream_type %x, %d",
@@ -246,7 +245,8 @@ error_t TsPmtProgram::psi_decode(TsPacket *pkt, BitContext &rd) {
     return ret;
 }
 
-TsPesContext::TsPesContext(int stream_type) {
+TsPesContext::TsPesContext(TsContext* ctx, int stream_type) {
+    this->ctx = ctx;
     this->stream_type = stream_type;
 }
 
@@ -269,8 +269,13 @@ void TsPesContext::init() {
 }
 
 error_t TsPesContext::dump(BitContext &rd, int payload_unit_start_indicator) {
+    error_t ret = SUCCESS;
     if (payload_unit_start_indicator == 1 && pes_packets) {
-        on_payload_complete();
+        ret = on_payload_complete();
+    }
+
+    if (ret != SUCCESS) {
+        return ret;
     }
 
     if (!pes_packets) {
@@ -310,13 +315,15 @@ error_t TsPesContext::dump(BitContext &rd, int payload_unit_start_indicator) {
 }
 
 error_t TsPesContext::on_payload_complete() {
+    error_t ret = SUCCESS;
     sp_trace("pes recv complete stream_type 0x%4x, size %d, "
              "pes_packet_length %d, "
              "pts %lld, dts %lld",
              stream_type,
              pes_packets->size(), pes_packet_length,
-             pts, dts);
+             pts/90, dts/90);
 
+    ret = ctx->on_pes_complete(this);
     reset();
     return SUCCESS;
 }
@@ -324,9 +331,10 @@ error_t TsPesContext::on_payload_complete() {
 TsPesProgram::TsPesProgram(int pid, TsContext *ctx,
     int stream_type, int pcr_pid) : TsProgram(pid, ctx) {
     program_type       = TS_PROGRAM_PES;
-    pes_ctx           = std::make_unique<TsPesContext>(stream_type);
+    pes_ctx           = std::make_unique<TsPesContext>(ctx, stream_type);
     this->stream_type = stream_type;
     this->pcr_pid     = pcr_pid;
+    this->continuity_counter = 0x0f;
 }
 
 error_t TsPesProgram::decode(TsPacket *pkt, BitContext &rd) {
@@ -336,6 +344,15 @@ error_t TsPesProgram::decode(TsPacket *pkt, BitContext &rd) {
         sp_error("pes packet is null");
         return ERROR_TS_PACKET_DECODE;
     }
+
+    if (pkt->continuity_counter != (((int) continuity_counter + 1) & 0x0f)) {
+        sp_error("ts pid %x, last cc %x, now %x",
+                 pid,
+                 continuity_counter,
+                 pkt->continuity_counter);
+        return ERROR_TS_PACKET_CC_CONTINUE;
+    }
+    continuity_counter = pkt->continuity_counter;
 
     if (pkt->payload_unit_start_indicator == 0) {
         return pes_ctx->dump(rd, pkt->payload_unit_start_indicator);
@@ -677,7 +694,8 @@ error_t TsPesProgram::decode(TsPacket *pkt, BitContext &rd) {
     return ret;
 }
 
-TsContext::TsContext() {
+TsContext::TsContext(IPesHandler* handler) {
+    this->handler = handler;
     add_program(PAT_PID, std::make_shared<TsPatProgram>(PAT_PID, this));
     add_program(SDT_PID, std::make_shared<TsSdtProgram>(SDT_PID, this));
     // add_filter(EIT_PID, nullptr);
@@ -728,6 +746,13 @@ error_t TsContext::add_program(int pid, PTsProgram program) {
     return SUCCESS;
 }
 
+error_t TsContext::on_pes_complete(TsPesContext *pes) {
+    if (handler) {
+        return handler->on_pes_complete(pes);
+    }
+    return SUCCESS;
+}
+
 error_t TsAdaptationFiled::decode(BitContext& rd) {
     auto ret = rd.acquire(1);
 
@@ -758,7 +783,10 @@ error_t TsAdaptationFiled::decode(BitContext& rd) {
     flags.adaptation_field_extension_flag = rd.read_bits(1);
 
     if (flags.PCR_flag) {
-        rd.read_bytes(pcr, 6);
+        pcr.program_clock_reference_base = rd.read_bits(33);
+        pcr.pcr_reserved = rd.read_bits(6);
+        pcr.program_clock_reference_extension = rd.read_bits(9);
+        pcr_value = pcr.program_clock_reference_base * 300 + pcr.program_clock_reference_extension;
     }
 
     if (flags.OPCR_flag) {
@@ -825,6 +853,23 @@ error_t TsPacket::decode(BitContext& rd) {
         if (ret != SUCCESS) {
             return ret;
         }
+
+        sp_info("pid %d, adaptation discontinuity_indicator %x, "
+                "random_access_indicator %x, "
+                "elementary_stream_priority_indicator %x, "
+                "PCR_flag %x, OPCR_flag %x, "
+                "splicing_point_flag %x, transport_private_data_flag: %x, "
+                "adaptation_field_extension_flag %x, "
+                "pcr_value %llu, ",
+                pid, adaptation_field->flags.discontinuity_indicator,
+                adaptation_field->flags.random_access_indicator,
+                adaptation_field->flags.elementary_stream_priority_indicator,
+                adaptation_field->flags.PCR_flag,
+                adaptation_field->flags.OPCR_flag,
+                adaptation_field->flags.splicing_point_flag,
+                adaptation_field->flags.transport_private_data_flag,
+                adaptation_field->flags.adaptation_field_extension_flag,
+                adaptation_field->pcr_value);
     }
 
 #if 0

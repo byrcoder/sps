@@ -33,20 +33,27 @@ SOFTWARE.
 
 namespace sps {
 
-class TsDemuxer : public IAVDemuxer {
+class TsDemuxer : public IAVDemuxer, public IPesHandler {
  public:
     explicit TsDemuxer(PIReader rd);
 
  public:
-    error_t read_header(PSpsAVPacket & buffer)  override;
+    error_t read_header(PSpsAVPacket& buffer)  override;
     error_t read_packet(PSpsAVPacket& buffer)   override;
     error_t read_tail(PSpsAVPacket& buffer)    override;
     error_t probe(PSpsAVPacket& buffer)        override;
+
+ public:
+    error_t on_pes_complete(TsPesContext* pes) override;
+    error_t on_h264(TsPesContext* pes);
+    error_t on_aac(TsPesContext* pes);
 
  private:
     PAVBuffer buf;
     PSpsBytesReader rd;
     TsContext ts_ctx;
+
+    PSpsAVPacket decoded_pkt;
 };
 
 AVInputFormat(Ts, "ts", "ts");

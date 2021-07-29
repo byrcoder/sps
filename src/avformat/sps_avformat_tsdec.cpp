@@ -75,4 +75,35 @@ error_t TsDemuxer::probe(PSpsAVPacket& buffer) {
     return ERROR_STREAM_NOT_IMPL;
 }
 
+error_t TsDemuxer::on_pes_complete(TsPesContext *pes) {
+    error_t ret = SUCCESS;
+    switch (pes->stream_type) {
+        case TS_STREAM_TYPE_VIDEO_H264:
+            ret = on_h264(pes);
+            break;
+
+        case TS_STREAM_TYPE_AUDIO_AAC:
+            ret = on_aac(pes);
+
+        case TS_STREAM_TYPE_VIDEO_H265:
+
+            break;
+        default:
+            sp_warn("ignore stream_type %x", pes->stream_type);
+    }
+    return ret;
+}
+
+error_t TsDemuxer::on_h264(TsPesContext* pes) {
+    error_t ret = SUCCESS;
+
+    return ret;
+}
+
+error_t TsDemuxer::on_aac(TsPesContext* pes) {
+    error_t ret = SUCCESS;
+
+    return ret;
+}
+
 }  // namespace sps

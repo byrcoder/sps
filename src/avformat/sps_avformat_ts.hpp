@@ -188,8 +188,6 @@ class TsSdtProgram : public TsPsiProgram {
 //        running_status : 3;
 //        free_CA_mode : 1;
     };
-
-
 };
 
 struct PmtInfo {
@@ -261,7 +259,7 @@ class TsPmtProgram : public TsPsiProgram {
  */
 class TsPesContext {
  public:
-    TsPesContext(int stream_type);
+    TsPesContext(TsContext* ctx, int stream_type);
 
  public:
     void reset();
@@ -279,6 +277,7 @@ class TsPesContext {
     uint16_t pes_packet_length = 0;
     uint32_t pes_packet_cap    = 0;
     PCharBuffer pes_packets;
+    TsContext* ctx;
 };
 typedef std::unique_ptr<TsPesContext> PTsPesContext;
 
@@ -451,11 +450,17 @@ class TsPesProgram : public TsProgram {
     PTsPesContext pes_ctx;
     int stream_type;
     int pcr_pid;
+    uint8_t continuity_counter;
+};
+
+class IPesHandler {
+ public:
+    virtual error_t on_pes_complete(TsPesContext* pes) = 0;
 };
 
 class TsContext {
  public:
-    TsContext();
+    explicit TsContext(IPesHandler *handler = nullptr);
 
  public:
     error_t decode(uint8_t* p, size_t len);
@@ -464,8 +469,12 @@ class TsContext {
     PTsProgram get_program(int pid);
     error_t   add_program(int pid, PTsProgram program);
 
+ public:
+    error_t on_pes_complete(TsPesContext* pes);
+
  private:
     std::map<int, PTsProgram> filters;
+    IPesHandler* handler;
 };
 
 /*
@@ -497,10 +506,12 @@ class TsAdaptationFiled {
     } flags;
 
     // PCR reference https://blog.csdn.net/zp704393004/article/details/82225892
-    uint8_t pcr[6];
-    //    uint64_t program_clock_reference_base;  // 33bit
-    //    uint8_t  pcr_reserved;  // 6bit
-    //    uint8_t  program_clock_reference_extension;  // 9bit
+    struct {
+        uint64_t program_clock_reference_base;  // 33bit
+        uint8_t  pcr_reserved;  // 6bit
+        uint8_t program_clock_reference_extension;  // 9bit
+    } pcr;
+    uint64_t pcr_value = 0;
 
     // OPCR
     uint8_t opcr[6];

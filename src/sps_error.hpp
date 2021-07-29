@@ -135,5 +135,6 @@ SOFTWARE.
 
 #define ERROR_TS_PACKET_SIZE                3300
 #define ERROR_TS_PACKET_DECODE              3301
+#define ERROR_TS_PACKET_CC_CONTINUE         3302
 
 #endif  // SPS_SPS_ERROR_HPP
