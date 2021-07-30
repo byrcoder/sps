@@ -24,16 +24,15 @@ SOFTWARE.
 #ifndef SPS_SPS_TYPEDEF_HPP
 #define SPS_SPS_TYPEDEF_HPP
 
+#include <cassert>
+
+#include <algorithm>
 #include <list>
 #include <map>
 #include <memory>
 #include <set>
 
 #include <sps_error.hpp>
-
-#ifndef __unused
-#define __unused __attribute__((unused))
-#endif
 
 typedef int error_t;
 typedef uint64_t utime_t;

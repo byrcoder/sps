@@ -69,6 +69,9 @@ link_directories(3rdparty/state-threads/obj
 
 include_directories(
         ${PROJECT_SOURCE_DIR}/src
+
+        ${PROJECT_SOURCE_DIR}/src/avcodec
+
         ${PROJECT_SOURCE_DIR}/src/avformat
         ${PROJECT_SOURCE_DIR}/src/cache
         ${PROJECT_SOURCE_DIR}/src/co
@@ -97,6 +100,8 @@ include_directories(
 
 file(GLOB SRC_LIST
         "${PROJECT_SOURCE_DIR}/src/*.cpp"
+
+        ${PROJECT_SOURCE_DIR}/src/avcodec/*.cpp
 
         "${PROJECT_SOURCE_DIR}/src/module/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/module/module/*.cpp"
@@ -156,7 +161,7 @@ add_executable(sps
         ${PROJECT_SOURCE_DIR}/src/main/sps_main_sps.cpp
         )
 
-target_link_libraries(sps libst.a libhttp_parser.a libgtest.a librtmp.a)
+target_link_libraries(sps libst.a libhttp_parser.a librtmp.a)
 
 if(ENABLE_UNITTESTS)
 

@@ -21,42 +21,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_LOG_HPP
-#define SPS_LOG_HPP
-
-#include <cerrno>
-#include <cstdio>
-#include <cstring>
-
-#include <sps_auto_header.hpp>
-
-#define __FILENAME__ (__builtin_strrchr(__FILE__, '/') ? \
-    __builtin_strrchr(__FILE__, '/') + 1 : __FILE__)
-
-#define sp_error(msg , ...) printf("[%s:%d] " msg " (%d %s)\r\n", \
-    __FILENAME__, __LINE__,  ##__VA_ARGS__, errno, strerror(errno))
-
-#define sp_warn(msg , ...)  printf("[%s:%d] " msg "\r\n", \
-    __FILENAME__, __LINE__,  ##__VA_ARGS__)
-
-#define sp_trace(msg, ...)  printf("[%s:%d] " msg "\r\n", \
-    __FILENAME__, __LINE__,  ##__VA_ARGS__)
-
-#define sp_info(msg, ...)   printf("[%s:%d] " msg "\r\n", \
-    __FILENAME__, __LINE__,  ##__VA_ARGS__)
-
-#define sp_append_start(msg, ...)  \
-    printf("[%s:%d] " msg " ", __FILENAME__, __LINE__,  ##__VA_ARGS__)
-
-#define sp_append(msg, ...)         printf(msg " ",  ##__VA_ARGS__)
-#define sp_append_end()             printf("\r\n");
-
-
-#ifdef SPS_HEAVY_LOG
-#define sp_debug(msg, ...)  \
-    printf("[%s:%d] " msg "\r\n", __FILENAME__, __LINE__,  ##__VA_ARGS__)
-#else
-#define sp_debug(msg, ...)
-#endif
-
-#endif  // SPS_LOG_HPP
+//
+// Created by byrcoder on 2021/7/30.
+//

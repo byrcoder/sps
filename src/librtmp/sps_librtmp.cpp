@@ -73,7 +73,9 @@ void librtmp_init_once() {
     RTMP_LogSetLevel(RTMP_LOGDEBUG);
 }
 
+
 RTMP_HOOK krtmp_hook = {
+        .rtmp_obj             = nullptr,
         .RTMP_Connect         = RtmpHook::SPS_RTMP_Connect,
         .RTMP_TLS_Accept      = RtmpHook::SPS_RTMP_TLS_Accept,
         .RTMPSockBuf_Send     = RtmpHook::SPS_RTMPSockBuf_Send,

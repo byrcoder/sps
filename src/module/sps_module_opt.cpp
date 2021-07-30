@@ -89,7 +89,7 @@ error_t ConfigOption::opt_set(void *obj, const char *val, int len) const {
             bool num = memcmp(val, "on", 2) == 0;
             memcpy(dst, (void*) &num, sizeof(num));
 
-            sp_info("------------------bool val %s -> %d-----------",
+            sp_debug("------------------bool val %s -> %d-----------",
                      val, num);
             break;
         }

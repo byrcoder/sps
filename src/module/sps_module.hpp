@@ -59,6 +59,7 @@ SOFTWARE.
 
 #include <cstdio>
 #include <cctype>
+#include <cstddef>
 
 #include <algorithm>
 #include <list>
@@ -165,7 +166,7 @@ class ModuleFactoryRegister :
      public: \
         N##ModuleFactory() {  \
             module = #N; \
-            transform(module.begin(), module.end(), module.begin(), tolower); \
+            std::transform(module.begin(), module.end(), module.begin(), ::tolower); \
         } \
      public: \
         PIModule create(const std::string& module, \
