@@ -171,22 +171,9 @@ if(ENABLE_UNITTESTS)
             ${SRC_TEST_LIST}
             )
 
-    add_executable(test_tmp
-            ${SRC_LIST}
-            ${HEAD_LIST}
-            test/test_av_flv.cpp
-            test/test_main.cpp
-            )
-
-
     target_link_libraries(test_all
             libgtest.a
-            libst.a libhttp_parser.a libgtest.a librtmp.a
-            )
-
-    target_link_libraries(test_tmp
-            libgtest.a
-            libst.a libhttp_parser.a libgtest.a  librtmp.a
+            libst.a libhttp_parser.a libgtest.a librtmp.a pthread
             )
 
     add_test(
@@ -194,13 +181,6 @@ if(ENABLE_UNITTESTS)
             test_all
             COMMAND
             ${CMAKE_BINARY_DIR}/test_all
-    )
-
-    add_test(
-            NAME
-            test_tmp
-            COMMAND
-            ${CMAKE_BINARY_DIR}/test_tmp
     )
 
     enable_testing()

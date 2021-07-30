@@ -24,6 +24,9 @@ SOFTWARE.
 #ifndef SPS_CACHE_BUFFER_HPP
 #define SPS_CACHE_BUFFER_HPP
 
+#include <cassert>
+#include <cstring>
+
 #include <memory>
 
 namespace sps {
