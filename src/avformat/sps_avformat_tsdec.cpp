@@ -37,7 +37,7 @@ namespace sps {
 
 TsDemuxer::TsDemuxer(PIReader rd) {
     buf       = std::make_shared<AVBuffer>(SPS_TS_PACKET_SIZE, false);
-    this->rd  = std::make_unique<SpsBytesReader>(rd, buf);
+    this->rd  = std::make_unique<BytesReader>(rd, buf);
 }
 
 error_t TsDemuxer::read_header(PSpsAVPacket & buffer) {

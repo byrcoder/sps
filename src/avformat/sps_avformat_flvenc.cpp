@@ -72,7 +72,7 @@ error_t FlvAVMuxer::write_header(PSpsAVPacket& buffer) {
 
 error_t FlvAVMuxer::write_message(PSpsAVPacket& buffer) {
     tag_buffer->clear();
-    SpsBytesWriter head_writer(tag_buffer);
+    BytesWriter head_writer(tag_buffer);
 
     error_t  ret      = SUCCESS;
     uint8_t  tag_type = 0;

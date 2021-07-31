@@ -110,50 +110,58 @@ void AVBuffer::clear() {
     buf_ptr = buf_end = 0;
 }
 
-PSpsBytesReader SpsBytesReader::create_reader(uint8_t* buf, int len) {
+PBytesReader BytesReader::create_reader(uint8_t* buf, int len) {
     static PIReader null_reader;
 
     auto av_buffer = std::make_shared<AVBuffer>(
             buf, len, len, false);
-    return std::make_unique<SpsBytesReader>(null_reader, av_buffer);
+    return std::make_unique<BytesReader>(null_reader, av_buffer);
 }
 
-SpsBytesReader::SpsBytesReader(PIReader io, PAVBuffer buf):
+BytesReader::BytesReader(PIReader io, PAVBuffer buf):
     io(std::move(io)), buf(std::move(buf)) {
 }
 
-SpsBytesReader::~SpsBytesReader() {
+BytesReader::~BytesReader() {
 }
 
-void SpsBytesReader::read_bytes(uint8_t* c, size_t n) {
+void BytesReader::read_bytes(uint8_t* c, size_t n) {
     memcpy(c, buf->pos(), n);
     buf->skip(n);
 }
 
-void SpsBytesReader::skip_bytes(size_t n) {
+size_t BytesReader::size() {
+    return buf->size();
+}
+
+uint8_t* BytesReader::pos() {
+    return buf->pos();
+}
+
+void BytesReader::skip_bytes(size_t n) {
     buf->skip(n);
 }
 
-uint16_t SpsBytesReader::read_int16() {
+uint16_t BytesReader::read_int16() {
     return ((uint32_t) read_int8()) << 8u | read_int8();
 }
 
-uint32_t SpsBytesReader::read_int24() {
+uint32_t BytesReader::read_int24() {
     return ((uint32_t) read_int8()) << 16u | read_int16();
 }
 
-uint32_t SpsBytesReader::read_int32() {
+uint32_t BytesReader::read_int32() {
     return ((uint32_t) read_int16()) << 16u |  read_int16();
 }
 
-void SpsBytesReader::read_reverse_bytes(uint8_t* c, size_t n) {
+void BytesReader::read_reverse_bytes(uint8_t* c, size_t n) {
     for (int i = 0; i < n; ++i) {
         *c = read_int8();
         --c;
     }
 }
 
-error_t SpsBytesReader::acquire(uint32_t n) {
+error_t BytesReader::acquire(uint32_t n) {
     error_t ret   = SUCCESS;
     size_t  nread = 0;
 
@@ -191,34 +199,34 @@ error_t SpsBytesReader::acquire(uint32_t n) {
     return ret;
 }
 
-SpsBytesWriter::SpsBytesWriter(PAVBuffer& buf): buf(buf) {
+BytesWriter::BytesWriter(PAVBuffer& buf): buf(buf) {
 }
 
-error_t SpsBytesWriter::acquire(uint32_t n) {
+error_t BytesWriter::acquire(uint32_t n) {
     return buf->remain() >= n ? SUCCESS : ERROR_IO_BUFFER_FULL;
 }
 
-void SpsBytesWriter::write_int16(uint16_t n) {
+void BytesWriter::write_int16(uint16_t n) {
     write_int8(n >> 8);
     write_int8(n & 0XFF);
 }
 
-void SpsBytesWriter::write_int24(uint32_t n) {
+void BytesWriter::write_int24(uint32_t n) {
     write_int8(n >> 16);
     write_int16(n & 0XFFFF);
 }
 
-void SpsBytesWriter::write_int32(uint32_t n) {
+void BytesWriter::write_int32(uint32_t n) {
     write_int8(n >> 24);
     write_int24(n & 0XFFFFFF);
 }
 
-void SpsBytesWriter::write_bytes(uint8_t* data, size_t n) {
+void BytesWriter::write_bytes(uint8_t* data, size_t n) {
     memcpy(buf->end(), data, n);
     buf->append(n);
 }
 
-void SpsBytesWriter::skip(size_t n) {
+void BytesWriter::skip(size_t n) {
     buf->append(n);
 }
 

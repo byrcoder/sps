@@ -94,7 +94,9 @@ int MemoryReaderWriter::cur_line_num() {
     return line_num;
 }
 
-error_t MemoryReaderWriter::read_fully(void *buf, size_t size, ssize_t *nread) {
+error_t MemoryReaderWriter::read_fully(void *buf,
+                                       size_t size,
+                                       ssize_t *nread) {
     auto n = std::min((int) size, (int) (len - pos));
     if (n < size || n == 0) {
         return ERROR_IO_EOF;

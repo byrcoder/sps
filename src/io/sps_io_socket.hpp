@@ -128,7 +128,8 @@ typedef std::shared_ptr<Socket> PSocket;
 
 class ClientSocketFactory : public Single<ClientSocketFactory> {
  public:
-    PSocket create_ss(Transport transport, const std::string& ip,
+    PSocket create_ss(Transport transport,
+                      const std::string& ip,
                       int port, utime_t tm);
 };
 
@@ -140,7 +141,8 @@ class IServerSocket {
     virtual ~IServerSocket() = default;
 
  public:
-    virtual error_t listen(std::string ip, int port, bool reuse_port = true,
+    virtual error_t listen(std::string ip, int port,
+                           bool reuse_port = true,
                            int backlog = 1024) = 0;
     virtual PSocket accept()  = 0;
 };

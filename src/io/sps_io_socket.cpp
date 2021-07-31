@@ -31,19 +31,23 @@ SOFTWARE.
 namespace sps {
 
 PSocket ClientSocketFactory::create_ss(
-        Transport transport, const std::string &ip, int port, utime_t tm) {
+    Transport transport,
+    const std::string &ip,
+    int port, utime_t tm) {
     error_t ret = SUCCESS;
+
     switch (transport) {
         case Transport::TCP: {
             st_netfd_t fd;
+
             if ((ret = st_tcp_connect(ip, port, tm, &fd)) != SUCCESS) {
                 sp_error("Failed connect %s:%d, tm:%llu, ret:%d",
                          ip.c_str(), port, tm, ret);
                 return nullptr;
             }
 
-            return std::make_shared<Socket>(std::make_shared<StTcpSocket>(fd),
-                                            ip, port);
+            return std::make_shared<Socket>(
+                    std::make_shared<StTcpSocket>(fd),ip, port);
         }
         default:
             return nullptr;

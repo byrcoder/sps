@@ -82,24 +82,19 @@ class AVBuffer {
 
 typedef std::shared_ptr<AVBuffer> PAVBuffer;
 
-class SpsBytesReader;
-typedef std::unique_ptr<SpsBytesReader> PSpsBytesReader;
-class SpsBytesReader {
+class BytesReader;
+typedef std::unique_ptr<BytesReader> PBytesReader;
+class BytesReader {
  public:
-    static PSpsBytesReader create_reader(uint8_t* buf, int len);
+    static PBytesReader create_reader(uint8_t* buf, int len);
 
  public:
-    SpsBytesReader(PIReader io, PAVBuffer buf);
-    ~SpsBytesReader();
+    BytesReader(PIReader io, PAVBuffer buf);
+    ~BytesReader();
 
  public:
-    size_t size() {
-        return buf->size();
-    }
-
-    uint8_t* pos() {
-        return buf->pos();
-    }
+    size_t size();
+    uint8_t* pos();
 
  public:
     // call acquire then call following functions
@@ -124,9 +119,9 @@ class SpsBytesReader {
     PAVBuffer buf;
 };
 
-class SpsBytesWriter {
+class BytesWriter {
  public:
-    explicit SpsBytesWriter(PAVBuffer& buf);
+    explicit BytesWriter(PAVBuffer& buf);
 
     error_t acquire(uint32_t n);
 
@@ -140,7 +135,6 @@ class SpsBytesWriter {
     void    write_int32(uint32_t n);
     void    write_bytes(uint8_t* data, size_t n);
     void    skip(size_t n);
-
 
  private:
     PAVBuffer& buf;

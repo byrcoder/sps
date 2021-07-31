@@ -50,7 +50,7 @@ class TsDemuxer : public IAVDemuxer, public IPesHandler {
 
  private:
     PAVBuffer buf;
-    PSpsBytesReader rd;
+    PBytesReader rd;
     TsContext ts_ctx;
 
     PSpsAVPacket decoded_pkt;

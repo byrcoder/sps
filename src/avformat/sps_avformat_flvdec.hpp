@@ -45,7 +45,7 @@ class FlvDemuxer : public IAVDemuxer {
 
  private:
     PAVBuffer buf;
-    PSpsBytesReader rd;
+    PBytesReader rd;
 };
 
 AVInputFormat(Flv, "flv", "flv");

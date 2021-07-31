@@ -45,7 +45,7 @@ GTEST_TEST(IOBYTES, READ) {
     PIReader rw = std::make_shared<sps::MemoryReaderWriter>((char*) buf, sizeof(buf));
 
     auto buffer = std::make_shared<sps::AVBuffer>(7, true);
-    sps::SpsBytesReader bytes(rw, buffer);
+    sps::BytesReader bytes(rw, buffer);
 
     sp_info("total bytes: %s", (char*) buf);
 
@@ -101,7 +101,7 @@ GTEST_TEST(IOBYTES, READ_REWIND) {
 
     PIReader rw = std::make_shared<sps::MemoryReaderWriter>((char*) tmp.c_str(), tmp.size());
     auto buffer = std::make_shared<sps::AVBuffer>(7, true);
-    sps::SpsBytesReader bytes(rw, buffer);
+    sps::BytesReader bytes(rw, buffer);
 
     for (int i = 0; i < tmp.size(); ) {
         int n = rand() % 7 + 1;
@@ -128,7 +128,7 @@ GTEST_TEST(IOBYTES, READ_NOREWIND) {
 
     PIReader rw = std::make_shared<sps::MemoryReaderWriter>((char*) tmp.c_str(), tmp.size());
     auto buffer = std::make_shared<sps::AVBuffer>(tmp.size(), true);
-    sps::SpsBytesReader bytes(rw, buffer);
+    sps::BytesReader bytes(rw, buffer);
 
     char* buf = new char[tmp.size()] {0};
 
@@ -165,7 +165,7 @@ GTEST_TEST(IOBYTES, WRITE) {
     };
 
     auto av_buf = std::make_shared<sps::AVBuffer>(buf, sizeof(buf), false);
-    sps::SpsBytesWriter writer(av_buf);
+    sps::BytesWriter writer(av_buf);
 
     EXPECT_TRUE(writer.acquire(sizeof(buf)) == SUCCESS);
     EXPECT_TRUE(writer.acquire(sizeof(buf)+1) != SUCCESS);

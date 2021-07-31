@@ -33,9 +33,9 @@ SOFTWARE.
 
 namespace sps {
 
-FlvDemuxer::FlvDemuxer(PIReader rd) {
+FlvDemuxer::FlvDemuxer(PIReader reader) {
     buf       = std::make_shared<AVBuffer>(FLV_MAX_LEN, true);
-    this->rd  = std::make_unique<SpsBytesReader>(rd, buf);
+    rd        = std::make_unique<BytesReader>(reader, buf);
 }
 
 error_t FlvDemuxer::read_header(PSpsAVPacket &buffer) {
