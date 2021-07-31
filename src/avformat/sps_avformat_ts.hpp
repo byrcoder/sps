@@ -262,12 +262,14 @@ class TsPesContext {
     TsPesContext(TsContext* ctx, int stream_type);
 
  public:
+    void init(int sz);
+    error_t flush();
+
+ private:
     void reset();
-    void init();
 
  public:
     error_t dump(BitContext& rd, int payload_unit_start_indicator);
-
     error_t on_payload_complete();
 
  public:

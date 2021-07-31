@@ -65,6 +65,7 @@ class CharBuffer : public IBuffer {
  public:
     uint8_t*   buffer() override      { return buf+head_len; }
     uint32_t   size() override        { return len; }
+    uint32_t   cap() override         { return cap_len; }
 
  public:
     void  append(uint8_t* p, uint32_t sz) {

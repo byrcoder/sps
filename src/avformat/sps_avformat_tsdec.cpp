@@ -35,7 +35,7 @@ SOFTWARE.
 
 namespace sps {
 
-TsDemuxer::TsDemuxer(PIReader rd) {
+TsDemuxer::TsDemuxer(PIReader rd) : ts_ctx(this) {
     buf       = std::make_shared<AVBuffer>(SPS_TS_PACKET_SIZE, false);
     this->rd  = std::make_unique<BytesReader>(rd, buf);
 }
@@ -77,6 +77,7 @@ error_t TsDemuxer::probe(PSpsAVPacket& buffer) {
 
 error_t TsDemuxer::on_pes_complete(TsPesContext *pes) {
     error_t ret = SUCCESS;
+
     switch (pes->stream_type) {
         case TS_STREAM_TYPE_VIDEO_H264:
             ret = on_h264(pes);
@@ -84,7 +85,7 @@ error_t TsDemuxer::on_pes_complete(TsPesContext *pes) {
 
         case TS_STREAM_TYPE_AUDIO_AAC:
             ret = on_aac(pes);
-
+            break;
         case TS_STREAM_TYPE_VIDEO_H265:
 
             break;
@@ -97,6 +98,14 @@ error_t TsDemuxer::on_pes_complete(TsPesContext *pes) {
 error_t TsDemuxer::on_h264(TsPesContext* pes) {
     error_t ret = SUCCESS;
 
+    sp_info("pes stream type %x, size %u",
+             pes->stream_type, pes->pes_packet_length);
+
+    NALUContext nalus;
+    nalu_parser.split_nalu(pes->pes_packets->buffer(),
+                           pes->pes_packet_length,
+                           &nalus,
+                           false);
     return ret;
 }
 

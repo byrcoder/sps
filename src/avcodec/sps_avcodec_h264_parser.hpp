@@ -26,6 +26,9 @@ SOFTWARE.
 
 #include <sps_typedef.hpp>
 
+#include <memory>
+#include <vector>
+
 /*
  * Table 7-1 – NAL unit type codes, syntax element categories, and NAL unit type classes in
  * T-REC-H.264-201704
@@ -69,8 +72,11 @@ namespace sps {
 
 class H264NAL {
  public:
-    H264NAL();
-    ~H264NAL();
+    H264NAL() = default;
+    ~H264NAL() = default;
+
+ public:
+    error_t parse_nal(uint8_t* buf, size_t sz);
 
  public:
     struct {
@@ -79,8 +85,49 @@ class H264NAL {
         uint8_t nal_unit_type : 5;
     } nal_header;
 
-    char* nalu_buf   = nullptr;
-    size_t nalu_size = 0;
+    uint8_t* nalu_buf   = nullptr;
+    size_t   nalu_size  = 0;
+};
+
+class NALUContext {
+ public:
+    NALUContext() = default;
+
+ public:
+    error_t append(uint8_t* nal, size_t sz);
+
+ public:
+    std::vector<H264NAL> nalu_list;
+};
+typedef std::shared_ptr<NALUContext> PNALUContext;
+
+enum {
+    H264_FORMAT_UNKNOWN,
+    H264_FORMAT_AVC,
+    H264_FORMAT_ANNEX_B,
+};
+
+uint8_t* find_start_code(uint8_t* buf, size_t sz);
+
+class NALUParser {
+ public:
+    NALUParser(bool is_avc = false);
+
+ public:
+    error_t split_nalu(uint8_t* buf, size_t sz,
+                       NALUContext* ctx,
+                       bool is_seq_header);
+
+ private:
+    error_t decode_header(uint8_t* buf, size_t sz,
+                          NALUContext* ctx);
+
+    error_t decode(uint8_t* buf, size_t sz,
+                   NALUContext* ctx);
+
+ private:
+    bool is_avc;  // default
+    uint8_t nalu_length_size_minus_one;
 };
 
 }  // namespace sps

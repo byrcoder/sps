@@ -251,36 +251,40 @@ TsPesContext::TsPesContext(TsContext* ctx, int stream_type) {
 }
 
 void TsPesContext::reset() {
+    pes_packets.reset();
     pts = -1;
     dts = -1;
+
     pes_packet_length = 0;
-    pes_packet_cap    = 0;
-    pes_packets.reset();
 }
 
-void TsPesContext::init() {
+error_t TsPesContext::flush() {
+    if (pes_packets) {
+        return on_payload_complete();
+    }
+
+    return SUCCESS;
+}
+
+void TsPesContext::init(int sz) {
+    pes_packet_length = sz;
+
     if (pes_packet_length > 0) {
         pes_packet_cap = pes_packet_length;
-        pes_packets = CharBuffer::create_buf(pes_packet_cap);
+        pes_packets    = CharBuffer::create_buf(pes_packet_cap);
     } else {
         pes_packet_cap = TS_DEFAULT_PES_PACKET_SIZE;
-        pes_packets = CharBuffer::create_buf(pes_packet_cap);
+        pes_packets    = CharBuffer::create_buf(pes_packet_cap);
     }
+
+    pts = -1;
+    dts = -1;
+
+    sp_info("pes init length %d, cap %d", sz, pes_packets->cap());
 }
 
 error_t TsPesContext::dump(BitContext &rd, int payload_unit_start_indicator) {
     error_t ret = SUCCESS;
-    if (payload_unit_start_indicator == 1 && pes_packets) {
-        ret = on_payload_complete();
-    }
-
-    if (ret != SUCCESS) {
-        return ret;
-    }
-
-    if (!pes_packets) {
-        init();
-    }
 
     if (!pes_packets) {
         sp_warn("pes packet null pes_packet_length %d", pes_packet_length);
@@ -308,24 +312,29 @@ error_t TsPesContext::dump(BitContext &rd, int payload_unit_start_indicator) {
     }
 
     if (pes_packet_length > 0 && pes_packets->size() == pes_packet_length) {
-        on_payload_complete();
+        ret = flush();
     }
 
-    return SUCCESS;
+    return ret;
 }
 
 error_t TsPesContext::on_payload_complete() {
     error_t ret = SUCCESS;
+    if (pes_packet_length == 0) {
+        pes_packet_length = pes_packets->size();
+    }
+
     sp_trace("pes recv complete stream_type 0x%4x, size %d, "
-             "pes_packet_length %d, "
+             "pes_packet_length %d, cap %d, "
              "pts %lld, dts %lld",
              stream_type,
-             pes_packets->size(), pes_packet_length,
+             pes_packets->size(), pes_packet_length, pes_packets->cap(),
              pts/90, dts/90);
 
     ret = ctx->on_pes_complete(this);
+
     reset();
-    return SUCCESS;
+    return ret;
 }
 
 TsPesProgram::TsPesProgram(int pid, TsContext *ctx,
@@ -364,15 +373,18 @@ error_t TsPesProgram::decode(TsPacket *pkt, BitContext &rd) {
             return ret;
         }
 
-        pes_ctx->reset();
+        // pes pre tag flush
+        if ((ret = pes_ctx->flush()) != SUCCESS) {
+            sp_error("fail flush pre packet ret %d", ret);
+            return ret;
+        }
 
         pes_packet_header.packet_start_code_prefix = rd.read_int24();
         pes_packet_header.stream_id = rd.read_int8();
         pes_packet_header.pes_packet_length = rd.read_int16();
 
-        pes_ctx->pes_packet_length = pes_packet_header.pes_packet_length;
-
-        pes_ctx->init();
+        // pes new packet
+        pes_ctx->init(pes_packet_header.pes_packet_length);
 
         if (pes_packet_header.packet_start_code_prefix != 0x000001) {
             sp_error("packet_start_code_prefix %x not start with 0x01",
@@ -853,7 +865,7 @@ error_t TsPacket::decode(BitContext& rd) {
         if (ret != SUCCESS) {
             return ret;
         }
-
+#if 0
         sp_info("pid %d, adaptation discontinuity_indicator %x, "
                 "random_access_indicator %x, "
                 "elementary_stream_priority_indicator %x, "
@@ -870,6 +882,7 @@ error_t TsPacket::decode(BitContext& rd) {
                 adaptation_field->flags.transport_private_data_flag,
                 adaptation_field->flags.adaptation_field_extension_flag,
                 adaptation_field->pcr_value);
+#endif
     }
 
 #if 0

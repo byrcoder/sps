@@ -26,6 +26,8 @@ SOFTWARE.
 
 #include <memory>
 
+#include <sps_avcodec_h264_parser.hpp>
+
 #include <sps_avformat_dec.hpp>
 #include <sps_avformat_ts.hpp>
 
@@ -54,6 +56,7 @@ class TsDemuxer : public IAVDemuxer, public IPesHandler {
     TsContext ts_ctx;
 
     PSpsAVPacket decoded_pkt;
+    NALUParser nalu_parser;
 };
 
 AVInputFormat(Ts, "ts", "ts");

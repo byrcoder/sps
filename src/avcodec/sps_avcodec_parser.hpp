@@ -24,7 +24,14 @@ SOFTWARE.
 #ifndef SPS_AVCODEC_PARSER_HPP
 #define SPS_AVCODEC_PARSER_HPP
 
+#include <sps_typedef.hpp>
+
 namespace sps {
+
+class IAVCodecParser {
+ public:
+    virtual error_t parse(uint8_t* in_buf, int in_size) = 0;
+};
 
 }  // namespace sps
 

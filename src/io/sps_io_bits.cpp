@@ -65,17 +65,21 @@ error_t BitContext::acquire_bits(size_t nbit) {
 }
 
 void BitContext::read_bytes(uint8_t* c, size_t n) {
-    assert(remain_bits == 0 || remain_bits == 8);
-    if (remain_bits == 8) {
-        memcpy((char *) c, buf + buf_pos, n);
-    } else {
-        memcpy((char *) c, buf + buf_pos+1, n);
-    }
+    assert(remain_bits == 0);
+    memcpy((char *) c, buf + buf_pos+1, n);
     buf_pos += n;
 }
 
 void BitContext::skip_bytes(size_t n) {
     buf_pos += n;
+
+    // remain_value is invalid
+    if (remain_bits == 0) {
+        return;
+    }
+
+    remain_value = buf[buf_pos];
+    remain_value <<= (8-remain_bits);
 }
 
 uint8_t BitContext::read_int8() {
