@@ -29,6 +29,8 @@ SOFTWARE.
 #include <memory>
 #include <vector>
 
+#include <sps_avformat_packet.hpp>
+
 /*
  * Table 7-1 – NAL unit type codes, syntax element categories, and NAL unit type classes in
  * T-REC-H.264-201704
@@ -76,6 +78,12 @@ class H264NAL {
     ~H264NAL() = default;
 
  public:
+    error_t is_pps();
+    error_t is_sps();
+    error_t is_idr();
+    error_t is_aud();
+
+ public:
     error_t parse_nal(uint8_t* buf, size_t sz);
 
  public:
@@ -91,13 +99,17 @@ class H264NAL {
 
 class NALUContext {
  public:
-    NALUContext() = default;
+    NALUContext(int64_t dts = 0, int64_t pts = 0);
 
  public:
     error_t append(uint8_t* nal, size_t sz);
 
  public:
     std::vector<H264NAL> nalu_list;
+
+ public:
+    int64_t dts;
+    int64_t pts;
 };
 typedef std::shared_ptr<NALUContext> PNALUContext;
 
@@ -111,23 +123,28 @@ uint8_t* find_start_code(uint8_t* buf, size_t sz);
 
 class NALUParser {
  public:
-    NALUParser(bool is_avc = false);
+    NALUParser(bool is_avc = false, int nalu_length_size_minus_one = -1);
 
  public:
-    error_t split_nalu(uint8_t* buf, size_t sz,
-                       NALUContext* ctx,
-                       bool is_seq_header);
-
+    // if not sure is_seq_header set false
+    // avc must make sure whether is_seq_header
+    // annexb can ignore is_seq_header
+    error_t decode(uint8_t* buf, size_t sz,
+                   NALUContext* ctx,
+                   bool is_seq_header);
  private:
     error_t decode_header(uint8_t* buf, size_t sz,
                           NALUContext* ctx);
+    error_t decode_data(uint8_t* buf, size_t sz,
+                        NALUContext* ctx);
 
-    error_t decode(uint8_t* buf, size_t sz,
-                   NALUContext* ctx);
+ public:
+    error_t encode_avc(NALUContext* ctx, std::list<PAVPacket>& pkts);
+    error_t encode_annexb(NALUContext* ctx, PAVPacket& pkt);
 
  private:
     bool is_avc;  // default
-    uint8_t nalu_length_size_minus_one;
+    int8_t nalu_length_size_minus_one;
 };
 
 }  // namespace sps

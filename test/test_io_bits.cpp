@@ -86,3 +86,114 @@ GTEST_TEST(IOBITS, READ) {
     }
 
 }
+
+GTEST_TEST(IOBITS, WRITE) {
+    uint8_t buf[] = {
+            0XD7, // 1101 0111        // 0
+            0X02, 0X03,               // 1
+            0X04, 0X05, 0X06,         // 3
+            0X07, 0X08, 0X09,         // 6
+            0XA0, 0XB0, 0XC0, 0XD0,   // 9
+    };
+
+    uint8_t* wbuf = new uint8_t[sizeof(buf)];
+
+    {
+        BitContext bc(wbuf, sizeof(buf));
+
+        bc.write_bits(0x0D, 4);
+        bc.write_bits(0x01, 2);
+        bc.write_bits(0x03, 2);
+
+        bc.write_bits(0x00, 4);
+        bc.write_bits(0x0203, 12);
+        EXPECT_TRUE(wbuf[0] == buf[0]);
+        EXPECT_TRUE(wbuf[1] == buf[1]);
+        EXPECT_TRUE(wbuf[2] == buf[2]);
+
+        bc.write_int8(0x04);
+        EXPECT_TRUE(wbuf[3] == buf[3]);
+        bc.write_int16(0x0506);
+        EXPECT_TRUE(wbuf[4] == buf[4]);
+        EXPECT_TRUE(wbuf[5] == buf[5]);
+
+        bc.write_int24(0x070809);
+        EXPECT_TRUE(wbuf[6] == buf[6]);
+        EXPECT_TRUE(wbuf[7] == buf[7]);
+        EXPECT_TRUE(wbuf[8] == buf[8]);
+
+        bc.write_int32(0xa0b0c0d0);
+        EXPECT_TRUE(wbuf[9] == buf[9]);
+        EXPECT_TRUE(wbuf[10] == buf[10]);
+        EXPECT_TRUE(wbuf[11] == buf[11]);
+        EXPECT_TRUE(wbuf[12] == buf[12]);
+
+        EXPECT_TRUE(bc.size() == 0);
+        EXPECT_TRUE(memcmp(wbuf, buf, sizeof(buf)) == 0);
+    }
+
+    {
+        BitContext bc(wbuf, sizeof(buf));
+        bc.skip_write_bytes(1);
+
+        bc.write_bytes(buf+1, 2);
+        EXPECT_TRUE(wbuf[1] == buf[1]);
+        EXPECT_TRUE(wbuf[2] == buf[2]);
+
+        bc.write_bytes(buf+3, 1);
+        EXPECT_TRUE(wbuf[3] == buf[3]);
+        bc.write_bytes(buf+4, 2);
+        EXPECT_TRUE(wbuf[4] == buf[4]);
+        EXPECT_TRUE(wbuf[5] == buf[5]);
+
+        bc.write_bytes(buf+6, 3);
+        EXPECT_TRUE(wbuf[6] == buf[6]);
+        EXPECT_TRUE(wbuf[7] == buf[7]);
+        EXPECT_TRUE(wbuf[8] == buf[8]);
+
+        bc.write_bytes(buf+9, 4);
+        EXPECT_TRUE(wbuf[9] == buf[9]);
+        EXPECT_TRUE(wbuf[10] == buf[10]);
+        EXPECT_TRUE(wbuf[11] == buf[11]);
+        EXPECT_TRUE(wbuf[12] == buf[12]);
+
+        EXPECT_TRUE(bc.size() == 0);
+        EXPECT_TRUE(memcmp(wbuf, buf, sizeof(buf)) == 0);
+    }
+
+    {
+        uint8_t buf[] = {
+                0XD7, // 1101 0111        // 0
+                0X02, 0X03,               // 1
+                0X04, 0X05, 0X06,         // 3
+                0X07, 0X08, 0X09,         // 6
+                0XA0, 0XB0, 0XC0, 0XD0,   // 9
+        };
+
+        BitContext bc(wbuf, sizeof(buf));
+        bc.write_bits( 0XD7 << 1, 9);
+        bc.write_bits(0X0203, 15);
+        EXPECT_TRUE(wbuf[0] == buf[0]);
+        EXPECT_TRUE(wbuf[1] == buf[1]);
+        EXPECT_TRUE(wbuf[2] == buf[2]);
+
+        bc.write_bits(0x0405060, 28);
+        bc.write_bits(0x07, 4);
+        EXPECT_TRUE(wbuf[3] == buf[3]);
+        EXPECT_TRUE(wbuf[4] == buf[4]);
+        EXPECT_TRUE(wbuf[5] == buf[5]);
+        EXPECT_TRUE(wbuf[6] == buf[6]);
+
+        bc.write_bits(0x0809A0B0CLL, 36);
+        bc.write_bits(0x0D0, 12);
+        EXPECT_TRUE(wbuf[7] == buf[7]);
+        EXPECT_TRUE(wbuf[8] == buf[8]);
+        EXPECT_TRUE(wbuf[9] == buf[9]);
+        EXPECT_TRUE(wbuf[10] == buf[10]);
+        EXPECT_TRUE(wbuf[11] == buf[11]);
+
+        EXPECT_TRUE(bc.size() == 0);
+        EXPECT_TRUE(memcmp(wbuf, buf, sizeof(buf)) == 0);
+    }
+
+}

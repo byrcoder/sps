@@ -34,9 +34,9 @@ class RtmpAVMuxer : public IAVMuxer {
     explicit RtmpAVMuxer(PIWriter writer);
 
  public:
-    error_t write_header(PSpsAVPacket& buffer) override;
-    error_t write_message(PSpsAVPacket& buffer) override;
-    error_t write_tail(PSpsAVPacket& buffer)    override;
+    error_t write_header(PAVPacket& buffer) override;
+    error_t write_message(PAVPacket& buffer) override;
+    error_t write_tail(PAVPacket& buffer)    override;
 
  private:
     PRtmpUrlProtocol  writer;

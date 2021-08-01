@@ -48,10 +48,10 @@ class IAVDemuxer {
     const IAVInputFormat* name() { return fmt; }
 
  public:
-    virtual error_t read_header(PSpsAVPacket & buffer)  = 0;
-    virtual error_t read_packet(PSpsAVPacket& buffer) = 0;
-    virtual error_t read_tail(PSpsAVPacket& buffer)    = 0;
-    virtual error_t probe(PSpsAVPacket& buffer)        = 0;
+    virtual error_t read_header(PAVPacket & buffer)  = 0;
+    virtual error_t read_packet(PAVPacket& buffer) = 0;
+    virtual error_t read_tail(PAVPacket& buffer)    = 0;
+    virtual error_t probe(PAVPacket& buffer)        = 0;
 
  public:
     const IAVInputFormat* fmt;

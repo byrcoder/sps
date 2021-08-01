@@ -41,7 +41,7 @@ FlvAVMuxer::FlvAVMuxer(PIWriter writer) : writer(std::move(writer)) {
     previous_size = 0;
 }
 
-error_t FlvAVMuxer::write_header(PSpsAVPacket& buffer) {
+error_t FlvAVMuxer::write_header(PAVPacket& buffer) {
     static const uint8_t flv_header[] = {
             'F', 'L', 'V',
             0x01,  // version
@@ -70,7 +70,7 @@ error_t FlvAVMuxer::write_header(PSpsAVPacket& buffer) {
     return ret;
 }
 
-error_t FlvAVMuxer::write_message(PSpsAVPacket& buffer) {
+error_t FlvAVMuxer::write_message(PAVPacket& buffer) {
     tag_buffer->clear();
     BytesWriter head_writer(tag_buffer);
 
@@ -174,7 +174,7 @@ error_t FlvAVMuxer::write_message(PSpsAVPacket& buffer) {
     return ret;
 }
 
-error_t FlvAVMuxer::write_tail(PSpsAVPacket& buffer) {
+error_t FlvAVMuxer::write_tail(PAVPacket& buffer) {
     return SUCCESS;
 }
 

@@ -66,11 +66,11 @@ error_t BitContext::acquire_bits(size_t nbit) {
 
 void BitContext::read_bytes(uint8_t* c, size_t n) {
     assert(remain_bits == 0);
-    memcpy((char *) c, buf + buf_pos+1, n);
+    memcpy((char *) c, buf + buf_pos + 1, n);
     buf_pos += n;
 }
 
-void BitContext::skip_bytes(size_t n) {
+void BitContext::skip_read_bytes(size_t n) {
     buf_pos += n;
 
     // remain_value is invalid
@@ -151,11 +151,72 @@ uint32_t BitContext::read_bits(size_t n) {
     return num;
 }
 
+void BitContext::write_bytes(uint8_t* c, size_t n) {
+    assert(remain_bits == 0);
+    memcpy((char *) c, buf + buf_pos + 1, n);
+    buf_pos += n;
+}
+
+void BitContext::skip_write_bytes(size_t n) {
+    assert(remain_bits == 0);
+    buf_pos += n;
+}
+
+void BitContext::write_bits(uint64_t value, size_t n) {
+    while (n > 0) {
+        if (remain_bits == 0) {
+            next_write();
+        }
+
+        size_t nr = std::min(remain_bits, n);
+        uint32_t nr_value = 0;
+
+        static uint32_t masks[]     =  {
+                0x01, 0x03,
+                0x07, 0x0f,
+                0xf8, 0xfc,
+                0xfe, 0xff
+        };
+
+        // eg. read value nr = 3, n = 6  value = (101) xxxxxxxx
+        nr_value = masks[nr-1] & (value >> (n-nr));
+
+        // eg. write value remain_bit = 7, nr = 3, value = 1 (101) xxxx
+        buf[buf_pos] |= (nr_value << (remain_bits - nr));
+
+        n -= nr;
+        remain_bits -= nr;
+    }
+}
+
+void BitContext::write_int8(uint32_t value) {
+    write_bits(value, 8);
+}
+
+void BitContext::write_int16(uint32_t value) {
+    write_bits(value, 16);
+}
+
+void BitContext::write_int24(uint32_t value) {
+    write_bits(value, 24);
+}
+
+void BitContext::write_int32(uint32_t value) {
+    write_bits(value, 32);
+}
+
 void BitContext::next() {
     assert(remain_bits == 0);
     ++buf_pos;
     remain_bits  = 8;
     remain_value = *(buf+buf_pos);
+}
+
+void BitContext::next_write() {
+    assert(remain_bits == 0);
+    ++buf_pos;
+    remain_bits  = 8;
+    buf[buf_pos] = 0;  // clear value
 }
 
 }

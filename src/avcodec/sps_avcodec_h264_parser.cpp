@@ -33,6 +33,22 @@ SOFTWARE.
 
 namespace sps {
 
+error_t H264NAL::is_pps() {
+    return H264_NAL_SPS == nal_header.nal_unit_type;
+}
+
+error_t H264NAL::is_sps() {
+    return H264_NAL_PPS == nal_header.nal_unit_type;
+}
+
+error_t H264NAL::is_idr() {
+    return H264_NAL_IDR_SLICE == nal_header.nal_unit_type;
+}
+
+error_t H264NAL::is_aud() {
+    return H264_NAL_AUD == nal_header.nal_unit_type;
+}
+
 error_t H264NAL::parse_nal(uint8_t *buf, size_t sz) {
     this->nalu_buf  = buf;
     this->nalu_size = sz;
@@ -56,6 +72,11 @@ error_t H264NAL::parse_nal(uint8_t *buf, size_t sz) {
     return SUCCESS;
 }
 
+NALUContext::NALUContext(int64_t dts, int64_t pts) {
+    this->dts = dts;
+    this->pts = pts;
+}
+
 error_t NALUContext::append(uint8_t* buf, size_t sz) {
     H264NAL nal;
     error_t ret = nal.parse_nal(buf, sz);
@@ -63,9 +84,9 @@ error_t NALUContext::append(uint8_t* buf, size_t sz) {
     return ret;
 }
 
-NALUParser::NALUParser(bool avc) {
-    is_avc = avc;
-    nalu_length_size_minus_one = -1;
+NALUParser::NALUParser(bool avc, int nsz) {
+    is_avc                     = avc;
+    nalu_length_size_minus_one = nsz;
 }
 
 uint8_t* find_start_code(uint8_t* buf, size_t sz) {
@@ -79,14 +100,14 @@ uint8_t* find_start_code(uint8_t* buf, size_t sz) {
     return nullptr;
 }
 
-error_t NALUParser::split_nalu(uint8_t* buf, size_t sz,
-                               NALUContext* ctx,
-                               bool is_seq_header) {
+error_t NALUParser::decode(uint8_t* buf, size_t sz,
+                           NALUContext* ctx,
+                           bool is_seq_header) {
     if (is_seq_header) {
         return decode_header(buf, sz, ctx);
     }
 
-    return decode(buf, sz, ctx);
+    return decode_data(buf, sz, ctx);
 }
 
 error_t NALUParser::decode_header(uint8_t* buf, size_t sz,
@@ -122,10 +143,10 @@ error_t NALUParser::decode_header(uint8_t* buf, size_t sz,
                 return ERROR_H264_DECODER;
             }
 
-            if ((ret = decode(bc.pos(), nalu_size, ctx)) != SUCCESS) {
+            if ((ret = decode_data(bc.pos(), nalu_size, ctx)) != SUCCESS) {
                 return ret;
             }
-            bc.skip_bytes(nalu_size);
+            bc.skip_read_bytes(nalu_size);
         }
 
         int pps_num = bc.read_int8();
@@ -136,21 +157,21 @@ error_t NALUParser::decode_header(uint8_t* buf, size_t sz,
                 return ERROR_H264_DECODER;
             }
 
-            if ((ret = decode(bc.pos(), nalu_size, ctx)) != SUCCESS) {
+            if ((ret = decode_data(bc.pos(), nalu_size, ctx)) != SUCCESS) {
                 return ret;
             }
-            bc.skip_bytes(nalu_size);
+            bc.skip_read_bytes(nalu_size);
         }
     } else {
         is_avc = false;
-        return decode(buf, sz, ctx);
+        return decode_data(buf, sz, ctx);
     }
 
     return ret;
 }
 
-error_t NALUParser::decode(uint8_t* buf, size_t sz,
-                           NALUContext* ctx) {
+error_t NALUParser::decode_data(uint8_t* buf, size_t sz,
+                                NALUContext* ctx) {
     error_t ret = SUCCESS;
     if (is_avc && nalu_length_size_minus_one < 0) {
         sp_error("nalu length size %d < 1", nalu_length_size_minus_one);
@@ -177,7 +198,7 @@ error_t NALUParser::decode(uint8_t* buf, size_t sz,
             if (!end_pos) {
                 sp_debug("not found next nalu, push full");
             }
-            bc.skip_bytes(start_pos - bc.pos() + 3);
+            bc.skip_read_bytes(start_pos - bc.pos() + 3);
         }
 
         if (bc.acquire(nalu_size) != SUCCESS) {
@@ -188,10 +209,112 @@ error_t NALUParser::decode(uint8_t* buf, size_t sz,
         if ((ret = ctx->append(bc.pos(), nalu_size)) != SUCCESS) {
             return ret;
         }
-        bc.skip_bytes(nalu_size);
+        bc.skip_read_bytes(nalu_size);
     }
 
     return SUCCESS;
+}
+
+error_t NALUParser::encode_avc(NALUContext *ctx, std::list<PAVPacket>& pkts) {
+    H264NAL* sps    = nullptr;
+    H264NAL* pps    = nullptr;
+
+    for (auto& n : ctx->nalu_list) {
+        if (n.is_sps()) {
+            sps = &n;
+        } else if (n.is_pps()) {
+            pps = &n;
+        }
+    }
+
+    if (sps) {
+        // avc version(8bit), avc profile id(8bit) + avc compatibility(8bit) +
+        // avc level(8bit) + reserved(6bit) + nalu_length_size_minus_one (2bit, 2) +
+        // reserved(3bit) + sps_num(5bit) +
+        //     loop(sps_num): sps size (16bit) + sps data
+        // pps_num(8bit)
+        //      loop(pps_num): pps size (16bit) + pps data
+        int pkt_sz = 5 + 1 + (sps ? 2 + sps->nalu_size : 0) +
+                     1 + (pps ? 2 + pps->nalu_size : 0);
+
+        if (sps->nalu_size < 4) {
+            sp_error("sps size %lu", sps->nalu_size);
+            return ERROR_H264_ENCODER;
+        }
+
+        nalu_length_size_minus_one = 3;
+        auto pkt = AVPacket::create_empty_cap(AVMessageType::AV_MESSAGE_DATA,
+                         AV_STREAM_TYPE_VIDEO,
+                         AVPacketType{AV_VIDEO_TYPE_SEQUENCE_HEADER},
+                         pkt_sz,
+                         ctx->dts,
+                         ctx->pts,
+                         AV_PKT_FLAG_SEQUENCE,
+                         H264);
+
+        BitContext bc(pkt->pos(), pkt->cap());
+        bc.write_int8(0x01);  // avc version
+        bc.write_int8(sps->nalu_buf[1]);  // avc profile
+        bc.write_int8(0x00);  // avc compatibility
+        bc.write_int8(sps->nalu_buf[3]);  // avc level
+        bc.write_int8(nalu_length_size_minus_one);  // avc level
+
+        bc.write_int8(1);  // 1 sps num
+        bc.write_int16(sps->nalu_size);
+        bc.write_bytes(sps->nalu_buf, sps->nalu_size);
+
+        bc.write_int8(pps ? 1 : 0);
+        if (pps) {
+            bc.write_int16(pps->nalu_size);
+            bc.write_bytes(pps->nalu_buf, pps->nalu_size);
+        }
+
+        pkt->skip(bc.pos() - pkt->pos());
+        pkts.push_back(pkt);
+
+        sp_info("avc seq header size %d", pkt->size());
+    }
+
+    for (auto& n : ctx->nalu_list) {
+        if (n.is_sps() || n.is_pps() || n.is_aud()) {
+            continue;
+        }
+
+        if (nalu_length_size_minus_one < 0) {
+            nalu_length_size_minus_one = 3;
+        }
+
+        uint8_t flag = H264;
+        // 1 keyframe 2. inner 3. h263 disposable 4.5. frame info or order frame
+        uint8_t frame_type = (n.is_idr() ? 1 : 2) << 4;
+
+        flag |= frame_type;
+        // size + nalu
+        size_t pkt_sz = nalu_length_size_minus_one + 1 + n.nalu_size;
+        auto pkt = AVPacket::create_empty_cap(AVMessageType::AV_MESSAGE_DATA,
+                                              AV_STREAM_TYPE_VIDEO,
+                                              AVPacketType{AV_VIDEO_TYPE_DATA},
+                                              pkt_sz,
+                                              ctx->dts / 90,
+                                              ctx->pts / 90,
+                                              flag,
+                                              H264);
+
+        BitContext bc(pkt->pos(), pkt->cap());
+        bc.write_bits(n.nalu_size, 8 * (nalu_length_size_minus_one+1));
+        bc.write_bytes(n.nalu_buf, n.nalu_size);
+
+        pkt->skip(bc.pos() - pkt->pos());
+        pkts.push_back(pkt);
+
+        sp_info("avc video data size %d", pkt->size());
+    }
+
+    return SUCCESS;
+}
+
+error_t NALUParser::encode_annexb(NALUContext *ctx, PAVPacket &pkt) {
+    return ERROR_H264_NOT_IMPL;
 }
 
 }

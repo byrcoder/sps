@@ -46,7 +46,7 @@ class BitContext {
 
  public:
     void     read_bytes(uint8_t* c, size_t n);
-    void     skip_bytes(size_t n);
+    void     skip_read_bytes(size_t n);
 
     uint8_t  read_int8();
     uint16_t read_int16();
@@ -56,8 +56,19 @@ class BitContext {
  public:
     uint32_t read_bits(size_t n);
 
+ public:
+    void     write_bytes(uint8_t* c, size_t n);
+    void     skip_write_bytes(size_t n);
+
+    void     write_bits(uint64_t value, size_t n);
+    void     write_int8(uint32_t value);
+    void     write_int16(uint32_t value);
+    void     write_int24(uint32_t value);
+    void     write_int32(uint32_t value);
+
  private:
     void next();
+    void next_write();
 
  private:
     // byte pos info

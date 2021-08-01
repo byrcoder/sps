@@ -40,10 +40,10 @@ class TsDemuxer : public IAVDemuxer, public IPesHandler {
     explicit TsDemuxer(PIReader rd);
 
  public:
-    error_t read_header(PSpsAVPacket& buffer)  override;
-    error_t read_packet(PSpsAVPacket& buffer)   override;
-    error_t read_tail(PSpsAVPacket& buffer)    override;
-    error_t probe(PSpsAVPacket& buffer)        override;
+    error_t read_header(PAVPacket& buffer)  override;
+    error_t read_packet(PAVPacket& buffer)   override;
+    error_t read_tail(PAVPacket& buffer)    override;
+    error_t probe(PAVPacket& buffer)        override;
 
  public:
     error_t on_pes_complete(TsPesContext* pes) override;
@@ -55,8 +55,11 @@ class TsDemuxer : public IAVDemuxer, public IPesHandler {
     PBytesReader rd;
     TsContext ts_ctx;
 
-    PSpsAVPacket decoded_pkt;
-    NALUParser nalu_parser;
+    PAVPacket decoded_pkt;
+    NALUParser nalu_decoder;
+
+    NALUParser nalu_encoder;
+    std::list<PAVPacket> encoder_pkts;
 };
 
 AVInputFormat(Ts, "ts", "ts");

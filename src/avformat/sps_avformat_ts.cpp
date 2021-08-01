@@ -178,7 +178,7 @@ error_t TsPmtProgram::psi_decode(TsPacket *pkt, BitContext &rd) {
         program_info_desc = CharBuffer::create_buf(
                 pmt_flag.program_info_length);
         program_info_desc->append(rd.pos(), pmt_flag.program_info_length);
-        rd.skip_bytes(pmt_flag.program_info_length);
+        rd.skip_read_bytes(pmt_flag.program_info_length);
     }
     // 5 pre size, 4 pmt_flag, program_info_length, 4 crc32
     int left_length = flags1.section_length - 5
@@ -214,7 +214,7 @@ error_t TsPmtProgram::psi_decode(TsPacket *pkt, BitContext &rd) {
             info->pes_dec = CharBuffer::create_buf(
                     info->header.es_info_length);
             info->pes_dec->append(rd.pos(), info->header.es_info_length);
-            rd.skip_bytes(info->header.es_info_length);
+            rd.skip_read_bytes(info->header.es_info_length);
         }
 
         pes_infos.push_back(info);
@@ -288,7 +288,7 @@ error_t TsPesContext::dump(BitContext &rd, int payload_unit_start_indicator) {
 
     if (!pes_packets) {
         sp_warn("pes packet null pes_packet_length %d", pes_packet_length);
-        rd.skip_bytes(rd.size());
+        rd.skip_read_bytes(rd.size());
         return SUCCESS;
     }
 
@@ -303,12 +303,12 @@ error_t TsPesContext::dump(BitContext &rd, int payload_unit_start_indicator) {
         return ERROR_TS_PACKET_DECODE;
     }
     pes_packets->append(rd.pos(), left_size);
-    rd.skip_bytes(left_size);
+    rd.skip_read_bytes(left_size);
 
     if (rd.size() > 0) {
         sp_warn("pes_packet_length %d has remain size %lu, %lu",
                 pes_packet_length, rd.size(), left_size);
-        rd.skip_bytes(rd.size());
+        rd.skip_read_bytes(rd.size());
     }
 
     if (pes_packet_length > 0 && pes_packets->size() == pes_packet_length) {
@@ -522,7 +522,7 @@ error_t TsPesProgram::decode(TsPacket *pkt, BitContext &rd) {
             }
 
             // TODO: FIXME
-            rd.skip_bytes(1);
+            rd.skip_read_bytes(1);
             // rd.read_bytes((uint8_t*) &dsm_trick_mode, 1);
         }
 
@@ -533,7 +533,7 @@ error_t TsPesProgram::decode(TsPacket *pkt, BitContext &rd) {
             }
 
             // TODO: FIXME
-            rd.skip_bytes(1);
+            rd.skip_read_bytes(1);
             // rd.read_bytes((uint8_t*) &additional_copy_info, 1);
         }
 
@@ -567,7 +567,7 @@ error_t TsPesProgram::decode(TsPacket *pkt, BitContext &rd) {
 
                 pes_extension.pes_private_data.buffer = CharBuffer::create_buf(16);
                 pes_extension.pes_private_data.buffer->append(rd.pos(), 16);
-                rd.skip_bytes(16);
+                rd.skip_read_bytes(16);
             }
 
             if (pes_extension.flags.pack_header_field_flag) {
@@ -587,7 +587,7 @@ error_t TsPesProgram::decode(TsPacket *pkt, BitContext &rd) {
 
                 pes_extension.pack_header_field.buffer->append(rd.pos(),
                         pes_extension.pack_header_field.pack_field_length);
-                rd.skip_bytes(pes_extension.pack_header_field.pack_field_length);
+                rd.skip_read_bytes(pes_extension.pack_header_field.pack_field_length);
             }
 
             if (pes_extension.flags.program_packet_sequence_counter_flag) {
@@ -597,7 +597,7 @@ error_t TsPesProgram::decode(TsPacket *pkt, BitContext &rd) {
                 }
 
                 // TODO: FIMXE
-                rd.skip_bytes(2);
+                rd.skip_read_bytes(2);
                 // rd.read_bytes((uint8_t*) &pes_extension.program_packet_sequence_counter, 2);
             }
 
@@ -608,7 +608,7 @@ error_t TsPesProgram::decode(TsPacket *pkt, BitContext &rd) {
                 }
 
                 // TODO: FIMXE
-                rd.skip_bytes(2);
+                rd.skip_read_bytes(2);
                 // rd.read_bytes((uint8_t*) &pes_extension.p_std_buffer, 2);
             }
 
@@ -633,7 +633,7 @@ error_t TsPesProgram::decode(TsPacket *pkt, BitContext &rd) {
 
                 pes_extension.pes_extension2.buffer->append(rd.pos(),
                         pes_extension.pes_extension2.header.pes_extension_field_length);
-                rd.skip_bytes(pes_extension.pes_extension2.header.pes_extension_field_length);
+                rd.skip_read_bytes(pes_extension.pes_extension2.header.pes_extension_field_length);
             }
         }
 
@@ -645,7 +645,7 @@ error_t TsPesProgram::decode(TsPacket *pkt, BitContext &rd) {
             return ret;
         }
 
-        rd.skip_bytes(stuff_head_size);
+        rd.skip_read_bytes(stuff_head_size);
 
         if ((ret = pes_ctx->dump(rd, pkt->payload_unit_start_indicator)) != SUCCESS) {
             sp_error("fail dump pes ret %d", ret);
@@ -692,7 +692,7 @@ error_t TsPesProgram::decode(TsPacket *pkt, BitContext &rd) {
                 stuff_head_size
         );
     } else if (code == 0x1be) {  // padding stream
-        rd.skip_bytes(rd.size());
+        rd.skip_read_bytes(rd.size());
     } else if (code == 0x1bc || code == 0x1bf ||
                code == 0x1f0 || code == 0x1f1 ||
                code == 0x1ff || code == 0x1f2 ||
@@ -824,7 +824,7 @@ error_t TsAdaptationFiled::decode(BitContext& rd) {
 
     // stuffing_byte
     stuffing_length = adaption_field_length - (rd.pos() - pos);
-    rd.skip_bytes(stuffing_length);
+    rd.skip_read_bytes(stuffing_length);
 
     return ret;
 }

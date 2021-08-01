@@ -44,7 +44,7 @@ GTEST_TEST(RTMP_CIENT, CREATE) {
 
     RtmpDemuxer demuxer(url_rtmp);
 
-    PSpsAVPacket buffer;
+    PAVPacket buffer;
     while (demuxer.read_packet(buffer) == SUCCESS) {
         ;
     }

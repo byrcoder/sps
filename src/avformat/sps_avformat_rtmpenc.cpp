@@ -39,12 +39,12 @@ RtmpAVMuxer::RtmpAVMuxer(PIWriter writer) {
             std::move(writer));
 }
 
-error_t RtmpAVMuxer::write_header(PSpsAVPacket& buffer) {
+error_t RtmpAVMuxer::write_header(PAVPacket& buffer) {
     return SUCCESS;
 }
 
 // TODO(byrcoder): FIXME
-error_t RtmpAVMuxer::write_message(PSpsAVPacket& buffer) {
+error_t RtmpAVMuxer::write_message(PAVPacket& buffer) {
     WrapRtmpPacket packet(false);
     auto& pkt = packet.packet;
 
@@ -151,7 +151,7 @@ error_t RtmpAVMuxer::write_message(PSpsAVPacket& buffer) {
     return SUCCESS;
 }
 
-error_t RtmpAVMuxer::write_tail(PSpsAVPacket& buffer) {
+error_t RtmpAVMuxer::write_tail(PAVPacket& buffer) {
     return SUCCESS;
 }
 

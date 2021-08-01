@@ -101,7 +101,7 @@ error_t HttpStreamPhaseHandler::handler_play(ConnContext& ctx) {
         return ERROR_AVFORMAT_ENCODER_NOT_EXISTS;
     }
 
-    PSpsAVPacket buffer;
+    PAVPacket buffer;
     ret = enc->write_header(buffer);
 
     if (ret != SUCCESS) {
@@ -174,7 +174,7 @@ error_t HttpStreamPhaseHandler::handler_publish(ConnContext& ctx) {
     cache = StreamCache::create_av_streamcache(url);
     sp_trace("Publish url %s", url.c_str());
 
-    PSpsAVPacket packet;
+    PAVPacket packet;
 
     if ((ret = dec->read_header(packet)) != SUCCESS) {
         sp_error("fail read header recv ret %d", ret);

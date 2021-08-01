@@ -40,14 +40,14 @@ const int AV_PKT_FLAG_KEY       =   0x0001;
 // The packet contains a sequence header
 const int AV_PKT_FLAG_SEQUENCE  =   0x0002;
 
-enum SpsMessageType {
+enum AVMessageType {
     AV_MESSAGE_HEADER,
     AV_MESSAGE_DATA,
     AV_MESSAGE_TAIL,
     AV_MESSAGE_NB,
 };
 
-enum SpsAVStreamType {
+enum AVStreamType {
     AV_STREAM_TYPE_VIDEO,
     AV_STREAM_TYPE_AUDIO,
     AV_STREAM_TYPE_SUBTITLE,
@@ -55,39 +55,51 @@ enum SpsAVStreamType {
     AV_STREAM_TYPE_NB,
 };
 
-enum SpsVideoPktType {
+enum VideoPktType {
     AV_VIDEO_TYPE_SEQUENCE_HEADER = 0,
+    AV_VIDEO_TYPE_DATA            = 1,
 };
 
-enum SpsAudioPktType {
+enum AudioPktType {
     AV_AUDIO_TYPE_SEQUENCE_HEADER = 0,
 };
 
-struct SpsAVPacketType {
+struct AVPacketType {
     int pkt_type;
 };
 
-enum SpsAudioCodec {
+enum AudioCodec {
     AAC = 10,
     MP3 = 14,
 };
 
-enum SpsVideoCodec {
+enum VideoCodec {
     H264 = 7,   // AVC
     H265 = 12,  // H265
 };
 
 
-class SpsAVPacket;
-typedef std::shared_ptr<SpsAVPacket> PSpsAVPacket;
+class AVPacket;
+typedef std::shared_ptr<AVPacket> PAVPacket;
 // ffmpeg
-class SpsAVPacket : public CharBuffer {
+class AVPacket : public CharBuffer {
  public:
-    static PSpsAVPacket create(
-            SpsMessageType msg_type,
-            SpsAVStreamType stream_type,
-            SpsAVPacketType pkt_type,
+    static PAVPacket create(
+            AVMessageType msg_type,
+            AVStreamType stream_type,
+            AVPacketType pkt_type,
             uint8_t* buf,
+            int len,
+            int64_t dts,
+            int64_t pts,
+            int flags = 0,
+            int codecid = 0,
+            int64_t duration = 0);
+
+    static PAVPacket create_empty_cap(
+            AVMessageType msg_type,
+            AVStreamType stream_type,
+            AVPacketType pkt_type,
             int len,
             int64_t dts,
             int64_t pts,
@@ -97,7 +109,10 @@ class SpsAVPacket : public CharBuffer {
 
  public:
     // head_len for rtmp
-    SpsAVPacket(uint8_t* buf, int len, int head_len = 0);
+    AVPacket(uint8_t* buf, int len, int head_len = 0);
+
+    // cap size
+    AVPacket(uint32_t cap, int head_len = 0);
 
  public:
     bool is_video() const;
@@ -111,14 +126,14 @@ class SpsAVPacket : public CharBuffer {
     /**
      * avformat header/data/tail
      */
-    SpsMessageType msg_type   = AV_MESSAGE_NB;
+    AVMessageType msg_type   = AV_MESSAGE_NB;
 
     /**
      * video/audio/metadata/
      */
-    SpsAVStreamType stream_type  = AV_STREAM_TYPE_NB;
+    AVStreamType stream_type  = AV_STREAM_TYPE_NB;
 
-    SpsAVPacketType     pkt_type = {};
+    AVPacketType     pkt_type = {};
 
     /**
      * Presentation timestamp in AVStream->time_base units; the time at which
@@ -155,7 +170,6 @@ class SpsAVPacket : public CharBuffer {
  public:
     void debug();
 };
-typedef std::shared_ptr<SpsAVPacket> PAVPacket;
 
 }  // namespace sps
 

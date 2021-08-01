@@ -102,7 +102,7 @@ error_t RtmpServerStreamHandler::publish(ConnContext &ctx) {
     sp_trace("Publish url %s", url.c_str());
 
     do {
-        PSpsAVPacket packet;
+        PAVPacket packet;
         if ((ret = demuxer.read_packet(packet)) != SUCCESS) {
             sp_error("fail publishing recv ret %d", ret);
             break;

@@ -30,12 +30,12 @@ SOFTWARE.
 
 namespace sps {
 
-PSpsAVPacket SpsAVPacket::create(
-        SpsMessageType msg_type, SpsAVStreamType stream_type,
-        SpsAVPacketType pkt_type, uint8_t* buf, int len,
+PAVPacket AVPacket::create(
+        AVMessageType msg_type, AVStreamType stream_type,
+        AVPacketType pkt_type, uint8_t* buf, int len,
         int64_t dts, int64_t pts, int flags, int codecid,
         int64_t duration) {
-    auto pkt = std::make_shared<SpsAVPacket>(buf, len, FLV_HEAD_TAG_SIZE);
+    auto pkt = std::make_shared<AVPacket>(buf, len, FLV_HEAD_TAG_SIZE);
     pkt->msg_type    = msg_type;
     pkt->stream_type = stream_type;
     pkt->pkt_type    = pkt_type;
@@ -48,44 +48,70 @@ PSpsAVPacket SpsAVPacket::create(
     return pkt;
 }
 
-SpsAVPacket::SpsAVPacket(uint8_t *buf, int len, int head_len)
+PAVPacket AVPacket::create_empty_cap(
+        AVMessageType msg_type,
+        AVStreamType stream_type,
+        AVPacketType pkt_type,
+        int len,
+        int64_t dts,
+        int64_t pts,
+        int flags,
+        int codecid,
+        int64_t duration) {
+    auto pkt = std::make_shared<AVPacket>(len, FLV_HEAD_TAG_SIZE);
+    pkt->msg_type    = msg_type;
+    pkt->stream_type = stream_type;
+    pkt->pkt_type    = pkt_type;
+
+    pkt->dts         = dts;
+    pkt->pts         = pts;
+    pkt->flags       = flags;
+    pkt->codecid     = codecid;
+    pkt->duration    = duration;
+    return pkt;
+}
+
+AVPacket::AVPacket(uint8_t *buf, int len, int head_len)
     : CharBuffer(buf, len, head_len) {
 }
 
-bool SpsAVPacket::is_video() const {
+AVPacket::AVPacket(uint32_t cap, int head_len) : CharBuffer(cap, head_len) {
+}
+
+bool AVPacket::is_video() const {
     return stream_type == AV_STREAM_TYPE_VIDEO;
 }
 
-bool SpsAVPacket::is_audio() const {
+bool AVPacket::is_audio() const {
     return stream_type == AV_STREAM_TYPE_AUDIO;
 }
 
-bool SpsAVPacket::is_script() const {
+bool AVPacket::is_script() const {
     return stream_type == AV_STREAM_TYPE_SUBTITLE;
 }
 
-bool SpsAVPacket::is_keyframe() const {
+bool AVPacket::is_keyframe() const {
     if (!is_video()) {
         return false;
     }
     return ((flags >> 4) & 0x0F) == 1;
 }
 
-bool SpsAVPacket::is_video_sequence_header() const {
+bool AVPacket::is_video_sequence_header() const {
     if (!is_video()) {
         return false;
     }
     return pkt_type.pkt_type == AV_VIDEO_TYPE_SEQUENCE_HEADER;
 }
 
-bool SpsAVPacket::is_audio_sequence_header() {
+bool AVPacket::is_audio_sequence_header() {
     if (!is_audio()) {
         return false;
     }
     return pkt_type.pkt_type == AV_AUDIO_TYPE_SEQUENCE_HEADER;
 }
 
-void SpsAVPacket::debug() {
+void AVPacket::debug() {
     sp_append_start("msg_type: %d, stream_type: %d, pkt_type: %11d, "
                     "dts: %11lld, pts: %11lld, flags: %2X, codecid: %2d, "
                     "length: %10d, ",

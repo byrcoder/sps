@@ -38,11 +38,11 @@ RtmpDemuxer::RtmpDemuxer(PIReader rd) {
     this->io  = std::dynamic_pointer_cast<RtmpUrlProtocol>(rd);
 }
 
-error_t RtmpDemuxer::read_header(PSpsAVPacket& buffer) {
+error_t RtmpDemuxer::read_header(PAVPacket& buffer) {
     return SUCCESS;
 }
 
-error_t RtmpDemuxer::read_packet(PSpsAVPacket& buffer) {
+error_t RtmpDemuxer::read_packet(PAVPacket& buffer) {
     if (!io) {
         sp_error("fatal rtmp io is nullptr");
         return ERROR_AVFORMAT_RTMP_IO_NULL;
@@ -59,7 +59,7 @@ error_t RtmpDemuxer::read_packet(PSpsAVPacket& buffer) {
     int64_t  dts       = 0;
     int64_t  pts       = 0;
     int32_t  cts       = 0;
-    SpsAVStreamType stream_type = AV_STREAM_TYPE_NB;
+    AVStreamType stream_type = AV_STREAM_TYPE_NB;
 
     do {
         WrapRtmpPacket packet;
@@ -97,8 +97,8 @@ error_t RtmpDemuxer::read_packet(PSpsAVPacket& buffer) {
             codecid     = *packet.data() & 0x0f;    // low 4-bits
             stream_type = AV_STREAM_TYPE_VIDEO;
 
-            if (codecid != SpsVideoCodec::H264
-                    && codecid != SpsVideoCodec::H265) {
+            if (codecid != VideoCodec::H264
+                    && codecid != VideoCodec::H265) {
                 sp_error("unknown video codecid: %d", codecid);
                 return ERROR_FLV_VIDEO_CODECID;
             }
@@ -128,11 +128,11 @@ error_t RtmpDemuxer::read_packet(PSpsAVPacket& buffer) {
 #endif
 
             assert(data_size == av_buffer->size());
-            buffer = SpsAVPacket::create(SpsMessageType::AV_MESSAGE_DATA,
-                                         AV_STREAM_TYPE_VIDEO,
-                                         SpsAVPacketType{pkt_type},
-                                         av_buffer->pos(), av_buffer->size(),
-                                         dts, pts, flag, codecid);
+            buffer = AVPacket::create(AVMessageType::AV_MESSAGE_DATA,
+                                      AV_STREAM_TYPE_VIDEO,
+                                      AVPacketType{pkt_type},
+                                      av_buffer->pos(), av_buffer->size(),
+                                      dts, pts, flag, codecid);
             break;
         } else if (packet.is_audio()) {
             if ((ret = stream.acquire(1)) != SUCCESS) {
@@ -148,7 +148,7 @@ error_t RtmpDemuxer::read_packet(PSpsAVPacket& buffer) {
             codecid = (flag & 0xf0) >> 4;   // (10. aac 14. mp3) high 4-bits
             stream_type = AV_STREAM_TYPE_AUDIO;
 
-            if (codecid != SpsAudioCodec::AAC) {
+            if (codecid != AudioCodec::AAC) {
                 sp_error("unknown audio codecid: %d", codecid);
                 return ERROR_FLV_AUDIO_CODECID;
             }
@@ -159,20 +159,20 @@ error_t RtmpDemuxer::read_packet(PSpsAVPacket& buffer) {
             pts         =    dts;
 
             assert(data_size == av_buffer->size());
-            buffer = SpsAVPacket::create(SpsMessageType::AV_MESSAGE_DATA,
-                                         AV_STREAM_TYPE_AUDIO,
-                                         SpsAVPacketType{pkt_type},
-                                         av_buffer->pos(), av_buffer->size(),
-                                         dts, pts, flag, codecid);
+            buffer = AVPacket::create(AVMessageType::AV_MESSAGE_DATA,
+                                      AV_STREAM_TYPE_AUDIO,
+                                      AVPacketType{pkt_type},
+                                      av_buffer->pos(), av_buffer->size(),
+                                      dts, pts, flag, codecid);
             break;
         } else if (packet.is_script()) {
             stream_type = AV_STREAM_TYPE_SUBTITLE;
             assert(data_size == av_buffer->size());
-            buffer = SpsAVPacket::create(SpsMessageType::AV_MESSAGE_DATA,
-                                         AV_STREAM_TYPE_SUBTITLE,
-                                         SpsAVPacketType{0},
-                                         av_buffer->pos(), av_buffer->size(),
-                                         dts, pts, flag, codecid);
+            buffer = AVPacket::create(AVMessageType::AV_MESSAGE_DATA,
+                                      AV_STREAM_TYPE_SUBTITLE,
+                                      AVPacketType{0},
+                                      av_buffer->pos(), av_buffer->size(),
+                                      dts, pts, flag, codecid);
             break;
         } else {
             sp_info("skip pkt type %d", packet.packet.m_packetType);
@@ -187,11 +187,11 @@ error_t RtmpDemuxer::read_packet(PSpsAVPacket& buffer) {
     return ret;
 }
 
-error_t RtmpDemuxer::read_tail(PSpsAVPacket& buffer) {
+error_t RtmpDemuxer::read_tail(PAVPacket& buffer) {
     return SUCCESS;
 }
 
-error_t RtmpDemuxer::probe(PSpsAVPacket &buffer) {
+error_t RtmpDemuxer::probe(PAVPacket &buffer) {
     return ERROR_RTMP_NOT_IMPL;
 }
 

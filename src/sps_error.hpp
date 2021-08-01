@@ -138,5 +138,7 @@ SOFTWARE.
 #define ERROR_TS_PACKET_CC_CONTINUE         3302
 
 #define ERROR_H264_DECODER                  3500
+#define ERROR_H264_ENCODER                  3501
+#define ERROR_H264_NOT_IMPL                 3502
 
 #endif  // SPS_SPS_ERROR_HPP

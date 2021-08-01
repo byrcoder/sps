@@ -47,9 +47,9 @@ class IAVMuxer {
     const IAVOutputFormat* name();
 
  public:
-    virtual error_t write_header(PSpsAVPacket& buffer)  = 0;
-    virtual error_t write_message(PSpsAVPacket& buffer) = 0;
-    virtual error_t write_tail(PSpsAVPacket& buffer)    = 0;
+    virtual error_t write_header(PAVPacket& buffer)  = 0;
+    virtual error_t write_message(PAVPacket& buffer) = 0;
+    virtual error_t write_tail(PAVPacket& buffer)    = 0;
 
  public:
     const IAVOutputFormat* fmt;

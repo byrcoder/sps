@@ -38,7 +38,7 @@ FlvDemuxer::FlvDemuxer(PIReader reader) {
     rd        = std::make_unique<BytesReader>(reader, buf);
 }
 
-error_t FlvDemuxer::read_header(PSpsAVPacket &buffer) {
+error_t FlvDemuxer::read_header(PAVPacket &buffer) {
     auto ret = rd->acquire(9);
 
     if (ret != SUCCESS) {
@@ -61,11 +61,11 @@ error_t FlvDemuxer::read_header(PSpsAVPacket &buffer) {
     int flags = pos[4] & (FLV_HEADER_FLAG_HASVIDEO | FLV_HEADER_FLAG_HASAUDIO);
     // header_len buf[5...8]
 
-    buffer = SpsAVPacket::create(SpsMessageType::AV_MESSAGE_HEADER,
-                                 AV_STREAM_TYPE_NB,
-                                 SpsAVPacketType {},
-                                 pos, 9,
-                                 0, 0, flags, 0);
+    buffer = AVPacket::create(AVMessageType::AV_MESSAGE_HEADER,
+                              AV_STREAM_TYPE_NB,
+                              AVPacketType {},
+                              pos, 9,
+                              0, 0, flags, 0);
     buffer->flags = pos[4];
 
     rd->skip_bytes(9);
@@ -73,7 +73,7 @@ error_t FlvDemuxer::read_header(PSpsAVPacket &buffer) {
     return ret;
 }
 
-error_t FlvDemuxer::read_packet(PSpsAVPacket& buffer) {
+error_t FlvDemuxer::read_packet(PAVPacket& buffer) {
     const int flv_head_len = 15;
 
     error_t  ret    = SUCCESS;
@@ -101,7 +101,7 @@ error_t FlvDemuxer::read_packet(PSpsAVPacket& buffer) {
     dts           = rd->read_int24();  // timestamp low 24 bit
     dts          |= ((uint32_t) rd->read_int8() << 24u);  // high 8 bit
     stream_id     = rd->read_int24();  // streamid
-    SpsAVStreamType stream_type = AV_STREAM_TYPE_NB;
+    AVStreamType stream_type = AV_STREAM_TYPE_NB;
 
     if ((ret = rd->acquire(data_size)) != SUCCESS) {
         sp_error("flv head not enough %d", ret);
@@ -139,7 +139,7 @@ error_t FlvDemuxer::read_packet(PSpsAVPacket& buffer) {
         // sample_rate = flags & 0x0c    // (0. 5.5k  1. 11k   2. 22k   3. 44k)
         codecid = (flags & 0xf0) >> 4;   // (10. aac 14. mp3) high 4-bits
 
-        if (codecid != SpsAudioCodec::AAC) {
+        if (codecid != AudioCodec::AAC) {
             sp_error("unknown audio codecid: %d", codecid);
             return ERROR_FLV_AUDIO_CODECID;
         }
@@ -153,7 +153,7 @@ error_t FlvDemuxer::read_packet(PSpsAVPacket& buffer) {
         uint8_t frame_type = flags & 0xf0;
         codecid     = flags & 0x0f;  // low 4-bits
 
-        if (codecid != SpsVideoCodec::H264 && codecid != SpsVideoCodec::H265) {
+        if (codecid != VideoCodec::H264 && codecid != VideoCodec::H265) {
             sp_error("unknown video codecid: %d", codecid);
             return ERROR_FLV_VIDEO_CODECID;
         }
@@ -191,11 +191,11 @@ error_t FlvDemuxer::read_packet(PSpsAVPacket& buffer) {
         return ERROR_FLV_TAG;
     }
 
-    buffer = SpsAVPacket::create(SpsMessageType::AV_MESSAGE_DATA,
-                                 stream_type,
-                                 SpsAVPacketType{pkt_type},
-                                 buf->pos(), data_size,
-                                 dts, pts, flags, codecid);
+    buffer = AVPacket::create(AVMessageType::AV_MESSAGE_DATA,
+                              stream_type,
+                              AVPacketType{pkt_type},
+                              buf->pos(), data_size,
+                              dts, pts, flags, codecid);
 
     rd->skip_bytes(data_size);
 
@@ -207,11 +207,11 @@ error_t FlvDemuxer::read_packet(PSpsAVPacket& buffer) {
     return ret;
 }
 
-error_t FlvDemuxer::read_tail(PSpsAVPacket& buffer) {
+error_t FlvDemuxer::read_tail(PAVPacket& buffer) {
     return SUCCESS;
 }
 
-error_t FlvDemuxer::probe(PSpsAVPacket& buffer) {
+error_t FlvDemuxer::probe(PAVPacket& buffer) {
     auto pos = buffer->buffer();
     int  len = buffer->size();
 

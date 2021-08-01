@@ -39,10 +39,10 @@ class RtmpDemuxer : public IAVDemuxer {
     explicit RtmpDemuxer(PIReader rd);
 
  public:
-    error_t read_header(PSpsAVPacket& buffer)  override;
-    error_t read_packet(PSpsAVPacket& buffer)   override;
-    error_t read_tail(PSpsAVPacket& buffer)    override;
-    error_t probe(PSpsAVPacket& buffer)        override;
+    error_t read_header(PAVPacket& buffer)  override;
+    error_t read_packet(PAVPacket& buffer)   override;
+    error_t read_tail(PAVPacket& buffer)    override;
+    error_t probe(PAVPacket& buffer)        override;
 
  private:
     PRtmpUrlProtocol io;

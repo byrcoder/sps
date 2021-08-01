@@ -59,7 +59,7 @@ class CharBuffer : public IBuffer {
 
  public:
     CharBuffer(uint8_t* buf, uint32_t len, uint32_t head_len = 0);
-    CharBuffer(uint32_t cap);
+    CharBuffer(uint32_t cap, uint32_t head_len = 0);
     ~CharBuffer() override;
 
  public:
@@ -71,6 +71,11 @@ class CharBuffer : public IBuffer {
     void  append(uint8_t* p, uint32_t sz) {
         assert(remain() >= sz);
         memcpy(pos(), p, sz);
+        len += sz;
+    }
+
+    void skip(uint32_t sz) {
+        assert(remain() >= sz);
         len += sz;
     }
     uint8_t*   pos()              { return buf + len; }

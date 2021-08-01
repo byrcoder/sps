@@ -54,7 +54,7 @@ error_t test_flv() {
     }
 
     FlvDemuxer flv_demuxer(in_file);
-    PSpsAVPacket pkt;
+    PAVPacket pkt;
 
     ret = flv_demuxer.read_header(pkt);
     if (ret != SUCCESS) {
