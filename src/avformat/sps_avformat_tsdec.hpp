@@ -55,11 +55,8 @@ class TsDemuxer : public IAVDemuxer, public IPesHandler {
     PBytesReader rd;
     TsContext ts_ctx;
 
-    PAVPacket decoded_pkt;
-    NALUParser nalu_decoder;
-
-    NALUParser nalu_encoder;
-    std::list<PAVPacket> encoder_pkts;
+    PIAVCodecParser      video_codec_parser;
+    std::list<PAVPacket> video_encoder_pkts;
 };
 
 AVInputFormat(Ts, "ts", "ts");

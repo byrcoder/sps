@@ -26,3 +26,12 @@ SOFTWARE.
 //
 
 #include <sps_avcodec_parser.hpp>
+
+namespace sps {
+
+AVCodecContext::AVCodecContext(int64_t dts, int64_t pts) {
+    this->dts = dts;
+    this->pts = pts;
+}
+
+}

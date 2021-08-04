@@ -141,4 +141,6 @@ SOFTWARE.
 #define ERROR_H264_ENCODER                  3501
 #define ERROR_H264_NOT_IMPL                 3502
 
+#define ERROR_AAC_DECODER                   3600
+
 #endif  // SPS_SPS_ERROR_HPP

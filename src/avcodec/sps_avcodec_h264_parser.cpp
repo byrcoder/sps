@@ -33,20 +33,28 @@ SOFTWARE.
 
 namespace sps {
 
-error_t H264NAL::is_pps() {
-    return H264_NAL_SPS == nal_header.nal_unit_type;
-}
-
-error_t H264NAL::is_sps() {
+bool H264NAL::is_pps() const {
     return H264_NAL_PPS == nal_header.nal_unit_type;
 }
 
-error_t H264NAL::is_idr() {
+bool H264NAL::is_sps() const {
+    return H264_NAL_SPS == nal_header.nal_unit_type;
+}
+
+bool H264NAL::is_idr() const {
     return H264_NAL_IDR_SLICE == nal_header.nal_unit_type;
 }
 
-error_t H264NAL::is_aud() {
+bool H264NAL::is_aud() const {
     return H264_NAL_AUD == nal_header.nal_unit_type;
+}
+
+bool H264NAL::is_sei() const {
+    return H264_NAL_SEI == nal_header.nal_unit_type;
+}
+
+bool H264NAL::is_slice() const {
+    return H264_NAL_SLICE == nal_header.nal_unit_type;
 }
 
 error_t H264NAL::parse_nal(uint8_t *buf, size_t sz) {
@@ -233,26 +241,31 @@ error_t NALUParser::encode_avc(NALUContext *ctx, std::list<PAVPacket>& pkts) {
         // reserved(3bit) + sps_num(5bit) +
         //     loop(sps_num): sps size (16bit) + sps data
         // pps_num(8bit)
-        //      loop(pps_num): pps size (16bit) + pps data
-        int pkt_sz = 5 + 1 + (sps ? 2 + sps->nalu_size : 0) +
-                     1 + (pps ? 2 + pps->nalu_size : 0);
+        //      loop(pps_num): pps size (16bit) + (00 00 00 01) pps data
+        int pkt_sz = 5 + 1 + (sps ? 2 + (0 + sps->nalu_size) : 0) +
+                         1 + (pps ? 2 + (0 + pps->nalu_size) : 0);
 
         if (sps->nalu_size < 4) {
             sp_error("sps size %lu", sps->nalu_size);
             return ERROR_H264_ENCODER;
         }
 
+        uint8_t flag = H264;
+        // 1 keyframe 2. inner 3. h263 disposable 4.5. frame info or order frame
+        uint8_t frame_type = 0x01 << 4;
+        flag |= frame_type;
+
         nalu_length_size_minus_one = 3;
         auto pkt = AVPacket::create_empty_cap(AVMessageType::AV_MESSAGE_DATA,
                          AV_STREAM_TYPE_VIDEO,
                          AVPacketType{AV_VIDEO_TYPE_SEQUENCE_HEADER},
                          pkt_sz,
-                         ctx->dts,
-                         ctx->pts,
-                         AV_PKT_FLAG_SEQUENCE,
+                         0,
+                         0,
+                         flag,
                          H264);
 
-        BitContext bc(pkt->pos(), pkt->cap());
+        BitContext bc(pkt->buffer(), pkt->cap());
         bc.write_int8(0x01);  // avc version
         bc.write_int8(sps->nalu_buf[1]);  // avc profile
         bc.write_int8(0x00);  // avc compatibility
@@ -261,18 +274,20 @@ error_t NALUParser::encode_avc(NALUContext *ctx, std::list<PAVPacket>& pkts) {
 
         bc.write_int8(1);  // 1 sps num
         bc.write_int16(sps->nalu_size);
+        // bc.write_int32(0x01);  // nalu start code 00 00 00 01
         bc.write_bytes(sps->nalu_buf, sps->nalu_size);
 
         bc.write_int8(pps ? 1 : 0);
         if (pps) {
             bc.write_int16(pps->nalu_size);
+            // bc.write_int32(0x01);  // nalu start code 00 00 00 01
             bc.write_bytes(pps->nalu_buf, pps->nalu_size);
         }
 
-        pkt->skip(bc.pos() - pkt->pos());
+        pkt->skip(bc.pos() - pkt->buffer());
         pkts.push_back(pkt);
 
-        sp_info("avc seq header size %d", pkt->size());
+        sp_info("avc seq header size %d, flag %x", pkt->size(), flag);
     }
 
     for (auto& n : ctx->nalu_list) {
@@ -286,11 +301,18 @@ error_t NALUParser::encode_avc(NALUContext *ctx, std::list<PAVPacket>& pkts) {
 
         uint8_t flag = H264;
         // 1 keyframe 2. inner 3. h263 disposable 4.5. frame info or order frame
-        uint8_t frame_type = (n.is_idr() ? 1 : 2) << 4;
+        if (n.is_idr() || n.is_slice()) {
+            uint8_t frame_type = (n.is_idr() ? 1 : 2) << 4;
+            flag |= frame_type;
+        } else if (n.is_sei()) {
+            uint8_t frame_type = 0x5 << 4;
+            flag |= frame_type;
+        } else {
+            continue;
+        }
 
-        flag |= frame_type;
-        // size + nalu
-        size_t pkt_sz = nalu_length_size_minus_one + 1 + n.nalu_size;
+        // size + nalu start code + nalu
+        size_t pkt_sz = nalu_length_size_minus_one + 1 + 0 + n.nalu_size;
         auto pkt = AVPacket::create_empty_cap(AVMessageType::AV_MESSAGE_DATA,
                                               AV_STREAM_TYPE_VIDEO,
                                               AVPacketType{AV_VIDEO_TYPE_DATA},
@@ -300,11 +322,12 @@ error_t NALUParser::encode_avc(NALUContext *ctx, std::list<PAVPacket>& pkts) {
                                               flag,
                                               H264);
 
-        BitContext bc(pkt->pos(), pkt->cap());
+        BitContext bc(pkt->buffer(), pkt->cap());
         bc.write_bits(n.nalu_size, 8 * (nalu_length_size_minus_one+1));
+        // bc.write_int32(0x01);  // nalu start code
         bc.write_bytes(n.nalu_buf, n.nalu_size);
 
-        pkt->skip(bc.pos() - pkt->pos());
+        pkt->skip(bc.pos() - pkt->buffer());
         pkts.push_back(pkt);
 
         sp_info("avc video data size %d", pkt->size());
@@ -315,6 +338,23 @@ error_t NALUParser::encode_avc(NALUContext *ctx, std::list<PAVPacket>& pkts) {
 
 error_t NALUParser::encode_annexb(NALUContext *ctx, PAVPacket &pkt) {
     return ERROR_H264_NOT_IMPL;
+}
+
+H264AVCodecParser::H264AVCodecParser() {
+    nalu_parser = std::make_unique<NALUParser>();
+}
+
+error_t H264AVCodecParser::encode_avc(AVCodecContext* ctx, uint8_t* in_buf,
+                                      int in_size, std::list<PAVPacket>& pkts) {
+
+    NALUContext nalus(ctx->dts, ctx->pts);
+    error_t ret = nalu_parser->decode(in_buf, in_size, &nalus, false);
+
+    if (ret != SUCCESS) {
+        return ret;
+    }
+
+    return nalu_parser->encode_avc(&nalus, pkts);
 }
 
 }

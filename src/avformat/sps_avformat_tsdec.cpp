@@ -38,6 +38,9 @@ namespace sps {
 TsDemuxer::TsDemuxer(PIReader rd) : ts_ctx(this) {
     buf       = std::make_shared<AVBuffer>(SPS_TS_PACKET_SIZE, false);
     this->rd  = std::make_unique<BytesReader>(rd, buf);
+
+    // TODO: FIXME more than h264
+    video_codec_parser = std::make_shared<H264AVCodecParser>();
 }
 
 error_t TsDemuxer::read_header(PAVPacket & buffer) {
@@ -47,9 +50,9 @@ error_t TsDemuxer::read_header(PAVPacket & buffer) {
 error_t TsDemuxer::read_packet(PAVPacket& buffer) {
     error_t ret = SUCCESS;
 
-    if (!encoder_pkts.empty()) {
-        buffer = encoder_pkts.front();
-        encoder_pkts.erase(encoder_pkts.begin());
+    if (!video_encoder_pkts.empty()) {
+        buffer = video_encoder_pkts.front();
+        video_encoder_pkts.erase(video_encoder_pkts.begin());
         return SUCCESS;
     }
 
@@ -69,9 +72,9 @@ error_t TsDemuxer::read_packet(PAVPacket& buffer) {
 
         rd->buf->clear();
 
-        if (!encoder_pkts.empty()) {
-            buffer = encoder_pkts.front();
-            encoder_pkts.erase(encoder_pkts.begin());
+        if (!video_encoder_pkts.empty()) {
+            buffer = video_encoder_pkts.front();
+            video_encoder_pkts.erase(video_encoder_pkts.begin());
             return SUCCESS;
         }
 
@@ -110,30 +113,21 @@ error_t TsDemuxer::on_pes_complete(TsPesContext *pes) {
 
 error_t TsDemuxer::on_h264(TsPesContext* pes) {
     error_t ret = SUCCESS;
-
-    sp_info("pes stream type %x, size %u",
-             pes->stream_type, pes->pes_packet_length);
-
-    NALUContext nalus(pes->dts, pes->pts);
-    ret = nalu_decoder.decode(pes->pes_packets->buffer(),
-                        pes->pes_packet_length,
-                        &nalus,
-                        false);
-
-    if (ret != SUCCESS) {
-        sp_error("fail decode video ret %d", ret);
-        return ret;
-    }
-
     std::list<PAVPacket> pkts;
-    ret = nalu_encoder.encode_avc(&nalus, pkts);
+
+    sp_info("pes stream type %x, size %u", pes->stream_type,
+             pes->pes_packet_length);
+
+    AVCodecContext ctx(pes->dts, pes->pts);
+    ret = video_codec_parser->encode_avc(&ctx, pes->pes_packets->buffer(),
+                                         pes->pes_packet_length, pkts);
 
     if (ret != SUCCESS) {
-        sp_error("fail encoder video ret %d", ret);
+        sp_error("fail encode video ret %d", ret);
         return ret;
     }
 
-    this->encoder_pkts.insert(encoder_pkts.end(), pkts.begin(), pkts.end());
+    this->video_encoder_pkts.insert(video_encoder_pkts.end(), pkts.begin(), pkts.end());
     sp_info("send %d video pkt", (int) pkts.size());
 
     return ret;

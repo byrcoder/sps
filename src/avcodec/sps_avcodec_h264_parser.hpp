@@ -24,11 +24,11 @@ SOFTWARE.
 #ifndef SPS_AVCODEC_H264_PARSER_HPP
 #define SPS_AVCODEC_H264_PARSER_HPP
 
-#include <sps_typedef.hpp>
-
 #include <memory>
 #include <vector>
 
+#include <sps_typedef.hpp>
+#include <sps_avcodec_parser.hpp>
 #include <sps_avformat_packet.hpp>
 
 /*
@@ -78,10 +78,12 @@ class H264NAL {
     ~H264NAL() = default;
 
  public:
-    error_t is_pps();
-    error_t is_sps();
-    error_t is_idr();
-    error_t is_aud();
+    bool is_pps() const;
+    bool is_sps() const;
+    bool is_idr() const;
+    bool is_aud() const;
+    bool is_sei() const;
+    bool is_slice() const;
 
  public:
     error_t parse_nal(uint8_t* buf, size_t sz);
@@ -145,6 +147,19 @@ class NALUParser {
  private:
     bool is_avc;  // default
     int8_t nalu_length_size_minus_one;
+};
+typedef std::unique_ptr<NALUParser> PNALUParser;
+
+class H264AVCodecParser : public IAVCodecParser {
+ public:
+    H264AVCodecParser();
+
+ public:
+    error_t encode_avc(AVCodecContext* ctx, uint8_t* in_buf, int in_size,
+                       std::list<PAVPacket>& pkts) override;
+
+ private:
+    PNALUParser nalu_parser;
 };
 
 }  // namespace sps

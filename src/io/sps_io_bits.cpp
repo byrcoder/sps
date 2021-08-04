@@ -153,7 +153,7 @@ uint32_t BitContext::read_bits(size_t n) {
 
 void BitContext::write_bytes(uint8_t* c, size_t n) {
     assert(remain_bits == 0);
-    memcpy((char *) c, buf + buf_pos + 1, n);
+    memcpy( buf + buf_pos + 1, c, n);
     buf_pos += n;
 }
 
