@@ -27,6 +27,7 @@ SOFTWARE.
 #include <sps_typedef.hpp>
 
 #include <sps_avformat_packet.hpp>
+#include <list>
 
 namespace sps {
 

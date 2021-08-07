@@ -76,7 +76,7 @@ error_t H264NAL::parse_nal(uint8_t *buf, size_t sz) {
         return ERROR_H264_DECODER;
     }
 
-    sp_info("nalu type %x, sz %lu", nal_header.nal_unit_type, sz);
+    sp_debug("nalu type %x, sz %lu", nal_header.nal_unit_type, sz);
     return SUCCESS;
 }
 
@@ -287,7 +287,7 @@ error_t NALUParser::encode_avc(NALUContext *ctx, std::list<PAVPacket>& pkts) {
         pkt->skip(bc.pos() - pkt->buffer());
         pkts.push_back(pkt);
 
-        sp_info("avc seq header size %d, flag %x", pkt->size(), flag);
+        sp_debug("avc seq header size %d, flag %x", pkt->size(), flag);
     }
 
     for (auto& n : ctx->nalu_list) {
@@ -329,8 +329,6 @@ error_t NALUParser::encode_avc(NALUContext *ctx, std::list<PAVPacket>& pkts) {
 
         pkt->skip(bc.pos() - pkt->buffer());
         pkts.push_back(pkt);
-
-        sp_info("avc video data size %d", pkt->size());
     }
 
     return SUCCESS;

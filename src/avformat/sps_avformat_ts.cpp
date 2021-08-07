@@ -33,6 +33,19 @@ SOFTWARE.
 
 namespace sps {
 
+const char* get_stream_name(int stream_type) {
+    switch (stream_type) {
+        case TS_STREAM_TYPE_AUDIO_AAC:
+            return "aac";
+        case TS_STREAM_TYPE_VIDEO_H264:
+            return "h264";
+        case TS_STREAM_TYPE_VIDEO_H265:
+            return "h265";
+        default:
+            return "xx-stream-type";
+    }
+}
+
 TsProgram::TsProgram(int pid, TsContext *ctx) {
     this->pid = pid;
     this->ctx = ctx;
@@ -190,7 +203,6 @@ error_t TsPmtProgram::psi_decode(TsPacket *pkt, BitContext &rd) {
         auto info = std::make_shared<PesInfo>();
 
         info->header.stream_type = rd.read_int8();
-
         info->header.reserved1   = rd.read_bits(3);
         info->header.elementary_pid = rd.read_bits(13);
         info->header.reserved2 = rd.read_bits(4);
@@ -279,22 +291,21 @@ void TsPesContext::init(int sz) {
 
     pts = -1;
     dts = -1;
-
-    sp_info("pes init length %d, cap %d", sz, pes_packets->cap());
 }
 
 error_t TsPesContext::dump(BitContext &rd, int payload_unit_start_indicator) {
     error_t ret = SUCCESS;
 
     if (!pes_packets) {
-        sp_warn("pes packet null pes_packet_length %d", pes_packet_length);
+        sp_warn("[%s] pes packet null pes_packet_length %d", get_stream_name(stream_type),
+                pes_packet_length);
         rd.skip_read_bytes(rd.size());
         return SUCCESS;
     }
 
     size_t left_size = rd.size();
     if (pes_packet_length > 0) {
-        left_size = std::min((size_t) pes_packet_length, rd.size());
+        left_size = std::min((size_t) pes_packet_length - pes_packets->size(), rd.size());
     }
 
     if (pes_packets->remain() < left_size) {
@@ -304,16 +315,26 @@ error_t TsPesContext::dump(BitContext &rd, int payload_unit_start_indicator) {
     }
     pes_packets->append(rd.pos(), left_size);
     rd.skip_read_bytes(left_size);
+    auto p = pes_packets->buffer();
+    sp_debug("[%s] start %d, left_size %ld (%ld), pes_length %d, pes_remain %d (%d),"
+            "%x, %x, %x",
+            get_stream_name(stream_type),
+            payload_unit_start_indicator,
+            left_size, rd.size(), pes_packet_length, pes_packets->remain(),
+            pes_packet_length - pes_packets->size(),
+            *p, *(p+1), *(p+2)
+            );
 
     if (rd.size() > 0) {
         sp_warn("pes_packet_length %d has remain size %lu, %lu",
                 pes_packet_length, rd.size(), left_size);
         rd.skip_read_bytes(rd.size());
     }
-
+#if 0
     if (pes_packet_length > 0 && pes_packets->size() == pes_packet_length) {
         ret = flush();
     }
+#endif
 
     return ret;
 }
@@ -324,9 +345,10 @@ error_t TsPesContext::on_payload_complete() {
         pes_packet_length = pes_packets->size();
     }
 
-    sp_trace("pes recv complete stream_type 0x%4x, size %d, "
+    sp_debug("[%s] pes recv complete stream_type 0x%4x, size %d, "
              "pes_packet_length %d, cap %d, "
              "pts %lld, dts %lld",
+             get_stream_name(stream_type),
              stream_type,
              pes_packets->size(), pes_packet_length, pes_packets->cap(),
              pts/90, dts/90);
@@ -344,18 +366,21 @@ TsPesProgram::TsPesProgram(int pid, TsContext *ctx,
     this->stream_type = stream_type;
     this->pcr_pid     = pcr_pid;
     this->continuity_counter = 0x0f;
+
+    name = get_stream_name(stream_type);
 }
 
 error_t TsPesProgram::decode(TsPacket *pkt, BitContext &rd) {
     error_t ret = SUCCESS;
 
     if (pkt->payload_unit_start_indicator == 0 && !pes_ctx->pes_packets) {
-        sp_error("pes packet is null");
+        sp_error("[%s] pes packet is null", name);
         return ERROR_TS_PACKET_DECODE;
     }
 
     if (pkt->continuity_counter != (((int) continuity_counter + 1) & 0x0f)) {
-        sp_error("ts pid %x, last cc %x, now %x",
+        sp_error("[%s] ts pid %x, last cc %x, now %x",
+                 name,
                  pid,
                  continuity_counter,
                  pkt->continuity_counter);
@@ -423,8 +448,11 @@ error_t TsPesProgram::decode(TsPacket *pkt, BitContext &rd) {
 
         pes_header.pes_header_data_length = rd.read_int8();
 
+        // sp_info("debug left %ld", rd.size());
         uint8_t* pos = rd.pos();
 
+        pes_ctx->dts = pes_ctx->pts = -1;
+        // pts flag
         if ((pes_header.pts_dts_flags & 0x02) > 0) {
             if ((ret = rd.acquire(5)) != SUCCESS) {
                 sp_error("not enough size %d, ret %d", 6, ret);
@@ -449,6 +477,7 @@ error_t TsPesProgram::decode(TsPacket *pkt, BitContext &rd) {
             pes_ctx->dts = pes_ctx->pts = tmp_pts;
         }
 
+        // dts flag
         if (pes_header.pts_dts_flags == 0x03) {
             if ((ret = rd.acquire(5)) != SUCCESS) {
                 sp_error("not enough size %d, ret %d", 6, ret);
@@ -473,7 +502,7 @@ error_t TsPesProgram::decode(TsPacket *pkt, BitContext &rd) {
             pes_ctx->dts = tmp_dts;
 
             if (std::abs(pes_ctx->dts - pes_ctx->pts) > 90000) {
-                sp_warn("ts: sync dts=%lld pts=%lld", pes_ctx->dts, pes_ctx->pts);
+                sp_warn("[ts] sync dts=%lld, pts=%lld, diff > 1s", pes_ctx->dts, pes_ctx->pts);
             }
         }
 
@@ -640,19 +669,21 @@ error_t TsPesProgram::decode(TsPacket *pkt, BitContext &rd) {
         uint8_t* end_pos = rd.pos();
         int stuff_head_size = pes_header.pes_header_data_length - (end_pos - pos);
 
+        // sp_info("[%s] debug left %ld", name, rd.size());
         if ((ret = rd.acquire(stuff_head_size)) != SUCCESS) {
             sp_error("not enough size %d, ret %d", stuff_head_size, ret);
             return ret;
         }
 
         rd.skip_read_bytes(stuff_head_size);
+        // sp_info("[%s] debug left %ld", name, rd.size());
 
         if ((ret = pes_ctx->dump(rd, pkt->payload_unit_start_indicator)) != SUCCESS) {
             sp_error("fail dump pes ret %d", ret);
             return ret;
         }
 
-        sp_debug("got %s pes packet_start_code_prefix %x, "
+        sp_debug("[%s] got %s pes packet_start_code_prefix %x, "
                 "stream_id %x, pes_packet_length %d, \r\n"
                 ""
                 "pes_scrambling_control %x, "
@@ -670,6 +701,7 @@ error_t TsPesProgram::decode(TsPacket *pkt, BitContext &rd) {
                 "pes_header_data_length %x, "
                 "pts %lld, dts %lld, "
                 "stuff_head_size %d, ",
+                name,
                 pkt->payload_unit_start_indicator ? "new" : "old",
                 pes_packet_header.packet_start_code_prefix,
                 pes_packet_header.stream_id,

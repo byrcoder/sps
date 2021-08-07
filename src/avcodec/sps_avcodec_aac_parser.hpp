@@ -44,6 +44,34 @@ enum AACSampleRate {
     AAC_SAMPLE_8000 = 9,
 };
 
+enum {
+    FLV_MONO   = 0,
+    FLV_STEREO = 1,
+};
+
+/* offsets for packed values */
+#define FLV_AUDIO_SAMPLESSIZE_OFFSET 1
+#define FLV_AUDIO_SAMPLERATE_OFFSET  2
+#define FLV_AUDIO_CODECID_OFFSET     4
+enum {
+    FLV_SAMPLERATE_SPECIAL = 0, /**< signifies 5512Hz and 8000Hz in the case of NELLYMOSER */
+    FLV_SAMPLERATE_11025HZ = 1 << FLV_AUDIO_SAMPLERATE_OFFSET,
+    FLV_SAMPLERATE_22050HZ = 2 << FLV_AUDIO_SAMPLERATE_OFFSET,
+    FLV_SAMPLERATE_44100HZ = 3 << FLV_AUDIO_SAMPLERATE_OFFSET,
+};
+
+enum {
+    FLV_SAMPLESSIZE_8BIT  = 0,
+    FLV_SAMPLESSIZE_16BIT = 1 << FLV_AUDIO_SAMPLESSIZE_OFFSET,
+};
+
+/* XXX: make sure to update the copies in the different encoders if you change
+ * this table */
+const int avpriv_mpeg4audio_sample_rates[16] = {
+        96000, 88200, 64000, 48000, 44100, 32000,
+        24000, 22050, 16000, 12000, 11025, 8000, 7350
+};
+
 // Table 1. A.6 – Syntax of adts_fixed_header()
 struct AdtsFixedHeader {
  public:

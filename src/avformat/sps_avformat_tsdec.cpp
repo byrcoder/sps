@@ -41,6 +41,7 @@ TsDemuxer::TsDemuxer(PIReader rd) : ts_ctx(this) {
 
     // TODO: FIXME more than h264
     video_codec_parser = std::make_shared<H264AVCodecParser>();
+    audio_codec_parser = std::make_shared<AacAVCodecParser>();
 }
 
 error_t TsDemuxer::read_header(PAVPacket & buffer) {
@@ -50,9 +51,9 @@ error_t TsDemuxer::read_header(PAVPacket & buffer) {
 error_t TsDemuxer::read_packet(PAVPacket& buffer) {
     error_t ret = SUCCESS;
 
-    if (!video_encoder_pkts.empty()) {
-        buffer = video_encoder_pkts.front();
-        video_encoder_pkts.erase(video_encoder_pkts.begin());
+    if (!encoder_pkts.empty()) {
+        buffer = encoder_pkts.front();
+        encoder_pkts.erase(encoder_pkts.begin());
         return SUCCESS;
     }
 
@@ -72,9 +73,9 @@ error_t TsDemuxer::read_packet(PAVPacket& buffer) {
 
         rd->buf->clear();
 
-        if (!video_encoder_pkts.empty()) {
-            buffer = video_encoder_pkts.front();
-            video_encoder_pkts.erase(video_encoder_pkts.begin());
+        if (!encoder_pkts.empty()) {
+            buffer = encoder_pkts.front();
+            encoder_pkts.erase(encoder_pkts.begin());
             return SUCCESS;
         }
 
@@ -115,7 +116,7 @@ error_t TsDemuxer::on_h264(TsPesContext* pes) {
     error_t ret = SUCCESS;
     std::list<PAVPacket> pkts;
 
-    sp_info("pes stream type %x, size %u", pes->stream_type,
+    sp_debug("h264 pes stream type %x, size %u", pes->stream_type,
              pes->pes_packet_length);
 
     AVCodecContext ctx(pes->dts, pes->pts);
@@ -127,14 +128,32 @@ error_t TsDemuxer::on_h264(TsPesContext* pes) {
         return ret;
     }
 
-    this->video_encoder_pkts.insert(video_encoder_pkts.end(), pkts.begin(), pkts.end());
-    sp_info("send %d video pkt", (int) pkts.size());
+    this->encoder_pkts.insert(encoder_pkts.end(), pkts.begin(), pkts.end());
+    sp_debug("send %d video pkt", (int) pkts.size());
 
     return ret;
 }
 
 error_t TsDemuxer::on_aac(TsPesContext* pes) {
     error_t ret = SUCCESS;
+    std::list<PAVPacket> pkts;
+
+    sp_debug("aac pes stream type %x, size %u", pes->stream_type,
+            pes->pes_packet_length);
+
+    // return ret;
+
+    AVCodecContext ctx(pes->dts, pes->pts);
+    ret = audio_codec_parser->encode_avc(&ctx, pes->pes_packets->buffer(),
+                                         pes->pes_packets->size(), pkts);
+
+    if (ret != SUCCESS) {
+        sp_error("fail encode video ret %d", ret);
+        return ret;
+    }
+
+    this->encoder_pkts.insert(encoder_pkts.end(), pkts.begin(), pkts.end());
+    sp_debug("send %d audio pkt", (int) pkts.size());
 
     return ret;
 }

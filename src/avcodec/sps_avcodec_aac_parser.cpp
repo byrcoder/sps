@@ -69,9 +69,10 @@ error_t AdtsFixedHeader::decode(BitContext *bc) {
         return ERROR_AAC_DECODER;
     }
 
+    uint8_t* pos = bc->pos();
     syncword = bc->read_bits(12);
     if (syncword != 0xfff) {
-        sp_error("aac sync header not 0xfff %x", syncword);
+        sp_error("aac sync header not 0xfff 0x%x%x", *pos, *(pos+1));
         return ERROR_AAC_DECODER;
     }
 
@@ -80,6 +81,7 @@ error_t AdtsFixedHeader::decode(BitContext *bc) {
     protection_absent = bc->read_bits(1);
 
     profile = bc->read_bits(2);
+
     sampling_frequency_index = bc->read_bits(4);
     private_bit = bc->read_bits(1);
     channel_configuration = bc->read_bits(3);
@@ -97,6 +99,15 @@ error_t AdtsFixedHeader::decode(BitContext *bc) {
         crc16 = bc->read_bits(16);
     }
 
+    sp_debug("[adts header] parser header layid %d, profile %d,"
+            "sampling_frequency_index %d, channel_configuration %d, "
+            "protection_absent %d,"
+            "aac_frame_length %d no_raw_data_blocks_in_frame %d",
+            layer, profile,
+            sampling_frequency_index, channel_configuration,
+            protection_absent,
+            aac_frame_length, no_raw_data_blocks_in_frame);
+
     return SUCCESS;
 }
 
@@ -109,65 +120,73 @@ error_t AacAVCodecParser::encode_avc(AVCodecContext *ctx, uint8_t *in_buf,
     error_t ret = SUCCESS;
     BitContext bc(in_buf, in_size);
 
-    AdtsFixedHeader tmp_header;
-    if ((ret = tmp_header.decode(&bc)) != SUCCESS) {
-        return ret;
-    }
+    while (bc.size() > 0) {
+        AdtsFixedHeader tmp_header;
+        uint8_t* start = bc.pos();
 
-    if (!header || !(*header == tmp_header)) {
-        if (!header) {
-            header = std::make_unique<AdtsFixedHeader>();
+        if ((ret = tmp_header.decode(&bc)) != SUCCESS) {
+            return ret;
         }
 
-        *header = tmp_header;
+        if (!header || !(*header == tmp_header)) {
+            if (!header) {
+                header = std::make_unique<AdtsFixedHeader>();
+            }
 
-        uint8_t aac_header[4];
-        uint8_t& flags = aac_header[0];
+            *header = tmp_header;
 
-        uint8_t sound_rate = 0;
-        // For FLV, only support 5, 11, 22, 44KHz sampling rate.
-        if (header->sampling_frequency_index <= 0x0c && header->sampling_frequency_index > 0x0a) {
-            sound_rate = 0;
-        } else if (header->sampling_frequency_index <= 0x0a && header->sampling_frequency_index > 0x07) {
-            sound_rate = 1;
-        } else if (header->sampling_frequency_index <= 0x07 && header->sampling_frequency_index > 0x04) {
-            sound_rate = 2;
-        } else if (header->sampling_frequency_index <= 0x04) {
-            sound_rate = 3;
-        } else {
-            sound_rate = 4;
+            uint8_t aac_header[2];
+            auto flags = (AAC << 4) | FLV_SAMPLERATE_44100HZ |
+                         FLV_SAMPLESSIZE_16BIT | FLV_STEREO;
+            // AVPacketType 0 aac to flv
+            BitContext bc_header(aac_header, sizeof(aac_header));
+            int n_profile = (header->profile) + 1;
+
+            bc_header.write_bits(n_profile, 5);  // profile
+            bc_header.write_bits(header->sampling_frequency_index, 4);  // sample rate index
+            bc_header.write_bits(header->channel_configuration, 4);
+            // frame length - 1024 samples
+            // does not depend on core coder
+            // is not extension
+            bc_header.write_bits(0, 3);
+
+            auto pkt = AVPacket::create(
+                    AV_MESSAGE_DATA,
+                    AV_STREAM_TYPE_AUDIO,
+                    AVPacketType{AV_AUDIO_TYPE_SEQUENCE_HEADER},
+                    aac_header,
+                    sizeof(aac_header),
+                    0,
+                    0,
+                    flags,
+                    AAC
+            );
+            pkts.push_back(pkt);
         }
 
-        uint8_t sound_type = std::max(0, (std::min(header->channel_configuration - 1, 1))); // sound_type
-        uint8_t sound_size = 0x01; // sound size
+        if (tmp_header.aac_frame_length <= 0) {
+            sp_error("aac frame length %d", tmp_header.aac_frame_length);
+            return ERROR_AAC_DECODER;
+        }
 
-        flags = AAC << 4;
-        flags |= (sound_rate << 2);
-        flags |= (sound_size << 1);
-        flags |= (sound_type << 1);
+        auto flags = (AAC << 4) | FLV_SAMPLERATE_44100HZ |
+                     FLV_SAMPLESSIZE_16BIT | FLV_STEREO;
 
-        // aac to flv
-        aac_header[1] = ((header->profile + 1) << 3) & 0xf8;  // aac header 5 bit
-        aac_header[1] = (header->sampling_frequency_index >> 1) >> 0x07;
-        aac_header[2] = (header->sampling_frequency_index << 7) & 0x80;
-        aac_header[2] = (header->channel_configuration << 7) & 0x78;
-
-        // channels    = flags & 0x01    // (0. SndMomo 1. SndStero)
-        // sample_size = flags & 0x02    // (0. 8       1. 16)
-        // sample_rate = flags & 0x0c    // (0. 5.5k  1. 11k   2. 22k   3. 44k)
-
+        int buf_size = tmp_header.aac_frame_length - 7 - (tmp_header.protection_absent == 1 ? 0 : 2);
         auto pkt = AVPacket::create(
                 AV_MESSAGE_DATA,
                 AV_STREAM_TYPE_AUDIO,
-                AVPacketType {AV_AUDIO_TYPE_SEQUENCE_HEADER},
-                aac_header,
-                sizeof(aac_header),
-                0,
-                0,
+                AVPacketType{AV_AUDIO_TYPE_SEQUENCE_DATA},
+                bc.pos(),
+                buf_size,
+                ctx->dts,
+                ctx->dts,
                 flags,
                 AAC
-                );
+        );
         pkts.push_back(pkt);
+
+        bc.skip_read_bytes(buf_size);
     }
 
     return ret;

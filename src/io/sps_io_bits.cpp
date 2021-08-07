@@ -174,11 +174,11 @@ void BitContext::write_bits(uint64_t value, size_t n) {
         static uint32_t masks[]     =  {
                 0x01, 0x03,
                 0x07, 0x0f,
-                0xf8, 0xfc,
-                0xfe, 0xff
+                0x1f, 0x2f,
+                0x7f, 0xff
         };
 
-        // eg. read value nr = 3, n = 6  value = (101) xxxxxxxx
+        // eg. read value of highest nr bit eg, nr = 3, n = 6  value = (101) xxxxxxxx
         nr_value = masks[nr-1] & (value >> (n-nr));
 
         // eg. write value remain_bit = 7, nr = 3, value = 1 (101) xxxx

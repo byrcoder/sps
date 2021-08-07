@@ -62,6 +62,7 @@ enum VideoPktType {
 
 enum AudioPktType {
     AV_AUDIO_TYPE_SEQUENCE_HEADER = 0,
+    AV_AUDIO_TYPE_SEQUENCE_DATA = 1,
 };
 
 struct AVPacketType {

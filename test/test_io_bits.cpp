@@ -196,4 +196,18 @@ GTEST_TEST(IOBITS, WRITE) {
         EXPECT_TRUE(memcmp(wbuf, buf, sizeof(buf)) == 0);
     }
 
+    {
+        uint8_t buf[] = {
+                0x00, // 1101 0111        // 0
+                0x00,
+        };
+
+        sp_info("------------------");
+        BitContext bc(buf, 2);
+        bc.write_bits(2, 5);
+        sp_info("buf[0] %x, buf[1] %x", buf[0], buf[1]);
+
+        EXPECT_TRUE(buf[0] == 0x10);
+    }
+
 }

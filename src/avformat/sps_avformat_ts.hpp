@@ -95,6 +95,8 @@ enum TsProgramType {
     TS_PROGRAM_SDT,
 };
 
+const char* get_stream_name(int stream_type);
+
 // base ts program
 class TsProgram : public std::enable_shared_from_this<TsProgram> {
  public:
@@ -453,6 +455,8 @@ class TsPesProgram : public TsProgram {
     int stream_type;
     int pcr_pid;
     uint8_t continuity_counter;
+
+    const char* name;
 };
 
 class IPesHandler {

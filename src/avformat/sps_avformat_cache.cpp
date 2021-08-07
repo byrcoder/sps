@@ -34,18 +34,18 @@ error_t AVGopCacheStream::put(PAVPacket pb) {
 
     pb->number = number++;
     if (pb->is_audio_sequence_header()) {
-        sp_info("new audio header dts %.12lld", pb->dts);
+        sp_info("new audio header dts %lld", pb->dts);
         audio_sequence_header = pb;
     } else if (pb->is_video_sequence_header()) {
-        sp_info("new video header dts %.12lld", pb->dts);
+        sp_info("new video header dts %lld", pb->dts);
         video_sequence_header = pb;
     } else if (pb->is_script()) {
-        sp_info("new script dts %.12lld", pb->dts);
+        sp_info("new script dts %lld", pb->dts);
         script = pb;
     }  else if (pb->is_keyframe()) {
         pbs.clear();  // new keyframe
         pbs.push_back(pb);
-        sp_info("new keyframe dts %.12lld", pb->dts);
+        sp_info("new keyframe dts %lld", pb->dts);
     } else {
         if (!pbs.empty()) {
             pbs.push_back(pb);  // in case no keyframe

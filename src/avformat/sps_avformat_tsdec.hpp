@@ -26,6 +26,7 @@ SOFTWARE.
 
 #include <memory>
 
+#include <sps_avcodec_aac_parser.hpp>
 #include <sps_avcodec_h264_parser.hpp>
 
 #include <sps_avformat_dec.hpp>
@@ -56,7 +57,8 @@ class TsDemuxer : public IAVDemuxer, public IPesHandler {
     TsContext ts_ctx;
 
     PIAVCodecParser      video_codec_parser;
-    std::list<PAVPacket> video_encoder_pkts;
+    PIAVCodecParser      audio_codec_parser;
+    std::list<PAVPacket> encoder_pkts;
 };
 
 AVInputFormat(Ts, "ts", "ts");
