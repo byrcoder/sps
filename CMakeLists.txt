@@ -9,11 +9,9 @@ set(CMAKE_C_COMPILER gcc)
 option(SRT_DISABLED "disable srt" OFF)
 option(ENABLE_UNITTESTS "Enable unit tests" ON)
 
-# set(CMAKE_CXX_STANDARD 11)
-
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
-message("building sps...")
+message("building sps... C. ${CMAKE_C_COMPILER} C++. ${CMAKE_CXX_COMPILER}")
 
 find_package (Git)
 # git 代码信息
@@ -52,7 +50,8 @@ file(APPEND ${AUTO_HEAD} "\r\n")
 file(APPEND ${AUTO_HEAD} "#endif")
 #end auto header
 
-include_directories(${PROJECT_SOURCE_DIR}/3rdparty/state-threads/
+include_directories(
+        ${PROJECT_SOURCE_DIR}/3rdparty/state-threads/
         ${PROJECT_SOURCE_DIR}/3rdparty/srt/
         ${PROJECT_SOURCE_DIR}/3rdparty/gtest/googletest/include/
         ${PROJECT_SOURCE_DIR}/3rdparty/http-parser/
@@ -60,11 +59,12 @@ include_directories(${PROJECT_SOURCE_DIR}/3rdparty/state-threads/
         ${PROJECT_SOURCE_DIR}/3rdparty/rtmpdump/librtmp
         )
 
-link_directories(3rdparty/state-threads/obj
-                 3rdparty/srt/
-                 3rdparty/gtest/lib
-                 3rdparty/http-parser
-                 3rdparty/rtmpdump/librtmp
+link_directories(
+        ${PROJECT_SOURCE_DIR}/3rdparty/state-threads/obj
+        ${PROJECT_SOURCE_DIR}/3rdparty/srt
+        ${PROJECT_SOURCE_DIR}/3rdparty/gtest/lib
+        ${PROJECT_SOURCE_DIR}/3rdparty/http-parser
+        ${PROJECT_SOURCE_DIR}/3rdparty/rtmpdump/librtmp
         )
 
 include_directories(
@@ -143,18 +143,6 @@ file(GLOB SRC_TEST_LIST
 
 message("src: ${SRC_LIST}"  test:"${SRC_TEST_LIST}")
 
-
-
-# Add static and shared library target
-# add_library(spslib_static STATIC ${SRC_LIST})
-# add_library(spslib_shared SHARED ${SRC_LIST})
-
-if (SRT_DISABLED)
-    set(libs "libst.a libhttp_parser.a libgtest.a librtmp.a")
-else ()
-    set(libs "srt libst.a libhttp_parser.a librtmp.a")
-endif()
-
 add_executable(sps
         ${SRC_LIST}
         ${HEAD_LIST}
@@ -162,6 +150,9 @@ add_executable(sps
         )
 
 target_link_libraries(sps libst.a libhttp_parser.a librtmp.a)
+if (NOT SRT_DISABLED)
+target_link_libraries(sps ${PROJECT_SOURCE_DIR}/3rdparty/srt/libsrt.a)
+endif()
 
 if(ENABLE_UNITTESTS)
 
@@ -175,6 +166,9 @@ if(ENABLE_UNITTESTS)
             libgtest.a
             libst.a libhttp_parser.a libgtest.a librtmp.a pthread
             )
+    if (NOT SRT_DISABLED)
+        target_link_libraries(test_all ${PROJECT_SOURCE_DIR}/3rdparty/srt/libsrt.a)
+    endif()
 
     add_test(
             NAME
