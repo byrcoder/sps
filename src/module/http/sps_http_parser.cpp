@@ -171,7 +171,7 @@ int HttpParser::parse_header(PIReader io, HttpType ht) {
         ht = HttpType::REQUEST;
     }
 
-    sp_debug("http head: %s", buf.get());
+    sp_info("http head: %s", buf.get());
     return parse_header(buf.get(), buf_read, ht);
 }
 
@@ -184,8 +184,6 @@ int HttpParser::parse_header(const char *b, int len, HttpType ht) {
         sp_error("parse execute zero %.*s", len, b);
     }
 
-    sp_debug("parsed: %zu, ht:%u", parsed, ht);
-
     if ((ht == HttpType::REQUEST || ht == HttpType::BOTH) && parsed >= 0)  {
         ctx->parse_request();
     } else if ((ht == HttpType::RESPONSE || ht == HttpType::BOTH)
@@ -193,6 +191,7 @@ int HttpParser::parse_header(const char *b, int len, HttpType ht) {
         ctx->parse_response();
     }
 
+    sp_info("parsed: %zu, ht:%u", parsed, ht);
     return parsed;
 }
 

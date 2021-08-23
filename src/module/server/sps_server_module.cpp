@@ -135,7 +135,7 @@ error_t ServerModule::install() {
 
     Transport t = Transport::TCP;
 #ifndef SRT_DISABLED
-    if (server_conf->transport == "SRT") {
+    if (server_conf->transport == "srt") {
         t = Transport::SRT;
     }
 #endif

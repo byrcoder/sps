@@ -36,7 +36,7 @@ SOFTWARE.
 
 namespace sps {
 
-static StSrtMode default_srt_mode = ST_SRT_MODE_FILE;
+static StSrtMode default_srt_mode = ST_SRT_MODE_LIVE;
 
 int st_srt_epoll(SRTSOCKET fd, StSrtEvent evt, utime_t tm, std::string& err) {
     int ret = SrtStDispatch::get_instance()->st_srt_epoll(fd, evt, tm, err);
@@ -500,12 +500,12 @@ SrtEventCondition::~SrtEventCondition() {
 }
 
 SrtStDispatch* SrtStDispatch::get_instance() {
-    thread_local SrtStDispatch* srt_dispatch = nullptr;
-    if (srt_dispatch == nullptr) {
-        srt_dispatch = new SrtStDispatch();
+    thread_local std::shared_ptr<SrtStDispatch> srt_dispatch;
+    if (srt_dispatch.get() == nullptr) {
+        srt_dispatch = std::make_shared<SrtStDispatch>();
         srt_dispatch->init();
     }
-    return srt_dispatch;
+    return srt_dispatch.get();
 }
 
 SrtStDispatch::SrtStDispatch() {
@@ -520,8 +520,7 @@ int SrtStDispatch::init() {
     srt_eid = srt_epoll_create();
 
     srt_epoll_set(srt_eid, SRT_EPOLL_ENABLE_EMPTY);
-
-    return sps::ICoFactory::get_instance().start(std::shared_ptr<SrtStDispatch>(this));
+    return sps::ICoFactory::get_instance().start(shared_from_this());
 }
 
 int SrtStDispatch::st_srt_epoll(SRTSOCKET fd, StSrtEvent event, utime_t timeout, std::string& err) {
@@ -552,12 +551,12 @@ int SrtStDispatch::st_srt_epoll(SRTSOCKET fd, StSrtEvent event, utime_t timeout,
     }
 
     // st wait util timeout or notify
-    SrtEventCondition cnd(event);
-    conditions[fd].insert(&cnd);
-    ret = st_cond_timedwait(cnd.cond, timeout);
+    auto cnd = std::make_shared<SrtEventCondition>(event);
+    conditions[fd].insert(cnd);
+    ret = st_cond_timedwait(cnd->cond, timeout);
 
     if (conditions.count(fd))
-        conditions[fd].erase(&cnd);
+        conditions[fd].erase(cnd);
 
     int old_evt = get_exits_evt(fd);
 
@@ -574,9 +573,9 @@ int SrtStDispatch::st_srt_epoll(SRTSOCKET fd, StSrtEvent event, utime_t timeout,
         }
     }
 
-    if (cnd.err) {
-        err = cnd.err_msg;
-        return cnd.err;
+    if (cnd->err) {
+        err = cnd->err_msg;
+        return cnd->err;
     }
 
     if (ret != 0) {
@@ -600,7 +599,7 @@ int SrtStDispatch::get_exits_evt(SRTSOCKET fd) {
     }
 
     for (auto e : it->second) {
-        old_evt             |=  e->event;
+        old_evt |=  e->event;
     }
     return old_evt;
 }
@@ -620,7 +619,7 @@ error_t SrtStDispatch::handler()  {
                 sp_error("unknow srt_fd:%d", event.fd);
                 UDT::epoll_remove_ssock(srt_eid, event.fd);
             } else {
-                std::set<SrtEventCondition*>& sets = it->second;
+                auto& sets = it->second;
                 int  err = 0;
                 const char* err_msg = nullptr;
 
@@ -632,7 +631,7 @@ error_t SrtStDispatch::handler()  {
                 }
 
                 for (auto e = sets.begin(); e != sets.end(); ) {
-                    SrtEventCondition* cnd = *e;
+                    PSrtEventCondition cnd = *e;
                     bool notify = false;
 
                     // error event notify all the socket
@@ -667,6 +666,9 @@ error_t SrtStDispatch::handler()  {
 StSrtSocket::StSrtSocket(SRTSOCKET fd) : fd(fd) {
     rtm = ST_UTIME_NO_TIMEOUT;
     stm = ST_UTIME_NO_TIMEOUT;
+
+    read_buf  = std::make_unique<AVBuffer>(SRT_LIVE_DEF_PLSIZE, false);
+    write_buf = std::make_unique<AVBuffer>(SRT_LIVE_DEF_PLSIZE, false);
 }
 
 StSrtSocket::~StSrtSocket() {
@@ -687,8 +689,8 @@ error_t StSrtSocket::read_fully(void* buf, size_t size, ssize_t* nread) {
     int    ret   = SUCCESS;
     while (n < size) {
         size_t nr = 0;
-        ret       = st_srt_read(fd, reinterpret_cast<char*>(buf)+n, size-n, rtm, nr);
-        if (ret == SUCCESS) {
+        ret       = this->read(buf, size-n, nr);
+        if (ret != SUCCESS) {
             if (nread) {
                 *nread = n;
             }
@@ -703,7 +705,34 @@ error_t StSrtSocket::read_fully(void* buf, size_t size, ssize_t* nread) {
 }
 
 error_t StSrtSocket::read(void* buf, size_t size, size_t& nread) {
-    int ret = st_srt_read(fd, buf, size, rtm, nread);
+    if (read_buf->size() > 0) {
+        nread = std::min(size, read_buf->size());
+        memcpy(buf,  read_buf->pos(), nread);
+        read_buf->skip(nread);
+
+        if (read_buf->size() == 0) {
+            read_buf->clear();
+        }
+
+        return SUCCESS;
+    }
+
+    error_t ret = SUCCESS;
+
+    // in case buffer < SRT_LIVE_DEF_PLSIZE error
+    if (size < SRT_LIVE_DEF_PLSIZE) {
+        size_t nr = 0;
+        ret = st_srt_read(fd, read_buf->buffer(), read_buf->cap_size(), rtm, nr);
+        if (ret != SUCCESS || nr == 0) {
+            sp_error("srt read failed ret:%d, nr %ld", ret, nr);
+            return ret;
+        }
+
+        read_buf->append(nr);
+        return read(buf, size, nread);
+    }
+
+    ret = st_srt_read(fd, buf, size, rtm, nread);
     if (ret != SUCCESS) {
         sp_error("srt read failed ret:%d", ret);
         return ret;
@@ -725,6 +754,42 @@ error_t StSrtSocket::write(void* buf, size_t size) {
 
 SRTSOCKET StSrtSocket::get_fd() {
     return fd;
+}
+
+StSrtServerSocket::StSrtServerSocket() {
+    server_fd = SRT_INVALID_SOCK;
+}
+
+StSrtServerSocket::~StSrtServerSocket() {
+    st_srt_close(server_fd);
+}
+
+error_t StSrtServerSocket::listen(std::string ip, int port, bool reuse_port, int backlog) {
+    server_fd = st_srt_create_fd(ST_SRT_MODE_LIVE);
+
+    if (server_fd == SRT_INVALID_SOCK) {
+        sp_error("fail create srt fd %d", server_fd);
+        return ERROR_ST_OPEN_SOCKET;
+    }
+
+    return st_srt_listen(server_fd, ip, port, backlog, reuse_port);
+}
+
+PSocket StSrtServerSocket::accept() {
+    struct sockaddr_in addr;
+    int addr_len = sizeof(addr);
+    char buf[INET6_ADDRSTRLEN];
+    memset(buf, 0, sizeof(buf));
+
+    SRTSOCKET c_fd = st_srt_accept(server_fd, (struct sockaddr*) &addr,
+            &addr_len, ST_UTIME_NO_TIMEOUT);
+    auto srt_socket = std::make_shared<StSrtSocket>(c_fd);
+
+    if (inet_ntop(addr.sin_family, &addr.sin_addr, buf, sizeof(buf)) == NULL) {
+        buf[0] = '\0';  // 防止内存写乱
+    }
+
+    return std::make_shared<Socket>(srt_socket, std::string(buf), addr.sin_port);
 }
 
 }

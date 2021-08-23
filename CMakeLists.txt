@@ -155,7 +155,6 @@ target_link_libraries(sps ${PROJECT_SOURCE_DIR}/3rdparty/srt/libsrt.a)
 endif()
 
 if(ENABLE_UNITTESTS)
-
     add_executable(test_all
             ${SRC_LIST}
             ${HEAD_LIST}
@@ -178,5 +177,14 @@ if(ENABLE_UNITTESTS)
     )
 
     enable_testing()
+endif()
 
+if (NOT SRT_DISABLED)
+    add_executable(srt_http_client
+        ${SRC_LIST}
+        ${HEAD_LIST}
+        ${PROJECT_SOURCE_DIR}/tools/srt_http_client.cpp
+        )
+    target_link_libraries(srt_http_client libst.a libhttp_parser.a librtmp.a)
+    target_link_libraries(srt_http_client ${PROJECT_SOURCE_DIR}/3rdparty/srt/libsrt.a)
 endif()

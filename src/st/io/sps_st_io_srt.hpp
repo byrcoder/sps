@@ -28,6 +28,7 @@ SOFTWARE.
 
 #include <sps_st_co.hpp>
 #include <sps_io.hpp>
+#include <sps_io_bytes.hpp>
 
 #ifndef SRT_DISABLED
 
@@ -39,6 +40,8 @@ extern "C" {
 #include <map>
 #include <set>
 #include <string>
+
+#include <sps_io_socket.hpp>
 
 namespace sps {
 
@@ -104,7 +107,6 @@ double st_srt_stat_retrans(SRT_TRACEBSTATS *perf, bool is_send);
 class SrtEventCondition {
  public:
     explicit SrtEventCondition(StSrtEvent event);
-
     ~SrtEventCondition();
 
  public:
@@ -113,11 +115,12 @@ class SrtEventCondition {
     int err;
     std::string err_msg;
 };
+typedef std::shared_ptr<SrtEventCondition> PSrtEventCondition;
 
 /**
 * st 的各种信息回调，需要线程级别隔离
 */
-class SrtStDispatch : public sps::ICoHandler {
+ class SrtStDispatch : public sps::ICoHandler, public std::enable_shared_from_this<SrtStDispatch> {
  public:
     static SrtStDispatch *get_instance();
 
@@ -141,7 +144,7 @@ class SrtStDispatch : public sps::ICoHandler {
  private:
     int srt_eid;
     sps::PICo co;
-    std::map<SRTSOCKET, std::set<SrtEventCondition *> > conditions;
+    std::map<SRTSOCKET, std::set<PSrtEventCondition> > conditions;
     bool stop;
 };
 
@@ -176,6 +179,24 @@ class StSrtSocket : public IReaderWriter {
     SRTSOCKET fd;
     utime_t rtm;
     utime_t stm;
+
+    std::unique_ptr<AVBuffer> read_buf;
+    std::unique_ptr<AVBuffer> write_buf;
+};
+
+class StSrtServerSocket : public IServerSocket {
+ public:
+    StSrtServerSocket();
+    ~StSrtServerSocket();
+
+ public:
+    error_t listen(std::string ip, int port,
+                       bool reuse_port = true,
+                       int backlog = 1024) override;
+    PSocket accept() override;
+
+ private:
+    SRTSOCKET server_fd;
 };
 
 }

@@ -26,6 +26,7 @@ SOFTWARE.
 #include <memory>
 
 #include <sps_log.hpp>
+#include <sps_st_io_srt.hpp>
 #include <sps_st_io_tcp.hpp>
 
 namespace sps {
@@ -41,13 +42,33 @@ PSocket ClientSocketFactory::create_ss(
             st_netfd_t fd;
 
             if ((ret = st_tcp_connect(ip, port, tm, &fd)) != SUCCESS) {
-                sp_error("Failed connect %s:%d, tm:%llu, ret:%d",
+                sp_error("Failed tcp connect %s:%d, tm:%llu, ret:%d",
                          ip.c_str(), port, tm, ret);
                 return nullptr;
             }
 
             return std::make_shared<Socket>(
-                    std::make_shared<StTcpSocket>(fd),ip, port);
+                    std::make_shared<StTcpSocket>(fd), ip, port);
+        }
+        case Transport::SRT: {
+            auto fd = st_srt_create_fd();
+
+            if (fd == SRT_INVALID_SOCK) {
+                sp_error("Failed create srt fd connect %s:%d, tm:%llu, ret:%d",
+                         ip.c_str(), port, tm, ret);
+                return nullptr;
+            }
+
+            if ((ret = st_srt_connect(fd, ip, port, tm)) != SUCCESS) {
+                st_srt_close(fd);
+                sp_error("Failed srt connect %s:%d, tm:%llu, ret:%d",
+                         ip.c_str(), port, tm, ret);
+                return nullptr;
+            }
+
+            return  std::make_shared<Socket>(
+                    std::make_shared<StSrtSocket>(fd),
+                    ip, port);
         }
         default:
             return nullptr;
@@ -57,7 +78,9 @@ PSocket ClientSocketFactory::create_ss(
 PIServerSocket ServerSocketFactory::create_ss(Transport transport) {
     switch (transport) {
         case Transport::TCP:
-            return std::make_shared<StServerSocket>();
+            return std::make_shared<StTcpServerSocket>();
+        case Transport::SRT:
+            return std::make_shared<StSrtServerSocket>();
         default:
             return nullptr;
     }

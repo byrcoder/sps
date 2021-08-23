@@ -303,19 +303,19 @@ error_t StTcpSocket::write(void* buf, size_t size) {
     return ret;
 }
 
-StServerSocket::StServerSocket() {
+StTcpServerSocket::StTcpServerSocket() {
     port       = -1;
     server_fd  = nullptr;
     backlog    = 1024;
     reuse_port = false;
 }
 
-StServerSocket::~StServerSocket()  {
+StTcpServerSocket::~StTcpServerSocket()  {
     if (server_fd) st_tcp_close(server_fd);
 }
 
-error_t StServerSocket::listen(std::string sip, int sport, bool reuse_sport,
-                               int back_log) {
+error_t StTcpServerSocket::listen(std::string sip, int sport, bool reuse_sport,
+                                  int back_log) {
     error_t ret = st_tcp_listen(sip, sport, back_log, server_fd, reuse_sport);
 
     if (ret != SUCCESS) {
@@ -333,7 +333,7 @@ error_t StServerSocket::listen(std::string sip, int sport, bool reuse_sport,
     return ret;
 }
 
-PSocket StServerSocket::accept() {
+PSocket StTcpServerSocket::accept() {
     struct sockaddr_in addr;
     int len  = sizeof(addr);
 

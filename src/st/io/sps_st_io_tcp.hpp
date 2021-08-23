@@ -95,14 +95,14 @@ class StTcpSocket : public IReaderWriter {
     st_netfd_t stfd;
 };
 
-class StServerSocket : public IServerSocket {
+class StTcpServerSocket : public IServerSocket {
  public:
-    StServerSocket();
-    ~StServerSocket();
+    StTcpServerSocket();
+    ~StTcpServerSocket() override;
 
  public:
-    error_t listen(std::string sip, int sport, bool reuse_sport, int back_log);
-    PSocket accept();
+    error_t listen(std::string sip, int sport, bool reuse_sport, int back_log) override;
+    PSocket accept() override;
 
  private:
     std::string ip;
