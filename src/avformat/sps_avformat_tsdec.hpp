@@ -33,12 +33,25 @@ SOFTWARE.
 #include <sps_avformat_ts.hpp>
 
 #include <sps_io_bytes.hpp>
+#include <sps_stream_cache.hpp>
 
 namespace sps {
 
+class TsCache : public ITsPacketHandler {
+ public:
+    TsCache(StreamCache::PICacheStream cache);
+
+ public:
+    error_t on_packet(uint8_t* buf, size_t len, TsProgramType ts_type,
+                      int payload_unit_start_indicator) override;
+
+ private:
+    StreamCache::PICacheStream cache;
+};
+
 class TsDemuxer : public IAVDemuxer, public IPesHandler {
  public:
-    explicit TsDemuxer(PIReader rd);
+    TsDemuxer(PIReader rd, PITsPacketHandler ph = nullptr);
 
  public:
     error_t read_header(PAVPacket& buffer)  override;

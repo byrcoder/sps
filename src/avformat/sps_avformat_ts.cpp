@@ -738,8 +738,10 @@ error_t TsPesProgram::decode(TsPacket *pkt, BitContext &rd) {
     return ret;
 }
 
-TsContext::TsContext(IPesHandler* handler) {
+TsContext::TsContext(IPesHandler* handler,
+                     PITsPacketHandler packet_handler) {
     this->handler = handler;
+    this->pkt_handler = std::move(packet_handler);
     add_program(PAT_PID, std::make_shared<TsPatProgram>(PAT_PID, this));
     add_program(SDT_PID, std::make_shared<TsSdtProgram>(SDT_PID, this));
     // add_filter(EIT_PID, nullptr);
@@ -768,6 +770,13 @@ error_t TsContext::decode(uint8_t* p, size_t len) {
 
     if ((ret = program->decode(&pkt, rd)) != SUCCESS) {
         sp_error("fail decode payload ret %d", ret);
+        return ret;
+    }
+
+    if (pkt_handler &&
+        (ret = pkt_handler->on_packet(p, len, program->program_type,
+                pkt.payload_unit_start_indicator)) != SUCCESS) {
+        sp_error("fail handler ts packet ret %d", ret);
         return ret;
     }
 

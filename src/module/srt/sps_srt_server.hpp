@@ -21,31 +21,41 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_AVCODEC_PARSER_HPP
-#define SPS_AVCODEC_PARSER_HPP
+#ifndef SPS_SRT_SERVER_HPP
+#define SPS_SRT_SERVER_HPP
 
-#include <sps_typedef.hpp>
+#include <memory>
+#include <utility>
 
-#include <sps_avformat_packet.hpp>
-#include <list>
+#include <sps_host_phase_handler.hpp>
+#include <sps_server.hpp>
+
+#ifndef SRT_DISABLED
 
 namespace sps {
 
-class AVCodecContext {
+class SrtConnHandler : public IConnHandler {
  public:
-    AVCodecContext(int64_t dts = -1, int64_t pts = -1, int64_t timebase = 1);
-    int64_t dts;
-    int64_t pts;
-    int64_t timebase;
+    explicit SrtConnHandler(PSocket io, PServerPhaseHandler& handler);
+
+ public:
+    error_t handler() override;
+
+ public:
+    PServerPhaseHandler& hd;
 };
 
-class IAVCodecParser {
+class SrtConnHandlerFactory : public IConnHandlerFactory {
  public:
-    virtual error_t encode_avc(AVCodecContext* ctx, uint8_t* in_buf,
-                               int in_size, std::list<PAVPacket>& pkts) = 0;
+    explicit SrtConnHandlerFactory(PServerPhaseHandler hd);
+    PIConnHandler create(PSocket io) override;
+
+ private:
+    PServerPhaseHandler handler;
 };
-typedef std::shared_ptr<IAVCodecParser> PIAVCodecParser;
 
 }  // namespace sps
 
-#endif  // SPS_AVCODEC_PARSER_HPP
+#endif
+
+#endif  // SPS_SRT_SERVER_HPP

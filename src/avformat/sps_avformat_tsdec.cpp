@@ -35,7 +35,21 @@ SOFTWARE.
 
 namespace sps {
 
-TsDemuxer::TsDemuxer(PIReader rd) : ts_ctx(this) {
+TsCache::TsCache(StreamCache::PICacheStream cache) {
+    this->cache = std::move(cache);
+}
+
+error_t TsCache::on_packet(uint8_t *buf, size_t len,
+        TsProgramType ts_type, int payload_unit_start_indicator) {
+    auto pkt = AVPacket::create(AV_MESSAGE_DATA,
+            ts_type == TS_PROGRAM_PES ? AV_STREAM_PES : AV_STREAM_PSI,
+            AVPacketType{ts_type | (payload_unit_start_indicator >> 31)},
+            buf,
+            len, 0, 0);
+    return cache->put(pkt);
+}
+
+TsDemuxer::TsDemuxer(PIReader rd, PITsPacketHandler ph) : ts_ctx(this, ph) {
     buf       = std::make_shared<AVBuffer>(SPS_TS_PACKET_SIZE, false);
     this->rd  = std::make_unique<BytesReader>(rd, buf);
 
@@ -119,7 +133,7 @@ error_t TsDemuxer::on_h264(TsPesContext* pes) {
     sp_debug("h264 pes stream type %x, size %u", pes->stream_type,
              pes->pes_packet_length);
 
-    AVCodecContext ctx(pes->dts, pes->pts);
+    AVCodecContext ctx(pes->dts, pes->pts, 90);
     ret = video_codec_parser->encode_avc(&ctx, pes->pes_packets->buffer(),
                                          pes->pes_packet_length, pkts);
 
@@ -143,7 +157,7 @@ error_t TsDemuxer::on_aac(TsPesContext* pes) {
 
     // return ret;
 
-    AVCodecContext ctx(pes->dts, pes->pts);
+    AVCodecContext ctx(pes->dts, pes->pts, 90);
     ret = audio_codec_parser->encode_avc(&ctx, pes->pes_packets->buffer(),
                                          pes->pes_packets->size(), pkts);
 

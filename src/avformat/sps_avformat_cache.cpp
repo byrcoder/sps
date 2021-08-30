@@ -72,6 +72,33 @@ int AVGopCacheStream::dump(std::list<PAVPacket>& vpb, bool) {
     return CacheStream::dump(vpb, false);
 }
 
+error_t MepegtsCacheStream::put(PAVPacket pb) {
+    if (pb->is_pat()) {
+        pat_header = pb;
+    } else if (pb->is_pmt()) {
+        pmt_header = pb;
+    } else {
+        if (pb->is_payload_unit_start_indicator()) {
+            pbs.clear();
+        }
+        pbs.push_back(pb);
+    }
+    this->publish(pb);
+    return SUCCESS;
+}
+
+int MepegtsCacheStream::dump(std::list<PAVPacket> &vpb, bool) {
+    if (pat_header) {
+        vpb.push_back(pat_header);
+    }
+
+    if (pmt_header) {
+        vpb.push_back(pmt_header);
+    }
+
+    return CacheStream::dump(vpb, false);
+}
+
 AVDumpCacheStream::AVDumpCacheStream(utime_t recv_timeout) {
     this->recv_timeout = recv_timeout;
 }

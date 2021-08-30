@@ -161,7 +161,8 @@ error_t ServerModule::install() {
         return ret;
     }
 
-    sp_info("success listen port: %d, reuse: %u, backlog: %d",
+    sp_info("success listen(%s) port: %d, reuse: %u, backlog: %d",
+             get_transport_name(t),
              server_conf->listen_port, server_conf->reuse_port,
              server_conf->backlog);
 

@@ -21,31 +21,42 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_AVCODEC_PARSER_HPP
-#define SPS_AVCODEC_PARSER_HPP
+//
+// Created by byrcoder on 2021/8/24.
+//
 
-#include <sps_typedef.hpp>
+#include <sps_srt_server.hpp>
 
-#include <sps_avformat_packet.hpp>
-#include <list>
+#ifndef SRT_DISABLED
 
 namespace sps {
 
-class AVCodecContext {
- public:
-    AVCodecContext(int64_t dts = -1, int64_t pts = -1, int64_t timebase = 1);
-    int64_t dts;
-    int64_t pts;
-    int64_t timebase;
-};
+SrtConnHandler::SrtConnHandler(PSocket io, PServerPhaseHandler& handler) :
+        IConnHandler(std::move(io)), hd(handler) {
+}
 
-class IAVCodecParser {
- public:
-    virtual error_t encode_avc(AVCodecContext* ctx, uint8_t* in_buf,
-                               int in_size, std::list<PAVPacket>& pkts) = 0;
-};
-typedef std::shared_ptr<IAVCodecParser> PIAVCodecParser;
+error_t SrtConnHandler::handler() {
+    ConnContext ctx(nullptr, io, this);
+    do {
+        error_t ret = SUCCESS;
+
+        if ((ret = hd->handler(ctx)) != SUCCESS) {
+            return ret;
+        }
+        sp_trace("success handler ret %d", ret);
+    } while (true);
+
+    return SUCCESS;
+}
+
+SrtConnHandlerFactory::SrtConnHandlerFactory(PServerPhaseHandler hd) {
+    handler = std::move(hd);
+}
+
+PIConnHandler SrtConnHandlerFactory::create(PSocket io) {
+    return std::make_shared<SrtConnHandler>(io, handler);
+}
 
 }  // namespace sps
 
-#endif  // SPS_AVCODEC_PARSER_HPP
+#endif

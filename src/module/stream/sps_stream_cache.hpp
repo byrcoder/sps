@@ -51,6 +51,12 @@ class StreamCache : public InfiniteCache<PAVPacket>,
         return cache;
     }
 
+    static PICacheStream create_raw_streamcache(const std::string& url) {
+        auto cache = std::make_shared<MepegtsCacheStream>();
+        get_instance().put(url, cache);
+        return cache;
+    }
+
     static void release_av_streamcache(const std::string& url) {
         get_instance().erase(url);
     }

@@ -80,9 +80,10 @@ error_t H264NAL::parse_nal(uint8_t *buf, size_t sz) {
     return SUCCESS;
 }
 
-NALUContext::NALUContext(int64_t dts, int64_t pts) {
+NALUContext::NALUContext(int64_t dts, int64_t pts, int64_t timebase) {
     this->dts = dts;
     this->pts = pts;
+    this->timebase = timebase;
 }
 
 error_t NALUContext::append(uint8_t* buf, size_t sz) {
@@ -317,8 +318,8 @@ error_t NALUParser::encode_avc(NALUContext *ctx, std::list<PAVPacket>& pkts) {
                                               AV_STREAM_TYPE_VIDEO,
                                               AVPacketType{AV_VIDEO_TYPE_DATA},
                                               pkt_sz,
-                                              ctx->dts / 90,
-                                              ctx->pts / 90,
+                                              ctx->dts / ctx->timebase,
+                                              ctx->pts / ctx->timebase,
                                               flag,
                                               H264);
 
@@ -345,7 +346,7 @@ H264AVCodecParser::H264AVCodecParser() {
 error_t H264AVCodecParser::encode_avc(AVCodecContext* ctx, uint8_t* in_buf,
                                       int in_size, std::list<PAVPacket>& pkts) {
 
-    NALUContext nalus(ctx->dts, ctx->pts);
+    NALUContext nalus(ctx->dts, ctx->pts, ctx->timebase);
     error_t ret = nalu_parser->decode(in_buf, in_size, &nalus, false);
 
     if (ret != SUCCESS) {

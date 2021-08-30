@@ -21,31 +21,29 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_AVCODEC_PARSER_HPP
-#define SPS_AVCODEC_PARSER_HPP
+#ifndef SPS_SRT_SERVER_HANDLER_HPP
+#define SPS_SRT_SERVER_HANDLER_HPP
 
-#include <sps_typedef.hpp>
+#include <memory>
+#include <string>
 
-#include <sps_avformat_packet.hpp>
-#include <list>
+#include <sps_host_phase_handler.hpp>
+
+#ifndef SRT_DISABLED
 
 namespace sps {
 
-class AVCodecContext {
+// srt phase parser
+class SrtPrepareHandler : public IPhaseHandler {
  public:
-    AVCodecContext(int64_t dts = -1, int64_t pts = -1, int64_t timebase = 1);
-    int64_t dts;
-    int64_t pts;
-    int64_t timebase;
-};
+    SrtPrepareHandler();
 
-class IAVCodecParser {
  public:
-    virtual error_t encode_avc(AVCodecContext* ctx, uint8_t* in_buf,
-                               int in_size, std::list<PAVPacket>& pkts) = 0;
+    error_t handler(ConnContext& ctx) override;
 };
-typedef std::shared_ptr<IAVCodecParser> PIAVCodecParser;
 
 }  // namespace sps
 
-#endif  // SPS_AVCODEC_PARSER_HPP
+#endif
+
+#endif  // SPS_SRT_SERVER_HANDLER_HPP

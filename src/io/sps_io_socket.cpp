@@ -31,6 +31,18 @@ SOFTWARE.
 
 namespace sps {
 
+const char* get_transport_name(Transport t) {
+    switch (t) {
+        case TCP: return "tcp";
+#ifndef SRT_DISABLED
+        case SRT: return "srt";
+#endif
+        case QUIC: return "quic";
+        case FILE: return "file";
+        default: return "unknown";
+    }
+}
+
 PSocket ClientSocketFactory::create_ss(
     Transport transport,
     const std::string &ip,

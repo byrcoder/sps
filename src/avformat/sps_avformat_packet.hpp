@@ -52,6 +52,10 @@ enum AVStreamType {
     AV_STREAM_TYPE_AUDIO,
     AV_STREAM_TYPE_SUBTITLE,
     AV_STREAM_TYPE_DATA,
+
+    AV_STREAM_PSI,
+    AV_STREAM_PES,
+
     AV_STREAM_TYPE_NB,
 };
 
@@ -122,6 +126,10 @@ class AVPacket : public CharBuffer {
     bool is_keyframe() const;
     bool is_video_sequence_header() const;
     bool is_audio_sequence_header();
+
+    bool is_pat();
+    bool is_pmt();
+    bool is_payload_unit_start_indicator();
 
  public:
     /**

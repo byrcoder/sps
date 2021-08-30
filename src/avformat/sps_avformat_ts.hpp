@@ -459,6 +459,13 @@ class TsPesProgram : public TsProgram {
     const char* name;
 };
 
+class ITsPacketHandler {
+ public:
+    virtual error_t on_packet(uint8_t* buf, size_t len, TsProgramType ts_type,
+            int payload_unit_start_indicator) = 0;
+};
+typedef std::shared_ptr<ITsPacketHandler> PITsPacketHandler;
+
 class IPesHandler {
  public:
     virtual error_t on_pes_complete(TsPesContext* pes) = 0;
@@ -466,7 +473,7 @@ class IPesHandler {
 
 class TsContext {
  public:
-    explicit TsContext(IPesHandler *handler = nullptr);
+    explicit TsContext(IPesHandler *handler = nullptr, PITsPacketHandler packet_handler = nullptr);
 
  public:
     error_t decode(uint8_t* p, size_t len);
@@ -481,6 +488,7 @@ class TsContext {
  private:
     std::map<int, PTsProgram> filters;
     IPesHandler* handler;
+    PITsPacketHandler pkt_handler;
 };
 
 /*

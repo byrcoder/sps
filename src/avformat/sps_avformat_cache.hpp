@@ -45,6 +45,18 @@ class AVGopCacheStream : public CacheStream<PAVPacket> {
     int       number = 0;
 };
 
+// pass through without any cache
+class MepegtsCacheStream : public CacheStream<PAVPacket> {
+ public:
+    error_t put(PAVPacket pb) override;
+
+    int dump(std::list<PAVPacket>& vpb, bool /** remove **/) override;
+
+ private:
+    PAVPacket pat_header;
+    PAVPacket pmt_header;
+};
+
 // subscriber dump from gop cache and subscribe AVGopCacheStream
 class AVDumpCacheStream : public CacheStream<PAVPacket> {
  public:

@@ -175,6 +175,8 @@ class StSrtSocket : public IReaderWriter {
  public:
     SRTSOCKET get_fd();
 
+    std::string get_streamid();
+
  private:
     SRTSOCKET fd;
     utime_t rtm;

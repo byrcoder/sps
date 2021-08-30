@@ -29,6 +29,7 @@ SOFTWARE.
 #include <sps_server_module.hpp>
 #include <sps_stream_module.hpp>
 #include <sps_upstream_module.hpp>
+#include <sps_srt_module.hpp>
 
 namespace sps {
 
@@ -47,6 +48,9 @@ PIModuleFactory sps_modules[] = {
         MODULE_INSTANCE(Rtmp),
 
         MODULE_INSTANCE(UpStream),
+#ifndef SRT_DISABLED
+        MODULE_INSTANCE(Srt),
+#endif
         nullptr
 };
 

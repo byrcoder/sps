@@ -46,6 +46,8 @@ enum Transport {
     DEFAULT = 0xFF
 };
 
+const char* get_transport_name(Transport t);
+
 // 适配器io， 统一的类型
 class Socket : public IReaderWriter {
  public:

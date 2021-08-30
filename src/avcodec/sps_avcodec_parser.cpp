@@ -29,9 +29,10 @@ SOFTWARE.
 
 namespace sps {
 
-AVCodecContext::AVCodecContext(int64_t dts, int64_t pts) {
+AVCodecContext::AVCodecContext(int64_t dts, int64_t pts, int64_t timbase) {
     this->dts = dts;
     this->pts = pts;
+    this->timebase = timbase;
 }
 
 }

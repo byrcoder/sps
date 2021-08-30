@@ -27,6 +27,7 @@ SOFTWARE.
 
 #include <sps_avformat_packet.hpp>
 #include <log/sps_log.hpp>
+#include <sps_avformat_ts.hpp>
 
 namespace sps {
 
@@ -109,6 +110,18 @@ bool AVPacket::is_audio_sequence_header() {
         return false;
     }
     return pkt_type.pkt_type == AV_AUDIO_TYPE_SEQUENCE_HEADER;
+}
+
+bool AVPacket::is_pat() {
+    return stream_type == AV_STREAM_PSI && (pkt_type.pkt_type & 0x8FFFFF) == TS_PROGRAM_PAT;
+}
+
+bool AVPacket::is_pmt() {
+    return stream_type == AV_STREAM_PSI && (pkt_type.pkt_type & 0x8FFFFF)  == TS_PROGRAM_PMT;
+}
+
+bool AVPacket::is_payload_unit_start_indicator() {
+    return stream_type == AV_STREAM_PES && (pkt_type.pkt_type & 0x80000000)  == 1;
 }
 
 void AVPacket::debug() {

@@ -179,11 +179,13 @@ error_t AacAVCodecParser::encode_avc(AVCodecContext *ctx, uint8_t *in_buf,
                 AVPacketType{AV_AUDIO_TYPE_SEQUENCE_DATA},
                 bc.pos(),
                 buf_size,
-                ctx->dts,
-                ctx->dts,
+                ctx->dts / ctx->timebase,
+                ctx->dts / ctx->timebase,
                 flags,
                 AAC
         );
+
+        sp_debug("audio dts %lld", ctx->dts);
         pkts.push_back(pkt);
 
         bc.skip_read_bytes(buf_size);

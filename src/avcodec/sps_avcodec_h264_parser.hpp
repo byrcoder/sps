@@ -101,7 +101,7 @@ class H264NAL {
 
 class NALUContext {
  public:
-    NALUContext(int64_t dts = 0, int64_t pts = 0);
+    NALUContext(int64_t dts = 0, int64_t pts = 0, int64_t timebase = 1);
 
  public:
     error_t append(uint8_t* nal, size_t sz);
@@ -112,6 +112,7 @@ class NALUContext {
  public:
     int64_t dts;
     int64_t pts;
+    int64_t timebase;  // default 1, ts 90
 };
 typedef std::shared_ptr<NALUContext> PNALUContext;
 

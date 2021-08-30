@@ -87,6 +87,7 @@ include_directories(
         ${PROJECT_SOURCE_DIR}/src/module/http/
         ${PROJECT_SOURCE_DIR}/src/module/rtmp/
         ${PROJECT_SOURCE_DIR}/src/module/server/
+        ${PROJECT_SOURCE_DIR}/src/module/srt/
         ${PROJECT_SOURCE_DIR}/src/module/stream/
         ${PROJECT_SOURCE_DIR}/src/module/upstream/
 
@@ -110,6 +111,7 @@ file(GLOB SRC_LIST
         "${PROJECT_SOURCE_DIR}/src/module/http/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/module/rtmp/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/module/server/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/module/srt/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/module/stream/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/module/tran/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/module/upstream/*.cpp"

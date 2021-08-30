@@ -756,6 +756,10 @@ SRTSOCKET StSrtSocket::get_fd() {
     return fd;
 }
 
+std::string StSrtSocket::get_streamid() {
+    return UDT::getstreamid(fd);
+}
+
 StSrtServerSocket::StSrtServerSocket() {
     server_fd = SRT_INVALID_SOCK;
 }
