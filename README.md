@@ -12,12 +12,13 @@
   rtmp/flv/ts. SPS support stream decode/encoder for rtmp/flv/ts. Plug is the characteristic of SPS, 
   which will make sps extensible. 
   
-  |  sps structure layer |   impl    |     directory  |
+  |  module |   impl    |     directory  |
   |  -----------------|------------- |--------------------|
   | os dispatch       | coroutine    |      co  （plugin state-threads） |
   | transport         | tcp/srt      |      io   (plugin state-threads srt) |
-  | app               | http/rtmp    |      modules (plugin)                |
-  | streaming         | flv/rtmp/ts  |      avformat(plugin flv rtmp)       |
+  | app               | http/rtmp/srt    |      modules (plugin)                |
+  | streaming format         | flv/rtmp/ts  |      avformat      |
+  | streaming codec   | h264/aac  |      avcodec      |
   
 # Requirements
 
@@ -58,7 +59,13 @@ ffplay "rtmp://127.0.0.1/live/test"
 ffplay "http://127.0.0.1/live/test.flv"
 ```
 
-### push ts pull not supported
+### push ts pull
 ```
 ffmpeg -i xx.flv -f mpegts "http://127.0.0.1/live/test.ts"
+```
+
+###  push/pull ts over srt
+```
+ffmpeg -re -i xx.ts -c:v copy -c:a copy -f mpegts 'srt://127.0.0.1:6000?streamid=#!::h=127.0.0.1/live/test,&mode=caller'
+ffplay 'srt://127.0.0.1:6000?streamid=#!::h=127.0.0.1/live/test,m=request,&mode=caller'
 ```
