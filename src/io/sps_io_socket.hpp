@@ -36,7 +36,7 @@ namespace sps {
 
 enum Transport {
     TCP = 1,
-#ifndef SRT_DISABLED
+#ifdef SRT_ENABLED
     SRT = 2,
 #endif
     QUIC = 3,

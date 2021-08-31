@@ -48,7 +48,7 @@ PIModuleFactory sps_modules[] = {
         MODULE_INSTANCE(Rtmp),
 
         MODULE_INSTANCE(UpStream),
-#ifndef SRT_DISABLED
+#ifdef SRT_ENABLED
         MODULE_INSTANCE(Srt),
 #endif
         nullptr

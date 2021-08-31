@@ -34,7 +34,7 @@ namespace sps {
 const char* get_transport_name(Transport t) {
     switch (t) {
         case TCP: return "tcp";
-#ifndef SRT_DISABLED
+#ifdef SRT_ENABLED
         case SRT: return "srt";
 #endif
         case QUIC: return "quic";

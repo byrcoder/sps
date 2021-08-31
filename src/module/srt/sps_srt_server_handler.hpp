@@ -29,7 +29,7 @@ SOFTWARE.
 
 #include <sps_host_phase_handler.hpp>
 
-#ifndef SRT_DISABLED
+#ifdef SRT_ENABLED
 
 namespace sps {
 

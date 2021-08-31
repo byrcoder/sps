@@ -28,7 +28,7 @@ SOFTWARE.
 #include <sps_srt_stream_handler.hpp>
 #include <sps_avformat_tsdec.hpp>
 
-#ifndef SRT_DISABLED
+#ifdef SRT_ENABLED
 
 namespace sps {
 

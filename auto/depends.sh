@@ -30,7 +30,7 @@ function makefile_project() {
     ln -s ${TMP_TARGET_DIR} ${TMP_BUILD_DIR}
 }
 
-if [ ${SRT_DISABLED} = "OFF" ]
+if [ ${SRT_ENABLED} = "ON" ]
 then
   echo "======building srt====="
   SRT_TARGET_DIR=${WORK_DIR}/3rdparty/srt

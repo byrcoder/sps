@@ -21,42 +21,59 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-//
-// Created by byrcoder on 2021/8/24.
-//
+#ifndef SPS_ST_IO_SSL_HPP
+#define SPS_ST_IO_SSL_HPP
 
-#include <sps_srt_server.hpp>
+#include <sps_io_socket.hpp>
 
-#ifdef SRT_ENABLED
+#ifdef OPENSSL_ENABLED
+
+#include <openssl/ssl.h>
 
 namespace sps {
 
-SrtConnHandler::SrtConnHandler(PSocket io, PServerPhaseHandler& handler) :
-        IConnHandler(std::move(io)), hd(handler) {
-}
+/**
+ * ssl wrapped
+ */
+class StSSLSocket : public IReaderWriter {
+ public:
+    explicit StSSLSocket(PIReaderWriter io);
 
-error_t SrtConnHandler::handler() {
-    ConnContext ctx(nullptr, io, this);
-    do {
-        error_t ret = SUCCESS;
+ public:
+    // reader
+    void    set_recv_timeout(utime_t tm) override;
+    utime_t get_recv_timeout() override;
 
-        if ((ret = hd->handler(ctx)) != SUCCESS) {
-            return ret;
-        }
-        sp_trace("success handler ret %d", ret);
-    } while (true);
+    error_t read_fully(void* buf, size_t size, ssize_t* nread) override;
+    error_t read(void* buf, size_t size, size_t& nread) override;
 
-    return SUCCESS;
-}
+ public:
+    // writer
+    void set_send_timeout(utime_t tm) override;
+    utime_t get_send_timeout() override;
+    error_t write(void* buf, size_t size) override;
 
-SrtConnHandlerFactory::SrtConnHandlerFactory(PServerPhaseHandler hd) {
-    handler = std::move(hd);
-}
+ private:
+    PIReaderWriter io;
+};
 
-PIConnHandler SrtConnHandlerFactory::create(PSocket io) {
-    return std::make_shared<SrtConnHandler>(io, handler);
-}
+/**
+ * ssl server wrapped
+ */
+class StSSLServerSocket : public IServerSocket {
+ public:
+    StSSLServerSocket(PIServerSocket ssock);
+
+ public:
+    error_t listen(std::string sip, int sport, bool reuse_sport, int back_log) override;
+    PSocket accept() override;
+
+ private:
+    PIServerSocket ssock;
+};
 
 }  // namespace sps
 
 #endif
+
+#endif  // SPS_ST_IO_SSL_HPP

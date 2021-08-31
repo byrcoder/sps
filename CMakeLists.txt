@@ -6,7 +6,15 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_COMPILER g++)
 set(CMAKE_C_COMPILER gcc)
 
-option(SRT_DISABLED "disable srt" OFF)
+# srt option
+option(SRT_ENABLED "srt enabled" OFF)
+
+# openssl option
+option(OPENSSL_ENABLED "openssl enabled" OFF)
+option(OPENSSL_INCLUDE "" "")
+option(OPENSSL_LIB "" "")
+
+# unit test option
 option(ENABLE_UNITTESTS "Enable unit tests" ON)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
@@ -29,7 +37,11 @@ execute_process(
         OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-message("git version ${GIT_VERSION} ${GIT_VERSION} ${GIT_BRANCH} disable_srt:${SRT_DISABLED}")
+message("git version ${GIT_VERSION} ${GIT_VERSION} ${GIT_BRANCH}
+        srt_enabled:${SRT_ENABLED}
+        openssl_enabled: ${OPENSSL_ENABLED}
+        openssl_include: ${OPENSSL_INCLUDE}
+        openssl_lib: ${OPENSSL_LIB}" )
 
 # auto header
 set(AUTO_HEAD ${PROJECT_SOURCE_DIR}/src/sps_auto_header.hpp)
@@ -42,8 +54,12 @@ file(APPEND ${AUTO_HEAD}
 #define GIT_VERSION \"${GIT_VERSION}\"
 #define GIT_BRANCH  \"${GIT_BRANCH}\"\r\n")
 
-if (SRT_DISABLED)
-    file(APPEND ${AUTO_HEAD} "#define SRT_DISABLED\r\n")
+if (SRT_ENABLED)
+    file(APPEND ${AUTO_HEAD} "#define SRT_ENABLED\r\n")
+endif()
+
+if (OPENSSL_ENABLED)
+    file(APPEND ${AUTO_HEAD} "#define OPENSSL_ENABLED\r\n")
 endif()
 
 file(APPEND ${AUTO_HEAD} "\r\n")
@@ -66,6 +82,16 @@ link_directories(
         ${PROJECT_SOURCE_DIR}/3rdparty/http-parser
         ${PROJECT_SOURCE_DIR}/3rdparty/rtmpdump/librtmp
         )
+
+if (OPENSSL_ENABLED)
+    if (OPENSSL_INCLUDE)
+        include_directories(${OPENSSL_INCLUDE})
+    endif()
+
+    if (OPENSSL_LIB)
+        link_directories(${OPENSSL_LIB})
+    endif()
+endif()
 
 include_directories(
         ${PROJECT_SOURCE_DIR}/src
@@ -152,7 +178,7 @@ add_executable(sps
         )
 
 target_link_libraries(sps libst.a libhttp_parser.a librtmp.a)
-if (NOT SRT_DISABLED)
+if (SRT_ENABLED)
 target_link_libraries(sps ${PROJECT_SOURCE_DIR}/3rdparty/srt/libsrt.a)
 endif()
 
@@ -167,7 +193,7 @@ if(ENABLE_UNITTESTS)
             libgtest.a
             libst.a libhttp_parser.a libgtest.a librtmp.a pthread
             )
-    if (NOT SRT_DISABLED)
+    if (SRT_ENABLED)
         target_link_libraries(test_all ${PROJECT_SOURCE_DIR}/3rdparty/srt/libsrt.a)
     endif()
 
@@ -181,7 +207,7 @@ if(ENABLE_UNITTESTS)
     enable_testing()
 endif()
 
-if (NOT SRT_DISABLED)
+if (SRT_ENABLED)
     add_executable(srt_http_client
         ${SRC_LIST}
         ${HEAD_LIST}

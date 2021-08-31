@@ -22,41 +22,60 @@ SOFTWARE.
 *****************************************************************************/
 
 //
-// Created by byrcoder on 2021/8/24.
+// Created by byrcoder on 2021/8/31.
 //
 
-#include <sps_srt_server.hpp>
+#include <sps_st_io_ssl.hpp>
 
-#ifdef SRT_ENABLED
+#ifdef OPENSSL_ENABLED
 
 namespace sps {
 
-SrtConnHandler::SrtConnHandler(PSocket io, PServerPhaseHandler& handler) :
-        IConnHandler(std::move(io)), hd(handler) {
+StSSLSocket::StSSLSocket(PIReaderWriter io) {
+    this->io = std::move(io);
 }
 
-error_t SrtConnHandler::handler() {
-    ConnContext ctx(nullptr, io, this);
-    do {
-        error_t ret = SUCCESS;
+void StSSLSocket::set_recv_timeout(utime_t tm) {
+    io->set_recv_timeout(tm);
+}
 
-        if ((ret = hd->handler(ctx)) != SUCCESS) {
-            return ret;
-        }
-        sp_trace("success handler ret %d", ret);
-    } while (true);
+utime_t StSSLSocket::get_recv_timeout() {
+    return io->get_recv_timeout();
+}
 
+error_t StSSLSocket::read_fully(void* buf, size_t size, ssize_t* nread) {
+    // TODO: IMPL SSL
+}
+
+error_t StSSLSocket::read(void* buf, size_t size, size_t& nread) {
+    // TODO: IMPL SSL
+}
+
+void StSSLSocket::set_send_timeout(utime_t tm) {
+    io->set_send_timeout(tm);
+}
+
+utime_t StSSLSocket::get_send_timeout() {
+    return io->get_send_timeout();
+}
+
+error_t StSSLSocket::write(void* buf, size_t size) {
+    // TODO: IMPL SSL
+}
+
+StSSLServerSocket::StSSLServerSocket(PIServerSocket ssock) {
+    this->ssock = ssock;
+}
+
+error_t StSSLServerSocket::listen(std::string sip, int sport, bool reuse_sport, int back_log) {
     return SUCCESS;
 }
 
-SrtConnHandlerFactory::SrtConnHandlerFactory(PServerPhaseHandler hd) {
-    handler = std::move(hd);
+PSocket StSSLServerSocket::accept() {
+    auto skt = ssock->accept();
+    // TODO: IMPL SSL
 }
 
-PIConnHandler SrtConnHandlerFactory::create(PSocket io) {
-    return std::make_shared<SrtConnHandler>(io, handler);
 }
-
-}  // namespace sps
 
 #endif
