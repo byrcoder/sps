@@ -38,6 +38,7 @@ namespace sps {
 class StSSLSocket : public IReaderWriter {
  public:
     explicit StSSLSocket(PIReaderWriter io);
+    ~StSSLSocket();
 
  public:
     // reader
@@ -55,6 +56,12 @@ class StSSLSocket : public IReaderWriter {
 
  private:
     PIReaderWriter io;
+
+    // ssl context
+    BIO* rbio;
+    BIO* wbio;
+    SSL_CTX* ctx;
+    SSL* ssl;
 };
 
 /**
