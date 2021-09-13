@@ -30,16 +30,49 @@ SOFTWARE.
 
 #include <openssl/ssl.h>
 
+#include <memory>
+
+#include <sps_co.hpp>
+#include <sps_sync.hpp>
+
 namespace sps {
+
+// ssl connect for client
+error_t st_tcp_ssl_connect(const std::string& server, int port,
+                           utime_t tm, PSocket& io);
+
+// ssl server accept
+error_t st_tcp_ssl_accept(PSocket& io, utime_t timeout);
+
+enum SSLRole {
+    SSL_CLIENT,
+    SSL_SERVER
+};
+
+struct SSLConfig {
+    std::string crt_file;
+    std::string key_file;
+    std::string server_host;
+};
 
 /**
  * ssl wrapped
  */
 class StSSLSocket : public IReaderWriter {
  public:
-    explicit StSSLSocket(PIReaderWriter io);
+    explicit StSSLSocket(PIReaderWriter io, SSLRole mode, SSLConfig config);
     ~StSSLSocket();
 
+ public:
+    error_t init();
+
+ private:
+    error_t handshake();
+    error_t accept();
+
+    error_t handshake_util_write();
+    error_t handshake_util_read();
+    error_t do_handshake(bool reading);
  public:
     // reader
     void    set_recv_timeout(utime_t tm) override;
@@ -57,26 +90,54 @@ class StSSLSocket : public IReaderWriter {
  private:
     PIReaderWriter io;
 
+    bool inited;
     // ssl context
     BIO* rbio;
     BIO* wbio;
     SSL_CTX* ctx;
     SSL* ssl;
+    SSLRole role;
+    SSLConfig config;
 };
 
+class StSSLAcceptor;
 /**
  * ssl server wrapped
  */
 class StSSLServerSocket : public IServerSocket {
  public:
+    friend class StSSLAcceptor;
+ public:
     StSSLServerSocket(PIServerSocket ssock);
+
+ public:
+    void init_config(SSLConfig& config);
 
  public:
     error_t listen(std::string sip, int sport, bool reuse_sport, int back_log) override;
     PSocket accept() override;
 
  private:
-    PIServerSocket ssock;
+    void push_socket(PSocket sock);
+
+ private:
+    PIServerSocket                  ssock;
+    PCondition                      condition;
+    std::list<PSocket>              ready_sockets;
+    std::shared_ptr<StSSLAcceptor>  acceptor;
+    SSLConfig                       config;
+};
+
+// do tls handshake with async no blocking
+class StSSLAcceptor : public ICoHandler {
+ public:
+    StSSLAcceptor(StSSLServerSocket& ssl);
+
+ public:
+    error_t handler() override;
+
+ private:
+    StSSLServerSocket& ssl;
 };
 
 }  // namespace sps
