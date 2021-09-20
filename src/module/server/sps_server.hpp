@@ -31,6 +31,7 @@ SOFTWARE.
 
 #include <sps_co.hpp>
 #include <sps_io_socket.hpp>
+#include <sps_st_io_ssl.hpp>
 
 namespace sps {
 
@@ -72,7 +73,7 @@ class IConnHandlerFactory {
 typedef std::shared_ptr<IConnHandlerFactory> PIConnHandlerFactory;
 
 /**
- * 一个server必须实现listener, handler factory 和 handler
+ * every server must impl listener, handler factory 和 handler
  */
 class Server : public ICoHandler {
  public:
@@ -82,6 +83,11 @@ class Server : public ICoHandler {
  public:
     error_t init(PIConnHandlerFactory factory,
                  utime_t send_timeout, utime_t  rcv_timeout);
+
+#ifdef OPENSSL_ENABLED
+    void    init_ssl(const std::string& crt_file, const std::string& key_file,
+            PISSLCertSearch searcher = nullptr);
+#endif
 
     error_t listen(std::string ip, int port, bool reuse_port = true,
                    int backlog = 1024, Transport t = DEFAULT);

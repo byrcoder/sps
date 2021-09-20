@@ -43,10 +43,39 @@ error_t st_tcp_ssl_accept(PSocket& io, utime_t timeout) {
     return ERROR_SSL_READ;
 }
 
-StSSLSocket::StSSLSocket(PIReaderWriter io, SSLRole mode, SSLConfig config) {
+std::map<SSL_CTX*, StSSLSocket*> StSSLSocket::cb_ctx;
+
+int StSSLSocket::ssl_servername_callback(SSL *ssl, int *ag, void *arg) {
+    SSL_CTX* ctx = SSL_get_SSL_CTX(ssl);
+
+    if (cb_ctx.count(ctx) == 0) {
+        sp_error("no found ctx");
+        return SSL_TLSEXT_ERR_NOACK;
+    }
+    StSSLSocket* skt = cb_ctx[ctx];
+
+    const char* server_name = SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name);
+    error_t ret = SUCCESS;
+
+    SSLConfig config;
+    if (!server_name || (ret = skt->cert_searcher->search(server_name, config)) != SUCCESS) {
+        sp_error("ssl sni search cert ret %d", ret);
+        return SSL_TLSEXT_ERR_NOACK;
+    }
+
+    if ((ret = skt->do_ssl_verify(config)) != SUCCESS) {
+        sp_error("ssl sni verify cert ret %d", ret);
+        return SSL_TLSEXT_ERR_NOACK;
+    }
+
+    return SSL_TLSEXT_ERR_OK;
+}
+
+StSSLSocket::StSSLSocket(PIReaderWriter io, SSLRole mode, SSLConfig config, PISSLCertSearch cs) {
     this->io   = std::move(io);
     this->role = mode;
     this->config = config;
+    this->cert_searcher = std::move(cs);
 
     inited     = false;
     // ssl init
@@ -59,9 +88,13 @@ StSSLSocket::StSSLSocket(PIReaderWriter io, SSLRole mode, SSLConfig config) {
     rbio = BIO_new(BIO_s_mem());
     wbio = BIO_new(BIO_s_mem());
     SSL_set_bio(ssl, rbio, wbio);
+
+    cb_ctx[ctx] = this;
 }
 
 StSSLSocket::~StSSLSocket() {
+    cb_ctx.erase(ctx);
+
     SSL_free(ssl);
     SSL_CTX_free(ctx);
 
@@ -89,6 +122,11 @@ error_t StSSLSocket::init() {
     return SUCCESS;
 }
 
+/**
+ * TODO: support 7.4.4.  Certificate Request
+ * also see dtls https://web.archive.org/web/20150814081716/http://sctp.fh-muenster.de/dtls-samples.html
+ * @return
+ */
 error_t StSSLSocket::handshake() {
     error_t ret = SUCCESS;
 
@@ -167,27 +205,18 @@ error_t StSSLSocket::accept() {
     SSL_set_accept_state(ssl);
     SSL_set_mode(ssl, SSL_MODE_ENABLE_PARTIAL_WRITE);
 
-    // Setup the key and cert file for server.
-    if (!config.crt_file.empty() &&
-            (n = SSL_use_certificate_file(ssl, config.crt_file.c_str(), SSL_FILETYPE_PEM)) != 1) {
-        sp_error("fail use ssl crt file %s, ret %d", config.crt_file.c_str(), n);
-        return ERROR_SSL_HANDSHAKE;
+    // TODO: imp sni
+    if (cert_searcher) {
+        SSL_CTX_set_tlsext_servername_callback(ctx, StSSLSocket::ssl_servername_callback);
+    } else {
+        if ((ret = do_ssl_verify(config)) != SUCCESS) {
+            return ret;
+        }
     }
-
-    if (!config.key_file.empty() &&
-            (n = SSL_use_RSAPrivateKey_file(ssl, config.key_file.c_str(), SSL_FILETYPE_PEM)) != 1) {
-        sp_error("fail use ssl key file %s, ret %d", config.key_file.c_str(), n);
-        return ERROR_SSL_HANDSHAKE;
-    }
-
-    if ((n = SSL_check_private_key(ssl)) != 1) {
-        sp_error("fail ssl check private key ret %d",  n);
-        return ERROR_SSL_HANDSHAKE;
-    }
-    sp_info("ssl: use key %s and cert %s.", config.key_file.c_str(), config.crt_file.c_str());
 
     // Receive ClientHello
     if ((ret = handshake_util_write()) != ERROR_SSL_HANDSHAKE_CONTINUE && ret != SUCCESS) {
+
         sp_error("fail Receive ClientHello ret %d", ret);
         return ret;
     }
@@ -332,6 +361,30 @@ error_t StSSLSocket::do_handshake(bool reading) {
     return ERROR_SSL_HANDSHAKE;
 }
 
+error_t StSSLSocket::do_ssl_verify(SSLConfig& config) {
+    int n;
+    // Setup the key and cert file for server.
+    if (!config.crt_file.empty() &&
+        (n = SSL_use_certificate_file(ssl, config.crt_file.c_str(), SSL_FILETYPE_PEM)) != 1) {
+        sp_error("fail use ssl crt file %s, ret %d", config.crt_file.c_str(), n);
+        return ERROR_SSL_HANDSHAKE;
+    }
+
+    if (!config.key_file.empty() &&
+        (n = SSL_use_RSAPrivateKey_file(ssl, config.key_file.c_str(), SSL_FILETYPE_PEM)) != 1) {
+        sp_error("fail use ssl key file %s, ret %d", config.key_file.c_str(), n);
+        return ERROR_SSL_HANDSHAKE;
+    }
+
+    if ((n = SSL_check_private_key(ssl)) != 1) {
+        sp_error("fail ssl check private key ret %d", n);
+        return ERROR_SSL_HANDSHAKE;
+    }
+    sp_info("ssl: use key %s and cert %s.", config.key_file.c_str(), config.crt_file.c_str());
+
+    return SUCCESS;
+}
+
 void StSSLSocket::set_recv_timeout(utime_t tm) {
     io->set_recv_timeout(tm);
 }
@@ -373,7 +426,7 @@ error_t StSSLSocket::read(void* buf, size_t size, size_t& nread) {
             nread = n;
             break;
         }
-        sp_info("SSL READ n %d", n);
+        sp_debug("SSL READ n %d", n);
 
         if (n <= 0 && SSL_ERROR_WANT_READ == SSL_get_error(ssl, n)) {
             // read raw buffer
@@ -382,7 +435,7 @@ error_t StSSLSocket::read(void* buf, size_t size, size_t& nread) {
                 return ret;
             }
 
-            sp_info("reading raw buf %lu", nread);
+            sp_debug("reading raw buf %lu", nread);
 
             n = BIO_write(rbio, buf, nread);
             if (n <= 0) {
@@ -436,7 +489,7 @@ error_t StSSLSocket::write(void* buf, size_t size) {
             sp_error("fail ssl encode write ret %d", ret);
             return ret;
         }
-        sp_info("encode_data %lu, %.*s", nsize, (int) nsize, encode_data);
+        sp_debug("encode_data %lu, %.*s", nsize, (int) nsize, encode_data);
 
         n = BIO_reset(wbio);
         if (n < 0) {
@@ -454,8 +507,9 @@ StSSLServerSocket::StSSLServerSocket(PIServerSocket ssock) {
     acceptor    = std::make_unique<StSSLAcceptor>(*this);
 }
 
-void StSSLServerSocket::init_config(SSLConfig& config) {
-    this->config = config;
+void StSSLServerSocket::init_config(SSLConfig& config, PISSLCertSearch search) {
+    this->config         = config;
+    this->cert_searcher  = std::move(search);
 }
 
 error_t StSSLServerSocket::listen(std::string sip, int sport, bool reuse_sport, int back_log) {
@@ -491,7 +545,7 @@ error_t StSSLAcceptor::handler() {
 
     do {
         auto sock = ssl.ssock->accept();
-        auto ssl_sock = std::make_shared<StSSLSocket>(sock, SSL_SERVER, ssl.config);
+        auto ssl_sock = std::make_shared<StSSLSocket>(sock, SSL_SERVER, ssl.config, ssl.cert_searcher);
 
         // TODO: fixme with threads startup
         if ((ret = ssl_sock->init()) != SUCCESS) {

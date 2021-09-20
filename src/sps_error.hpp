@@ -75,6 +75,7 @@ SOFTWARE.
 #define ERROR_SSL_WRITE                     1331
 #define ERROR_SSL_HANDSHAKE                 1332
 #define ERROR_SSL_HANDSHAKE_CONTINUE        1333
+#define ERROR_SSL_CERT_NOT_FOUND            1334
 
 #define ERROR_URL_PROTOCOL_NOT_EXISTS       1340
 

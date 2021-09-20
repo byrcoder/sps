@@ -35,6 +35,8 @@ SOFTWARE.
 #include <sps_co.hpp>
 #include <sps_sync.hpp>
 
+#define SSL_SNI_ENABLED 0
+
 namespace sps {
 
 // ssl connect for client
@@ -56,11 +58,27 @@ struct SSLConfig {
 };
 
 /**
+ * find cert config for host
+ */
+class ISSLCertSearch {
+ public:
+    virtual error_t search(const std::string& server_name, SSLConfig& config) = 0;
+};
+
+typedef std::shared_ptr<ISSLCertSearch> PISSLCertSearch;
+
+/**
  * ssl wrapped
+ * https://datatracker.ietf.org/doc/html/rfc5246
  */
 class StSSLSocket : public IReaderWriter {
  public:
-    explicit StSSLSocket(PIReaderWriter io, SSLRole mode, SSLConfig config);
+    static std::map<SSL_CTX*, StSSLSocket*> cb_ctx;
+    // support sni
+    static int ssl_servername_callback(SSL* ssl, int *ag, void *arg);
+
+ public:
+    explicit StSSLSocket(PIReaderWriter io, SSLRole mode, SSLConfig config, PISSLCertSearch cs = nullptr);
     ~StSSLSocket();
 
  public:
@@ -73,6 +91,10 @@ class StSSLSocket : public IReaderWriter {
     error_t handshake_util_write();
     error_t handshake_util_read();
     error_t do_handshake(bool reading);
+
+ private:
+    error_t do_ssl_verify(SSLConfig& config);
+
  public:
     // reader
     void    set_recv_timeout(utime_t tm) override;
@@ -98,6 +120,7 @@ class StSSLSocket : public IReaderWriter {
     SSL* ssl;
     SSLRole role;
     SSLConfig config;
+    PISSLCertSearch                 cert_searcher;
 };
 
 class StSSLAcceptor;
@@ -111,7 +134,7 @@ class StSSLServerSocket : public IServerSocket {
     StSSLServerSocket(PIServerSocket ssock);
 
  public:
-    void init_config(SSLConfig& config);
+    void init_config(SSLConfig& config, PISSLCertSearch search = nullptr);
 
  public:
     error_t listen(std::string sip, int sport, bool reuse_sport, int back_log) override;
@@ -126,6 +149,7 @@ class StSSLServerSocket : public IServerSocket {
     std::list<PSocket>              ready_sockets;
     std::shared_ptr<StSSLAcceptor>  acceptor;
     SSLConfig                       config;
+    PISSLCertSearch                 cert_searcher;
 };
 
 // do tls handshake with async no blocking

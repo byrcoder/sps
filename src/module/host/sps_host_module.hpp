@@ -29,6 +29,7 @@ SOFTWARE.
 #include <string>
 
 #include <sps_module.hpp>
+#include <sps_st_io_ssl.hpp>
 #include <sps_stream_module.hpp>
 
 #define HOST_OPTIONS \
@@ -52,11 +53,16 @@ struct HostConfCtx : public ConfCtx {
 
     int streaming;  // on, edge or source is rtmp/flv
     std::string edge_avformat;  // edge avformat
+
+    std::string ssl_key_file;  // ssl key
+    std::string ssl_crt_file;  // ssl crt
 };
 
 #define OFFSET(x) offsetof(HostConfCtx, x)
 static const ConfigOption host_options[] = {
         HOST_OPTIONS,
+        {"ssl_key_file",    "ssl key file",     OFFSET(ssl_key_file),    CONF_OPT_TYPE_STRING,   { .str = "" }, },
+        {"ssl_crt_file",    "ssl crt file",     OFFSET(ssl_crt_file),    CONF_OPT_TYPE_STRING,   { .str = "" }, },
         { nullptr }
 };
 #undef OFFSET
@@ -79,6 +85,8 @@ class HostModule : public IModule {
     std::string edge_format();
     std::string pass_proxy();
     std::string role();
+    std::string ssl_key_file();
+    std::string ssl_cert_file();
 
  public:
     /**
@@ -91,7 +99,12 @@ typedef std::shared_ptr<HostModule> PHostModule;
 MODULE_FACTORY(Host)
 class HostModuleFactory;
 
-class HostModulesRouter {
+
+class HostModulesRouter
+#ifdef OPENSSL_ENABLED
+        :public ISSLCertSearch
+#endif
+        {
  public:
     static std::string get_wildcard_host(std::string host);
 
@@ -104,6 +117,11 @@ class HostModulesRouter {
     PHostModule find_host(const std::string& host);
 
     error_t merge(HostModulesRouter* router);
+
+ public:
+#ifdef OPENSSL_ENABLED
+    error_t search(const std::string& server_name, SSLConfig& config) override;
+#endif
 
  private:
     std::map<std::string, PHostModule> exact_hosts;   // exact match
