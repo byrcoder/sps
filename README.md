@@ -8,7 +8,7 @@
 
 # Introduction
 
-  Streaming proxy server(SPS) is a proprietary server for live or vod proxy server for http and
+  Streaming proxy server(SPS) is a proprietary server for live or vod proxy server for http(s) and
   rtmp/flv/ts. SPS support stream decode/encoder for rtmp/flv/ts. Plug is the characteristic of SPS, 
   which will make sps extensible. 
   
@@ -16,7 +16,7 @@
   |  -----------------|------------- |--------------------|
   | os dispatch       | coroutine    |      co  （plugin state-threads） |
   | transport         | tcp/srt      |      io   (plugin state-threads srt) |
-  | app               | http/rtmp/srt    |      modules (plugin)                |
+  | app               | http/https/rtmp/srt    |      modules (plugin)                |
   | streaming format         | flv/rtmp/ts  |      avformat      |
   | streaming codec   | h264/aac  |      avcodec      |
   
