@@ -134,9 +134,15 @@ error_t ServerModule::install() {
     }
 
     Transport t = Transport::TCP;
-#ifndef SRT_DISABLED
+#ifdef SRT_ENABLED
     if (server_conf->transport == "srt") {
         t = Transport::SRT;
+    }
+#endif
+
+#ifdef OPENSSL_ENABLED
+    if (server_conf->transport == "https") {
+        t = Transport::HTTPS;
     }
 #endif
     ret = server->init(socket_handler,
@@ -156,6 +162,7 @@ error_t ServerModule::install() {
         return ret;
     }
 
+
     if ((ret = sps::ICoFactory::get_instance().start(server))!= SUCCESS) {
         sp_error("failed start server ret:%d", ret);
         return ret;
@@ -174,6 +181,32 @@ error_t ServerModule::install() {
 error_t ServerModule::pre_install(PIConnHandlerFactory factory) {
     this->socket_handler = factory;
     return SUCCESS;
+}
+
+error_t ServerModule::post_install(PHostModulesRouter router) {
+    error_t ret         = SUCCESS;
+    auto    server_conf = std::static_pointer_cast<sps::ServerConfCtx>(conf);
+
+    Transport t = Transport::TCP;
+#ifdef SRT_ENABLED
+    if (server_conf->transport == "srt") {
+        t = Transport::SRT;
+    }
+#endif
+
+#ifdef OPENSSL_ENABLED
+    if (server_conf->transport == "https") {
+        t = Transport::HTTPS;
+    }
+#endif
+
+#ifdef OPENSSL_ENABLED
+    if (t == Transport::HTTPS) {
+        server->init_ssl(server_conf->ssl_crt_file, server_conf->ssl_key_file, router);
+    }
+#endif
+
+    return ret;
 }
 
 error_t ServerModule::merge_server(PServerModule server_module) {

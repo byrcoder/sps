@@ -27,6 +27,7 @@ SOFTWARE.
 
 #include <sps_log.hpp>
 #include <sps_st_io_srt.hpp>
+#include <sps_st_io_ssl.hpp>
 #include <sps_st_io_tcp.hpp>
 
 namespace sps {
@@ -34,11 +35,14 @@ namespace sps {
 const char* get_transport_name(Transport t) {
     switch (t) {
         case TCP: return "tcp";
-#ifndef SRT_DISABLED
+#ifdef SRT_ENABLED
         case SRT: return "srt";
 #endif
         case QUIC: return "quic";
         case FILE: return "file";
+#ifdef OPENSSL_ENABLED
+        case HTTPS:  return "ssl";
+#endif
         default: return "unknown";
     }
 }
@@ -62,6 +66,8 @@ PSocket ClientSocketFactory::create_ss(
             return std::make_shared<Socket>(
                     std::make_shared<StTcpSocket>(fd), ip, port);
         }
+
+#ifdef SRT_ENABLED
         case Transport::SRT: {
             auto fd = st_srt_create_fd();
 
@@ -82,6 +88,28 @@ PSocket ClientSocketFactory::create_ss(
                     std::make_shared<StSrtSocket>(fd),
                     ip, port);
         }
+#endif
+
+#ifdef OPENSSL_ENABLED
+        case Transport::HTTPS: {
+            auto ss = create_ss(Transport::TCP, ip, port, tm);
+            if (!ss) {
+                return nullptr;
+            }
+
+            ss->set_send_timeout(tm);
+            ss->set_recv_timeout(tm);
+
+            SSLConfig config;
+            config.server_host = ip;
+            auto ssl = std::make_shared<StSSLSocket>(ss, SSLRole::SSL_CLIENT, config);
+            if (ssl->init() != SUCCESS) {
+                return nullptr;
+            }
+
+            return  std::make_shared<Socket>(ssl, ip, port);
+        }
+#endif
         default:
             return nullptr;
     }
@@ -91,8 +119,21 @@ PIServerSocket ServerSocketFactory::create_ss(Transport transport) {
     switch (transport) {
         case Transport::TCP:
             return std::make_shared<StTcpServerSocket>();
+
+#ifdef SRT_ENABLED
         case Transport::SRT:
             return std::make_shared<StSrtServerSocket>();
+#endif
+
+#ifdef OPENSSL_ENABLED
+        case Transport::HTTPS: {
+            auto tcp = create_ss(Transport::TCP);
+            if (!tcp) {
+                return nullptr;
+            }
+            return std::make_shared<StSSLServerSocket>(tcp);
+        }
+#endif
         default:
             return nullptr;
     }

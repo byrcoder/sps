@@ -42,6 +42,9 @@ struct ServerConfCtx : public ConfCtx {
     int            backlog;
     utime_t        recv_timeout;
     utime_t        send_timeout;
+
+    std::string    ssl_key_file;
+    std::string    ssl_crt_file;
 };
 
 #define OFFSET(x) offsetof(ServerConfCtx, x)
@@ -56,6 +59,10 @@ static const ConfigOption server_options[] = {
         {"reuse_port",      "reuse_port",       OFFSET(reuse_port),             CONF_OPT_TYPE_BOOL,   { .str = "off" }, },
         {"backlog",         "backlog",          OFFSET(backlog),             CONF_OPT_TYPE_INT,   { .str = "1024" }, },
         {"host",            "host sub module",       0,             CONF_OPT_TYPE_SUBMODULE,   { .str = "" }, },
+
+        {"ssl_key_file",    "ssl key file",     OFFSET(ssl_key_file),    CONF_OPT_TYPE_STRING,   { .str = "" }, },
+        {"ssl_crt_file",    "ssl crt file",     OFFSET(ssl_crt_file),    CONF_OPT_TYPE_STRING,   { .str = "" }, },
+
         {nullptr }
 };
 #undef OFFSET
@@ -93,6 +100,8 @@ class ServerModule : public IModule {
 
  public:
     error_t pre_install(PIConnHandlerFactory factory);
+
+    error_t post_install(PHostModulesRouter router);
 
     error_t merge_server(PServerModule server_module);
 

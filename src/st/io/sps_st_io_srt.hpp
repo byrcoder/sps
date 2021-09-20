@@ -30,7 +30,7 @@ SOFTWARE.
 #include <sps_io.hpp>
 #include <sps_io_bytes.hpp>
 
-#ifndef SRT_DISABLED
+#ifdef SRT_ENABLED
 
 extern "C" {
 #include <public.h>

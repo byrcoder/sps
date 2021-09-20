@@ -32,7 +32,7 @@ SOFTWARE.
 #include <sps_srt_server_handler.hpp>
 #include <sps_srt_stream_handler.hpp>
 
-#ifndef SRT_DISABLED
+#ifdef SRT_ENABLED
 
 namespace sps {
 

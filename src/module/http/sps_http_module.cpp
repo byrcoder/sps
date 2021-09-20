@@ -101,6 +101,12 @@ error_t HttpModule::install() {
                       s->module_name.c_str());
             return ret;
         }
+
+        if ((ret = s->post_install(hr)) != SUCCESS) {
+            sp_error("failed post install %s http server",
+                     s->module_name.c_str());
+            return ret;
+        }
         sp_info("success install %s http server listen",
                  s->module_name.c_str());
     }

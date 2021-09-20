@@ -90,6 +90,8 @@ error_t HttpProxyPhaseHandler::handler(ConnContext &ctx) {
     size_t nr   = 0;
 
     while ((ret = url_protocol->read(buf, len, nr)) == SUCCESS) {
+        sp_info("url read len %ld", nr);
+
         ret = rsp.write(buf, nr);
 
         if (ret != SUCCESS) {

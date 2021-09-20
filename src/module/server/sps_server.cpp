@@ -24,6 +24,7 @@ SOFTWARE.
 #include <sps_server.hpp>
 
 #include <sps_log.hpp>
+#include <st/io/sps_st_io_ssl.hpp>
 
 namespace sps {
 
@@ -43,6 +44,19 @@ error_t Server::init(PIConnHandlerFactory f,
 
     return SUCCESS;
 }
+
+#ifdef OPENSSL_ENABLED
+void Server::init_ssl(const std::string& crt_file, const std::string& key_file,
+                      PISSLCertSearch searcher) {
+    auto ssl = dynamic_cast<StSSLServerSocket*>(server_socket.get());
+    if (ssl) {
+        SSLConfig config;
+        config.crt_file = crt_file;
+        config.key_file = key_file;
+        ssl->init_config(config, std::move(searcher));
+    }
+}
+#endif
 
 int Server::listen(std::string ip, int port, bool reuse_port, int backlog,
                    Transport transport) {

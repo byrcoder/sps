@@ -70,6 +70,13 @@ SOFTWARE.
 #define ERROR_SRT_NOT_SUPPORT_FAST_OPEN     1321
 #define ERROR_SRT_STREAM_ID                 1322
 
+// ssl error
+#define ERROR_SSL_READ                      1330
+#define ERROR_SSL_WRITE                     1331
+#define ERROR_SSL_HANDSHAKE                 1332
+#define ERROR_SSL_HANDSHAKE_CONTINUE        1333
+#define ERROR_SSL_CERT_NOT_FOUND            1334
+
 #define ERROR_URL_PROTOCOL_NOT_EXISTS       1340
 
 #define ERROR_FILE_OPEN                     1350

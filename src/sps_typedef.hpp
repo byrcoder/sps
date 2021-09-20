@@ -33,6 +33,7 @@ SOFTWARE.
 #include <set>
 
 #include <sps_error.hpp>
+#include <sps_auto_header.hpp>
 
 typedef int error_t;
 typedef uint64_t utime_t;

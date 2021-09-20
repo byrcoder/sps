@@ -176,16 +176,16 @@ error_t HttpUrlProtocol::read_chunked_length() {
 
 error_t HttpUrlProtocol::read_chunked_data(void *buf, size_t size,
                                            size_t& nread) {
-    size         = std::min(nb_chunked_left, size);
     error_t ret  =  SUCCESS;
+    nread = size = std::min(nb_chunked_left, size);
 
-    if (nb_chunked_size != 0) {
-        ret = get_io()->read_fully(buf, size, (ssize_t *) &nread);
+    if (size != 0) {
+        ret = get_io()->read_fully(buf, size, nullptr);
     }
 
     nb_chunked_left -= nread;  // ignore ret
 
-    sp_debug("read chunked data ret:%d, nread:%lu", ret, nread);
+    sp_debug("read chunked data ret:%d, nread:%lu, size: %lu", ret, nread, size);
 
     if (ret == SUCCESS && nb_chunked_left == 0) {
         char tail[2];

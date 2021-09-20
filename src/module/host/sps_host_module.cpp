@@ -73,7 +73,6 @@ bool HostModule::support_publish(const std::string& format) {
     return host->edge_avformat == "all" || host->edge_avformat == format;
 }
 
-
 std::string HostModule::edge_format() {
     auto host = static_cast<HostConfCtx*>(conf.get());
     return host->edge_avformat;
@@ -87,6 +86,16 @@ std::string HostModule::pass_proxy() {
 std::string HostModule::role() {
     auto host = static_cast<HostConfCtx*>(conf.get());
     return host->role;
+}
+
+std::string HostModule::ssl_key_file() {
+    auto host = static_cast<HostConfCtx*>(conf.get());
+    return host->ssl_key_file;
+}
+
+std::string HostModule::ssl_cert_file() {
+    auto host = static_cast<HostConfCtx*>(conf.get());
+    return host->ssl_crt_file;
 }
 
 std::string HostModulesRouter::get_wildcard_host(std::string host) {
@@ -182,5 +191,25 @@ error_t HostModulesRouter::merge(HostModulesRouter *router) {
 
     return SUCCESS;
 }
+
+#ifdef OPENSSL_ENABLED
+error_t HostModulesRouter::search(const std::string& server_name, SSLConfig& config) {
+    auto host = find_host(server_name);
+    if (!host) {
+        sp_warn("ssl not found %s", server_name.c_str());
+        return ERROR_SSL_CERT_NOT_FOUND;
+    }
+
+    config.key_file = host->ssl_key_file();
+    config.crt_file = host->ssl_cert_file();
+
+    if (config.key_file.empty() || config.crt_file.empty()) {
+        sp_warn("ssl not config %s", server_name.c_str());
+        return ERROR_SSL_CERT_NOT_FOUND;
+    }
+
+    return SUCCESS;
+}
+#endif
 
 }  // namespace sps

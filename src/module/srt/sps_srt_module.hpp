@@ -32,7 +32,7 @@ SOFTWARE.
 #include <sps_module.hpp>
 #include <sps_server_module.hpp>
 
-#ifndef SRT_DISABLED
+#ifdef SRT_ENABLED
 
 namespace sps {
 

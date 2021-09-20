@@ -35,14 +35,15 @@ SOFTWARE.
 namespace sps {
 
 enum Transport {
-    TCP = 1,
-#ifndef SRT_DISABLED
-    SRT = 2,
+    TCP,
+#ifdef SRT_ENABLED
+    SRT,
 #endif
-    QUIC = 3,
-
-    FILE = 4,
-
+    QUIC,
+    FILE,
+#ifdef OPENSSL_ENABLED
+    HTTPS,
+#endif
     DEFAULT = 0xFF
 };
 
