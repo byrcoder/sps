@@ -104,4 +104,64 @@ GTEST_TEST(SSL, SERVER) {
     } while (i++ < 10);
 }
 
+GTEST_TEST(SSL, CLIENTBIO)
+{
+    BIO *sbio = NULL, *out = NULL;
+    int len;
+    char tmpbuf[1024];
+    SSL_CTX *ctx;
+    SSL *ssl;
+    const char *connect_str = "localhost:445";
+
+    ctx = SSL_CTX_new(TLS_client_method());
+
+    /*
+     * We'd normally set some stuff like the verify paths and * mode here
+     * because as things stand this will connect to * any server whose
+     * certificate is signed by any CA.
+     */
+
+    sbio = BIO_new_ssl_connect(ctx);
+
+    BIO_get_ssl(sbio, &ssl);
+
+    if (!ssl) {
+        fprintf(stderr, "Can't locate SSL pointer\n");
+        goto end;
+    }
+
+    /* Don't want any retries */
+    SSL_set_mode(ssl, SSL_MODE_AUTO_RETRY);
+    SSL_CTX_set_verify(ctx, SSL_VERIFY_NONE, NULL);
+    SSL_set_tlsext_host_name(ssl, "localhost");
+
+    /* We might want to do other things with ssl here */
+
+    BIO_set_conn_hostname(sbio, connect_str);
+
+    out = BIO_new_fp(stdout, BIO_NOCLOSE);
+    if (BIO_do_connect(sbio) <= 0) {
+        fprintf(stderr, "Error connecting to server\n");
+        goto end;
+    }
+
+    if (BIO_do_handshake(sbio) <= 0) {
+        fprintf(stderr, "Error establishing SSL connection\n");
+        goto end;
+    }
+
+    /* Could examine ssl here to get connection info */
+
+    BIO_puts(sbio, "GET / HTTP/1.0\r\n\r\n");
+    for (;;) {
+        len = BIO_read(sbio, tmpbuf, 1024);
+        if (len <= 0)
+            break;
+        BIO_write(out, tmpbuf, len);
+    }
+    end:
+    BIO_free_all(sbio);
+    BIO_free(out);
+}
+
 #endif

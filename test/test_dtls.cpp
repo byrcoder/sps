@@ -24,3 +24,15 @@ SOFTWARE.
 //
 // Created by byrcoder on 2021/9/18.
 //
+
+#include <gtest/gtest.h>
+
+#include <sps_st_io_ssl.hpp>
+
+using namespace sps;
+
+// http://sctp.fh-muenster.de/dtls/dtls_udp_echo.c
+GTEST_TEST(DTLS, SERVER) {
+
+
+}
