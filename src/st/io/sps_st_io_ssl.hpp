@@ -35,8 +35,6 @@ SOFTWARE.
 #include <sps_co.hpp>
 #include <sps_sync.hpp>
 
-#define SSL_SNI_ENABLED 0
-
 namespace sps {
 
 // ssl connect for client

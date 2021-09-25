@@ -26,7 +26,7 @@ SOFTWARE.
 #include <sps_st_io_tcp.hpp>
 #include <sps_log.hpp>
 
-#ifndef SRT_DISABLED
+#ifdef SRT_ENABLED
 
 #include <string>
 #include <vector>

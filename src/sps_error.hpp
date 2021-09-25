@@ -51,6 +51,7 @@ SOFTWARE.
 #define ERROR_SOCKET_WRITE                  1009
 #define ERROR_SOCKET_TIMEOUT                1011
 #define ERROR_SOCKET_EINTR                  1065
+#define ERROR_SOCKET_BUFFER_SMALL           1066
 
 #define ERROR_ST_OPEN_SOCKET                1200
 #define ERROR_ST_CONNECT                    1201

@@ -36,7 +36,8 @@ Install cmake and install git submodules.
 ```
 git submodule init
 git pull --recurse-submodules
-./configure --without-srt
+build srt: ./configure --with-srt
+build openssl:  ./configure - --with-openssl -openssl_include=/usr/local/opt/openssl/include/  -openssl_lib=/usr/local/opt/openssl/lib/ 
 ```
 
 ### Running
