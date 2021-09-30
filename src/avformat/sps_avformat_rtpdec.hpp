@@ -21,36 +21,39 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_AVCODEC_PARSER_HPP
-#define SPS_AVCODEC_PARSER_HPP
+#ifndef SPS_AVFORMAT_RTPDEC_HPP
+#define SPS_AVFORMAT_RTPDEC_HPP
 
-#include <sps_typedef.hpp>
+#include <sps_avformat_dec.hpp>
+#include <sps_avformat_rtp.hpp>
 
-#include <sps_avformat_packet.hpp>
-#include <list>
+#include <sps_io_bytes.hpp>
 
 namespace sps {
 
-enum AVCodec {
-    AVCODEC_H264 = 7,
-    AVCODEC_H265 = 12
+class RtpDemuxer : public IAVDemuxer {
+ public:
+    explicit RtpDemuxer(PIReader rd);
+
+ public:
+    error_t init_codec(int codec_id);
+
+ public:
+    error_t read_header(PAVPacket & buffer)  override;
+    error_t read_packet(PAVPacket& buffer)   override;
+    error_t read_tail(PAVPacket& buffer)    override;
+    error_t probe(PAVPacket& buffer)        override;
+
+ private:
+    PAVBuffer buf;
+    PBytesReader rd;
+    PICodecRtpDecoder rtp_codec_decode;
+
+    std::list<PAVPacket> pkts;
 };
 
-class AVCodecContext {
- public:
-    AVCodecContext(int64_t dts = -1, int64_t pts = -1, int64_t timebase = 1);
-    int64_t dts;
-    int64_t pts;
-    int64_t timebase;
-};
-
-class IAVCodecParser {
- public:
-    virtual error_t encode_avc(AVCodecContext* ctx, uint8_t* in_buf,
-                               int in_size, std::list<PAVPacket>& pkts) = 0;
-};
-typedef std::shared_ptr<IAVCodecParser> PIAVCodecParser;
+AVInputFormat(Rtp, "rtp", "rtp");
 
 }  // namespace sps
 
-#endif  // SPS_AVCODEC_PARSER_HPP
+#endif  // SPS_AVFORMAT_RTPDEC_HPP

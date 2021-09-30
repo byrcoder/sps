@@ -123,6 +123,7 @@ include_directories(
 
         ${PROJECT_SOURCE_DIR}/src/sync
         ${PROJECT_SOURCE_DIR}/src/url
+        ${PROJECT_SOURCE_DIR}/src/util
         )
 
 file(GLOB SRC_LIST
@@ -164,6 +165,7 @@ file(GLOB SRC_LIST
 
         "${PROJECT_SOURCE_DIR}/src/sync/*.cpp"
         "${PROJECT_SOURCE_DIR}/src/url/*.cpp"
+        "${PROJECT_SOURCE_DIR}/src/util/*.cpp"
         )
 
 file(GLOB SRC_TEST_LIST
