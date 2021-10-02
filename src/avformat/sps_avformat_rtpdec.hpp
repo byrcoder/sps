@@ -31,12 +31,47 @@ SOFTWARE.
 
 namespace sps {
 
+/**
+ * rtp decode base
+ */
+class IRtpDecoder {
+ public:
+    /**
+     * @param buffer
+     * @param size
+     * @param pkts result of av packet
+     * @return
+     */
+    error_t decode(uint8_t* buffer, int size, std::list<PAVPacket>& pkts);
+    /**
+     * payload decode for diff payload type
+     * @param pt rtp payload type header
+     * @return
+     */
+    virtual bool match(int pt) = 0;
+    virtual error_t decode(RtpPayloadHeader& header, BitContext& bc, std::list<PAVPacket>& pkts) = 0;
+};
+
+typedef std::shared_ptr<IRtpDecoder> PIRtpDecoder;
+
+/**
+ * dynamic rtp decode payload 96
+ */
+class IRtpDynamicDecoder : public IRtpDecoder {
+ public:
+    bool match(int pt) override;
+    error_t decode(RtpPayloadHeader& header, BitContext& bc, std::list<PAVPacket>& pkts) override = 0;
+};
+
+typedef std::shared_ptr<IRtpDynamicDecoder> PIRtpDynamicDecoder;
+
 class RtpDemuxer : public IAVDemuxer {
  public:
     explicit RtpDemuxer(PIReader rd);
 
  public:
     error_t init_codec(int codec_id);
+    error_t init_rtp_decode(int payload_type);
 
  public:
     error_t read_header(PAVPacket & buffer)  override;
@@ -47,7 +82,7 @@ class RtpDemuxer : public IAVDemuxer {
  private:
     PAVBuffer buf;
     PBytesReader rd;
-    PICodecRtpDecoder rtp_codec_decode;
+    PIRtpDecoder rtp_decoder;
 
     std::list<PAVPacket> pkts;
 };

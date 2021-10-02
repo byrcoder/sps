@@ -38,6 +38,11 @@ namespace sps {
  * https://datatracker.ietf.org/doc/html/rfc1890
  */
 enum RtpPayLoadType {
+    RTP_TS = 33,
+
+    RTP_DYNAMIC = 96,
+    RTP_DYNAMIC_END = 127,
+
     RTP_SR = 200,
     RTP_RR = 201,
     RTP_SDES = 202,
@@ -45,7 +50,10 @@ enum RtpPayLoadType {
     RTP_APP  = 204,
 };
 
+bool is_rtp_mepgts(int pt);
+bool is_rtp_dynamic(int pt);
 bool is_rtcp(int pt);
+
 
 class RtpPayloadHeader {
  public:
@@ -78,13 +86,6 @@ class RtpPayloadHeader {
         std::unique_ptr<uint8_t[]> header_extension;
     } extension_info;
 };
-
-class ICodecRtpDecoder {
- public:
-    virtual error_t decode(RtpPayloadHeader& header, BitContext& bc, std::list<PAVPacket>& pkts) = 0;
-};
-
-typedef std::shared_ptr<ICodecRtpDecoder> PICodecRtpDecoder;
 
 }  // namespace sps
 

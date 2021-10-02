@@ -30,6 +30,14 @@ SOFTWARE.
 
 namespace sps {
 
+bool is_rtp_mepgts(int pt) {
+    return pt == RTP_TS;
+}
+
+bool is_rtp_dynamic(int pt) {
+    return pt >= RTP_DYNAMIC && pt <= RTP_DYNAMIC_END;
+}
+
 bool is_rtcp(int pt) {
     return pt >= RTP_SR && pt <= RTP_APP;
 }
@@ -69,7 +77,7 @@ error_t RtpPayloadHeader::decode(BitContext &bc) {
         return ret;
     }
 
-    sp_info("[rtp @header] pt=%d, ssrc=%x, seq=%d, time=%u %s",
+    sp_debug("[rtp @header] pt=%d, ssrc=%x, seq=%d, time=%u %s",
             fix_header.payload_type, fix_header.ssrc,
             fix_header.sequence_num, fix_header.timestamp,
             fix_header.mark ? ", Mark" : "");

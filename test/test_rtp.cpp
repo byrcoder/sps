@@ -88,7 +88,7 @@ uint8_t* load_sps_pps(const char* sps_pps, int& size) {
     return buf;
 }
 
-GTEST_TEST(RTP, CLIENT) {
+GTEST_TEST(RTP, H264) {
 
     PUdpFd fd;
     auto ret = UdpFd::create_fd(9000, fd);
@@ -123,6 +123,107 @@ GTEST_TEST(RTP, CLIENT) {
                          AVPacketType {0},
                          seq_header, size, 0, 0,
                          0x17, 7);
+        flv_muxer->write_message(h);
+    }
+
+
+    PAVPacket pkt;
+    while ((ret = rtp.read_packet(pkt)) == SUCCESS) {
+        ret = flv_muxer->write_message(pkt);
+
+        EXPECT_TRUE(ret == SUCCESS);
+        // pkt->debug();
+    }
+
+    sp_info("rtp decode fail ret %d", ret);
+    EXPECT_TRUE(ret == ERROR_SOCKET_TIMEOUT);
+}
+
+GTEST_TEST(RTP, AAC) {
+
+    PUdpFd fd;
+    auto ret = UdpFd::create_fd(9000, fd);
+
+    EXPECT_TRUE(ret == SUCCESS);
+
+    if (ret != SUCCESS) {
+        return;
+    }
+
+    // 9001 port not used
+    auto sock = std::make_shared<StUdpClientSocket>("127.0.0.1", 9001, fd);
+    sock->set_recv_timeout(10 * 1000 * 1000);
+
+    RtpDemuxer rtp(sock);
+    rtp.init_codec(AVCODEC_AAC);
+
+    auto io = std::make_shared<FileURLProtocol>(true, false);
+    if ((ret = io->open("rtp_to_aac.flv")) != SUCCESS) {
+        sp_error("open file fail ret %d", ret);
+        EXPECT_TRUE(ret == SUCCESS);
+        return;
+    }
+    auto flv_muxer = std::make_shared<FlvAVMuxer>(io);
+    PAVPacket flv_header;
+    flv_muxer->write_header(flv_header);
+
+    {
+        int size = 0;
+        uint8_t *seq_header = load_sps_pps(sps_pps, size);
+        auto h = AVPacket::create(AV_MESSAGE_DATA, AV_STREAM_TYPE_VIDEO,
+                                  AVPacketType {0},
+                                  seq_header, size, 0, 0,
+                                  0x17, 7);
+        flv_muxer->write_message(h);
+    }
+
+
+    PAVPacket pkt;
+    while ((ret = rtp.read_packet(pkt)) == SUCCESS) {
+        ret = flv_muxer->write_message(pkt);
+
+        EXPECT_TRUE(ret == SUCCESS);
+        // pkt->debug();
+    }
+
+    sp_info("rtp decode fail ret %d", ret);
+    EXPECT_TRUE(ret == ERROR_SOCKET_TIMEOUT);
+}
+
+GTEST_TEST(RTP, TS) {
+
+    PUdpFd fd;
+    auto ret = UdpFd::create_fd(9000, fd);
+
+    EXPECT_TRUE(ret == SUCCESS);
+
+    if (ret != SUCCESS) {
+        return;
+    }
+
+    // 9001 port not used
+    auto sock = std::make_shared<StUdpClientSocket>("127.0.0.1", 9001, fd);
+    sock->set_recv_timeout(10 * 1000 * 1000);
+
+    RtpDemuxer rtp(sock);
+
+    auto io = std::make_shared<FileURLProtocol>(true, false);
+    if ((ret = io->open("rtp_ts_to_flv.flv")) != SUCCESS) {
+        sp_error("open file fail ret %d", ret);
+        EXPECT_TRUE(ret == SUCCESS);
+        return;
+    }
+    auto flv_muxer = std::make_shared<FlvAVMuxer>(io);
+    PAVPacket flv_header;
+    flv_muxer->write_header(flv_header);
+
+    {
+        int size = 0;
+        uint8_t *seq_header = load_sps_pps(sps_pps, size);
+        auto h = AVPacket::create(AV_MESSAGE_DATA, AV_STREAM_TYPE_VIDEO,
+                                  AVPacketType {0},
+                                  seq_header, size, 0, 0,
+                                  0x17, 7);
         flv_muxer->write_message(h);
     }
 

@@ -21,39 +21,38 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_AVCODEC_PARSER_HPP
-#define SPS_AVCODEC_PARSER_HPP
+//
+// Created by byrcoder on 2021/10/1.
+//
 
-#include <sps_typedef.hpp>
-
-#include <sps_avformat_packet.hpp>
-#include <list>
+#include <sps_avformat_rtpdec_ts.hpp>
 
 namespace sps {
 
-enum AVCodec {
-    AVCODEC_H264 = 7,
+MpegtsRtpDecodder::MpegtsRtpDecodder() {
+    ts_demuxer = std::make_shared<TsDemuxer>(nullptr, nullptr);
+}
 
-    AVCODEC_AAC  = 10,
+bool MpegtsRtpDecodder::match(int pt) {
+    return pt == RTP_TS;
+}
 
-    AVCODEC_H265 = 12
-};
+error_t MpegtsRtpDecodder::decode(RtpPayloadHeader &header, BitContext &bc, std::list<PAVPacket> &pkts) {
+    auto ret = ts_demuxer->decode_packet(bc.pos(), bc.size());
 
-class AVCodecContext {
- public:
-    AVCodecContext(int64_t dts = -1, int64_t pts = -1, int64_t timebase = 1);
-    int64_t dts;
-    int64_t pts;
-    int64_t timebase;
-};
+    if (ret != SUCCESS) {
+        sp_error("[rtp@ts decode ret %d", ret);
+        return ret;
+    }
 
-class IAVCodecParser {
- public:
-    virtual error_t encode_avc(AVCodecContext* ctx, uint8_t* in_buf,
-                               int in_size, std::list<PAVPacket>& pkts) = 0;
-};
-typedef std::shared_ptr<IAVCodecParser> PIAVCodecParser;
+    bc.skip_read_bytes(bc.size());
 
-}  // namespace sps
+    PAVPacket pkt;
+    while (ts_demuxer->pop(pkt))  {
+        pkts.push_back(std::move(pkt));
+    }
 
-#endif  // SPS_AVCODEC_PARSER_HPP
+    return ret;
+}
+
+}

@@ -27,6 +27,7 @@ SOFTWARE.
 #include <sps_avformat_rtp.hpp>
 
 #include <sps_avcodec_h264_parser.hpp>
+#include <sps_avformat_rtpdec.hpp>
 
 namespace sps {
 
@@ -98,36 +99,36 @@ class FuDecoder {
 };
 
 // h264 rtp decoder
-class IRtpDecoder {
+class IRtpH264Decoder {
  public:
     virtual error_t decode(int tp, RtpPayloadHeader& header,
             BitContext& bc, std::list<PAVPacket>& pkts) = 0;
 };
-typedef std::shared_ptr<IRtpDecoder> PIRtpDecoder;
+typedef std::shared_ptr<IRtpH264Decoder> PIRtpH264Decoder;
 
 // raw nalu decode
-class NaluRtpDecoder : public IRtpDecoder {
+class NaluRtpDecoder : public IRtpH264Decoder {
  public:
     error_t decode(int tp, RtpPayloadHeader& header,
             BitContext& bc, std::list<PAVPacket>& pkts) override;
 };
 
 // stap-a/b decode
-class StapRtpDecoder : public IRtpDecoder {
+class StapRtpDecoder : public IRtpH264Decoder {
  public:
     error_t decode(int tp, RtpPayloadHeader& header,
                    BitContext& bc, std::list<PAVPacket>& pkts) override;
 };
 
 // mtap-a/b decode
-class MtapRtpDecoder : public IRtpDecoder {
+class MtapRtpDecoder : public IRtpH264Decoder {
  public:
     error_t decode(int tp, RtpPayloadHeader& header,
                    BitContext& bc, std::list<PAVPacket>& pkts) override;
 };
 
 // fu-a/b decode
-class FuRtpDecoder : public IRtpDecoder {
+class FuRtpDecoder : public IRtpH264Decoder {
  public:
     FuRtpDecoder(PCharBuffer& pkt, int64_t rtp_timestamp);
  public:
@@ -139,9 +140,9 @@ class FuRtpDecoder : public IRtpDecoder {
     int64_t pre_rtp_timestamp;
 };
 
-class H264RtpDecoder : public ICodecRtpDecoder {
+class H264RtpDecoder : public IRtpDynamicDecoder {
  public:
-    PIRtpDecoder create_decoder(BitContext& bc, uint8_t nal_unit_type);
+    PIRtpH264Decoder create_decoder(BitContext& bc, uint8_t nal_unit_type);
 
  public:
     error_t decode(RtpPayloadHeader& header, BitContext& bc, std::list<PAVPacket>& pkts) override;

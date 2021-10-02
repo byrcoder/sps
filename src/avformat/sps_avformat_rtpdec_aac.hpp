@@ -21,39 +21,41 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_AVCODEC_PARSER_HPP
-#define SPS_AVCODEC_PARSER_HPP
+#ifndef SPS_AVFORMAT_RTPDEC_AAC_HPP
+#define SPS_AVFORMAT_RTPDEC_AAC_HPP
 
-#include <sps_typedef.hpp>
+#include <sps_avformat_rtpdec.hpp>
 
-#include <sps_avformat_packet.hpp>
-#include <list>
+#include <sps_avcodec_aac_parser.hpp>
 
 namespace sps {
 
-enum AVCodec {
-    AVCODEC_H264 = 7,
-
-    AVCODEC_AAC  = 10,
-
-    AVCODEC_H265 = 12
+struct RtpAacAu {
+    uint16_t au_size : 13;
+    uint16_t au_index : 3;
 };
 
-class AVCodecContext {
+class RtpAacAuHeader {
  public:
-    AVCodecContext(int64_t dts = -1, int64_t pts = -1, int64_t timebase = 1);
-    int64_t dts;
-    int64_t pts;
-    int64_t timebase;
+    error_t decode(BitContext& bc);
+
+ public:
+    int au_headers_length;  // bits
+    int nb_au_headers;
+    std::list<RtpAacAu> au_lists;
 };
 
-class IAVCodecParser {
+class AacRtpDecoder : public IRtpDynamicDecoder {
  public:
-    virtual error_t encode_avc(AVCodecContext* ctx, uint8_t* in_buf,
-                               int in_size, std::list<PAVPacket>& pkts) = 0;
+    AacRtpDecoder();
+
+ public:
+    error_t decode(RtpPayloadHeader& header, BitContext& bc, std::list<PAVPacket>& pkts);
+
+ private:
+    AacAVCodecParser aac_parser;
 };
-typedef std::shared_ptr<IAVCodecParser> PIAVCodecParser;
 
 }  // namespace sps
 
-#endif  // SPS_AVCODEC_PARSER_HPP
+#endif  // SPS_AVFORMAT_RTPDEC_AAC_HPP

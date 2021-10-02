@@ -65,6 +65,14 @@ bool FuDecoder::is_end() {
 error_t NaluRtpDecoder::decode(int tp, RtpPayloadHeader &header,
                                BitContext &bc, std::list<PAVPacket> &pkts) {
     // TODO: fixme dts, use clock timestamp
+    /*
+     * https://datatracker.ietf.org/doc/html/rfc3640#2.6
+     * The DTS cannot be
+     * carried in the RTP header.  In some cases, the DTS can be derived
+     * from the RTP time stamp using frame rate information; this requires
+     * deep parsing in the video stream, which may be considered
+     * objectionable.
+     */
     AVCodecContext ctx(get_time() * 90, header.fix_header.timestamp, 90);
     H264AVCodecParser h264_codec;
     auto ret = h264_codec.encode_raw_nalu(&ctx, bc.pos(), bc.size(), pkts);
@@ -210,7 +218,7 @@ error_t FuRtpDecoder::decode(int tp, RtpPayloadHeader &header,
     return ret;
 }
 
-PIRtpDecoder H264RtpDecoder::create_decoder(BitContext& bc, uint8_t nal_unit_type) {
+PIRtpH264Decoder H264RtpDecoder::create_decoder(BitContext& bc, uint8_t nal_unit_type) {
     /**
      * Single NAL Unit Packet: Contains only a single NAL unit in the
      * payload.  The NAL header type field is equal to the original NAL unit
