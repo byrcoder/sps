@@ -42,7 +42,7 @@ class IRtpDecoder {
      * @param pkts result of av packet
      * @return
      */
-    error_t decode(uint8_t* buffer, int size, std::list<PAVPacket>& pkts);
+    virtual error_t decode(uint8_t* buffer, int size, std::list<PAVPacket>& pkts);
     /**
      * payload decode for diff payload type
      * @param pt rtp payload type header
@@ -83,6 +83,7 @@ class RtpDemuxer : public IAVDemuxer {
     PAVBuffer buf;
     PBytesReader rd;
     PIRtpDecoder rtp_decoder;
+    PIRtpDecoder rtcp_decoder;
 
     std::list<PAVPacket> pkts;
 };

@@ -34,7 +34,7 @@ MpegtsRtpDecodder::MpegtsRtpDecodder() {
 }
 
 bool MpegtsRtpDecodder::match(int pt) {
-    return pt == RTP_TS;
+    return is_rtp_mepgts(pt);
 }
 
 error_t MpegtsRtpDecodder::decode(RtpPayloadHeader &header, BitContext &bc, std::list<PAVPacket> &pkts) {

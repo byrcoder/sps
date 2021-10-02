@@ -31,6 +31,7 @@ SOFTWARE.
 #include <sps_avformat_rtp.hpp>
 #include <sps_avformat_rtpdec_aac.hpp>
 #include <sps_avformat_rtpdec_h264_hevc.hpp>
+#include <sps_avformat_rtpdec_rtcp.hpp>
 #include <sps_avformat_rtpdec_ts.hpp>
 #include <sps_log.hpp>
 
@@ -58,12 +59,13 @@ error_t IRtpDecoder::decode(uint8_t *buffer, int size, std::list<PAVPacket> &pkt
 }
 
 bool IRtpDynamicDecoder::match(int pt) {
-    return pt >= RTP_DYNAMIC && pt <= RTP_DYNAMIC_END;
+    return is_rtp_dynamic(pt);
 }
 
 RtpDemuxer::RtpDemuxer(PIReader reader) {
     buf       = std::make_shared<AVBuffer>(RTP_MAX_LENGTH, true);
     rd        = std::make_unique<BytesReader>(reader, buf);
+    rtcp_decoder = std::make_shared<RtcpRtpDecoder>();
 }
 
 error_t RtpDemuxer::init_codec(int codec_id) {
@@ -119,7 +121,9 @@ error_t RtpDemuxer::read_packet(PAVPacket& buffer) {
 
         uint8_t pay_type = p[1];
         if (is_rtcp(pay_type)) {
-            sp_info("[rtp] ignore rtcp %d", pay_type);
+            if ((ret = rtcp_decoder->decode(p, len, pkts)) != SUCCESS) {
+                return ret;
+            }
             continue;
         }
 
