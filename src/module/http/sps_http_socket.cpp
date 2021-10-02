@@ -134,7 +134,7 @@ error_t HttpRequestSocket::read_chunked_data(void* buf, size_t size, size_t& nre
 
     nb_chunked_left -= nread;  // ignore ret
 
-    sp_info("read chunked data nb_chunked_size: %lu, "
+    sp_debug("read chunked data nb_chunked_size: %lu, "
             "nb_chunked_left: %lu, ret: %d, nread: %lu",
             nb_chunked_size, nb_chunked_left, ret, nread);
 

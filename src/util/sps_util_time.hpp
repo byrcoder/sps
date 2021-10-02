@@ -21,39 +21,14 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_AVCODEC_PARSER_HPP
-#define SPS_AVCODEC_PARSER_HPP
+#ifndef SPS_UTIL_TIME_HPP
+#define SPS_UTIL_TIME_HPP
 
 #include <sps_typedef.hpp>
 
-#include <sps_avformat_packet.hpp>
-#include <list>
-
 namespace sps {
-
-enum AVCodec {
-    AVCODEC_H264 = 7,
-
-    AVCODEC_AAC  = 10,
-
-    AVCODEC_H265 = 12
-};
-
-class AVCodecContext {
- public:
-    AVCodecContext(int64_t dts = -1, int64_t pts = -1, int64_t timebase = 1);
-    int64_t dts;
-    int64_t pts;
-    int64_t timebase;
-};
-
-class IAVCodecParser {
- public:
-    virtual error_t encode_avc(AVCodecContext* ctx, uint8_t* in_buf,
-                               int in_size, std::list<PAVPacket>& pkts) = 0;
-};
-typedef std::shared_ptr<IAVCodecParser> PIAVCodecParser;
-
+    utime_t update_time();
+    utime_t get_time();
 }  // namespace sps
 
-#endif  // SPS_AVCODEC_PARSER_HPP
+#endif  // SPS_UTIL_TIME_HPP

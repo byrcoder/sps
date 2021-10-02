@@ -146,6 +146,11 @@ SOFTWARE.
 #define ERROR_TS_PACKET_DECODE              3301
 #define ERROR_TS_PACKET_CC_CONTINUE         3302
 
+#define ERROR_RTP_PROBE                     3350
+#define ERROR_RTP_NOT_SUPPORT               3351
+#define ERROR_RTP_PAYLOAD_TYPE              3352
+#define ERROR_RTP_DECODER_H264              3353
+
 #define ERROR_H264_DECODER                  3500
 #define ERROR_H264_ENCODER                  3501
 #define ERROR_H264_NOT_IMPL                 3502

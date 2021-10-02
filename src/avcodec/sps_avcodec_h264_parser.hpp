@@ -156,8 +156,26 @@ class H264AVCodecParser : public IAVCodecParser {
     H264AVCodecParser();
 
  public:
+    /**
+     * @param ctx
+     * @param in_buf    nalu start with 00 00 01 or avcc format
+     * @param in_size
+     * @param pkts
+     * @return
+     */
     error_t encode_avc(AVCodecContext* ctx, uint8_t* in_buf, int in_size,
                        std::list<PAVPacket>& pkts) override;
+
+ public:
+    /**
+     * @param ctx
+     * @param in_buf nalu raw data has no 00 00 01 start flag
+     * @param in_size
+     * @param pkts
+     * @return
+     */
+    error_t encode_raw_nalu(AVCodecContext* ctx, uint8_t* in_buf, int in_size,
+                            std::list<PAVPacket>& pkts);
 
  private:
     PNALUParser nalu_parser;

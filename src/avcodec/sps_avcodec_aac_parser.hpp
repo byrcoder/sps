@@ -121,6 +121,9 @@ class AacAVCodecParser : public IAVCodecParser {
     error_t encode_avc(AVCodecContext* ctx, uint8_t* in_buf, int in_size,
                        std::list<PAVPacket>& pkts) override;
 
+    error_t encode_raw_avc(AVCodecContext* ctx, AdtsFixedHeader* header, uint8_t* in_buf, int in_size,
+                       std::list<PAVPacket>& pkts);
+
  public:
     PAdtsFixedHeader header;
 };

@@ -77,6 +77,7 @@ class FileURLProtocol : public IURLProtocol {
 
     bool          trunc;
     bool          append;
+    bool          create;
 };
 
 class FileURLProtocolFactory : public IURLProtocolFactory {

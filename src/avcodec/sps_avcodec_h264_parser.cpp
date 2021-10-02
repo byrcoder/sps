@@ -356,4 +356,22 @@ error_t H264AVCodecParser::encode_avc(AVCodecContext* ctx, uint8_t* in_buf,
     return nalu_parser->encode_avc(&nalus, pkts);
 }
 
+error_t H264AVCodecParser::encode_raw_nalu(AVCodecContext *ctx, uint8_t *in_buf,
+                                           int in_size, std::list<PAVPacket> &pkts) {
+    NALUContext nalus(ctx->dts, ctx->pts, ctx->timebase);
+
+    error_t ret = nalus.append(in_buf, in_size);
+
+    if (ret != SUCCESS) {
+        sp_error("[h264] append nalu fail ret %d nalu_header %x", ret, in_buf[0]);
+        return ret;
+    }
+
+    for (auto& n : nalus.nalu_list) {
+        sp_info("=======nalu type %d=============", n.nal_header.nal_unit_type);
+    }
+
+    return nalu_parser->encode_avc(&nalus, pkts);
+}
+
 }

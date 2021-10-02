@@ -150,7 +150,7 @@ error_t StUdpClientSocket::read(void *buf, size_t size, size_t &nread,
 
     int n = st_recvfrom(fd->get_fd(), buf, size, (struct sockaddr*) &from_addr, &from_len, rtm);
 
-    sp_info("st_recvfrom ret %d", n);
+    sp_debug("st_recvfrom ret %d", n);
 
     if (n <= 0) {
         if (n < 0 && errno == ETIME) {
@@ -364,7 +364,7 @@ PStUdpSessionClientSocket StUdpServerSocket::search_or_create(std::string& cip, 
     sessions[key] = std::weak_ptr<StUdpSessionClientSocket>(new_socket);
     is_new = true;
 
-    sp_info("udp client coming %s:%d", cip.c_str(), cport);
+    sp_trace("udp client coming %s:%d", cip.c_str(), cport);
 
     return new_socket;
 }
@@ -372,7 +372,7 @@ PStUdpSessionClientSocket StUdpServerSocket::search_or_create(std::string& cip, 
 void StUdpServerSocket::remove(const std::string& cip, int cport) {
     std::string key = generate_key(cip, cport);
 
-    sp_info("udp client leaving %s:%d", cip.c_str(), cport);
+    sp_trace("udp client leaving %s:%d", cip.c_str(), cport);
     sessions.erase(key);
 }
 

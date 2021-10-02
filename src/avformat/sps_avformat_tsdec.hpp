@@ -60,6 +60,11 @@ class TsDemuxer : public IAVDemuxer, public IPesHandler {
     error_t probe(PAVPacket& buffer)        override;
 
  public:
+    // not from rd, but from memory input
+    error_t decode_packet(uint8_t* pkt, size_t len);
+    bool    pop(PAVPacket& pkt);
+
+ public:
     error_t on_pes_complete(TsPesContext* pes) override;
     error_t on_h264(TsPesContext* pes);
     error_t on_aac(TsPesContext* pes);
@@ -75,6 +80,8 @@ class TsDemuxer : public IAVDemuxer, public IPesHandler {
 };
 
 AVInputFormat(Ts, "ts", "ts");
+
+typedef std::shared_ptr<TsDemuxer> PTsDemuxer;
 
 }  // namespace sps
 

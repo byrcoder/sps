@@ -65,13 +65,11 @@ error_t TsDemuxer::read_header(PAVPacket & buffer) {
 error_t TsDemuxer::read_packet(PAVPacket& buffer) {
     error_t ret = SUCCESS;
 
-    if (!encoder_pkts.empty()) {
-        buffer = encoder_pkts.front();
-        encoder_pkts.erase(encoder_pkts.begin());
-        return SUCCESS;
-    }
-
     do {
+        if (pop(buffer)) {
+            return SUCCESS;
+        }
+
         if ((ret = rd->acquire(SPS_TS_PACKET_SIZE)) != SUCCESS) {
             sp_error("fail read ts packet ret %d", ret);
             return ret;
@@ -80,18 +78,12 @@ error_t TsDemuxer::read_packet(PAVPacket& buffer) {
         sp_debug("get packet size %lu(%c), (%lu~%lu)",
                 buf->size(), *buf->buffer(), buf->buf_ptr, buf->buf_end);
 
-        if ((ret = ts_ctx.decode(buf->buffer(), SPS_TS_PACKET_SIZE)) != SUCCESS) {
+        if ((ret = decode_packet(buf->buffer(), SPS_TS_PACKET_SIZE)) != SUCCESS) {
             sp_error("fail decode ts packet ret %d", ret);
             return ret;
         }
 
         rd->buf->clear();
-
-        if (!encoder_pkts.empty()) {
-            buffer = encoder_pkts.front();
-            encoder_pkts.erase(encoder_pkts.begin());
-            return SUCCESS;
-        }
 
     } while (true);
 
@@ -104,6 +96,38 @@ error_t TsDemuxer::read_tail(PAVPacket& buffer) {
 
 error_t TsDemuxer::probe(PAVPacket& buffer) {
     return ERROR_STREAM_NOT_IMPL;
+}
+
+error_t TsDemuxer::decode_packet(uint8_t* pkt, size_t len) {
+    int pos = 0;
+    error_t ret = SUCCESS;
+
+    while (pos < len) {
+        if (len - pos < SPS_TS_PACKET_SIZE) {
+            ret = ERROR_TS_PACKET_SIZE;
+            sp_error("fail read ts packet ret %d", ret);
+            return ret;
+        }
+
+        if ((ret = ts_ctx.decode(pkt + pos, SPS_TS_PACKET_SIZE)) != SUCCESS) {
+            sp_error("fail decode ts packet ret %d", ret);
+            return ret;
+        }
+
+        pos += SPS_TS_PACKET_SIZE;
+    }
+
+    return ret;
+}
+
+bool TsDemuxer::pop(PAVPacket &pkt) {
+    if (!encoder_pkts.empty()) {
+        pkt = encoder_pkts.front();
+        encoder_pkts.erase(encoder_pkts.begin());
+        return true;
+    }
+
+    return false;
 }
 
 error_t TsDemuxer::on_pes_complete(TsPesContext *pes) {

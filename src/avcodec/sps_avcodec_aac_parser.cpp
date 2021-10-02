@@ -194,4 +194,27 @@ error_t AacAVCodecParser::encode_avc(AVCodecContext *ctx, uint8_t *in_buf,
     return ret;
 }
 
+error_t AacAVCodecParser::encode_raw_avc(AVCodecContext* ctx, AdtsFixedHeader* header,
+        uint8_t* in_buf, int in_size, std::list<PAVPacket>& pkts) {
+    auto flags = (AAC << 4) | FLV_SAMPLERATE_44100HZ |
+                 FLV_SAMPLESSIZE_16BIT | FLV_STEREO;
+
+    auto pkt = AVPacket::create(
+            AV_MESSAGE_DATA,
+            AV_STREAM_TYPE_AUDIO,
+            AVPacketType{AV_AUDIO_TYPE_SEQUENCE_DATA},
+            in_buf,
+            in_size,
+            ctx->dts / ctx->timebase,
+            ctx->dts / ctx->timebase,
+            flags,
+            AAC
+    );
+
+    sp_debug("audio dts %lld", ctx->dts);
+    pkts.push_back(pkt);
+
+    return SUCCESS;
+}
+
 }

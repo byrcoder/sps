@@ -21,39 +21,72 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_AVCODEC_PARSER_HPP
-#define SPS_AVCODEC_PARSER_HPP
+#ifndef SPS_AVFORMAT_RTP_HPP
+#define SPS_AVFORMAT_RTP_HPP
 
-#include <sps_typedef.hpp>
+#include <vector>
 
 #include <sps_avformat_packet.hpp>
-#include <list>
+#include <sps_io_bits.hpp>
+
+#define RTP_MAX_LENGTH 3000
+#define RTP_NALU_MAX_LENGTH 1 * 1024 * 1024
 
 namespace sps {
 
-enum AVCodec {
-    AVCODEC_H264 = 7,
+/**
+ * https://datatracker.ietf.org/doc/html/rfc1890
+ */
+enum RtpPayLoadType {
+    RTP_TS = 33,
 
-    AVCODEC_AAC  = 10,
+    RTP_DYNAMIC = 96,
+    RTP_DYNAMIC_END = 127,
 
-    AVCODEC_H265 = 12
+    RTP_SR = 200,
+    RTP_RR = 201,
+    RTP_SDES = 202,
+    RTP_BYE  = 203,
+    RTP_APP  = 204,
 };
 
-class AVCodecContext {
+bool is_rtp_mepgts(int pt);
+bool is_rtp_dynamic(int pt);
+bool is_rtcp(int pt);
+
+
+class RtpPayloadHeader {
  public:
-    AVCodecContext(int64_t dts = -1, int64_t pts = -1, int64_t timebase = 1);
-    int64_t dts;
-    int64_t pts;
-    int64_t timebase;
-};
+    error_t decode(BitContext& bc);
 
-class IAVCodecParser {
+ private:
+    error_t decode_extension(BitContext& bc);
+
  public:
-    virtual error_t encode_avc(AVCodecContext* ctx, uint8_t* in_buf,
-                               int in_size, std::list<PAVPacket>& pkts) = 0;
+    struct {
+        uint32_t version : 2;
+        uint32_t padding : 1;
+        uint32_t extension : 1;
+        uint32_t cc : 4;
+        uint32_t mark : 1;
+        // http://www.iana.org/assignments/rtp-parameters/rtp-parameters.xhtml
+        uint32_t payload_type : 7;
+        uint32_t sequence_num : 16;
+
+        uint32_t timestamp;
+        uint32_t ssrc;
+    } fix_header;
+
+    // number of cc
+    std::vector<uint32_t> csrc;
+
+    struct {
+        uint16_t define_by_profile;
+        uint16_t length;
+        std::unique_ptr<uint8_t[]> header_extension;
+    } extension_info;
 };
-typedef std::shared_ptr<IAVCodecParser> PIAVCodecParser;
 
 }  // namespace sps
 
-#endif  // SPS_AVCODEC_PARSER_HPP
+#endif  // SPS_AVFORMAT_RTP_HPP
