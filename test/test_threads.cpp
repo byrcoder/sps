@@ -21,59 +21,44 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#include <sps_avformat_enc.hpp>
+//
+// Created by byrcoder on 2022/3/9.
+//
 
-#include <algorithm>
-
+#include <gtest/gtest.h>
 #include <sps_log.hpp>
 
-namespace sps {
+using namespace std;
 
-const IAVOutputFormat* IAVMuxer::name() {
-    return fmt;
+struct Int32 {
+    int32_t a32;
+};
+
+struct Int64 {
+    int32_t a32;
+    int32_t b32;
+};
+
+struct Int96 {
+    int32_t a32;
+    int32_t b32;
+    int32_t c32;
+};
+
+GTEST_TEST(THREAD, ATOMIC) {
+    std::atomic<int> i32(1);
+    std::atomic<bool> b(false);
+    std::atomic<int64_t> i64;
+
+    std::atomic<Int32> si32;
+    std::atomic<Int64> si64;
+    std::atomic<Int96> si96;
+
+    EXPECT_TRUE(i32.is_lock_free());
+    EXPECT_TRUE(b.is_lock_free());
+    EXPECT_TRUE(i64.is_lock_free());
+    EXPECT_TRUE(si32.is_lock_free());
+    EXPECT_TRUE(si64.is_lock_free());
+    // EXPECT_TRUE(si96.is_lock_free());  compile error
+
 }
-
-error_t IAVMuxer::set_av_ctx(IAVContext *ctx) {  return SUCCESS; }
-
-IAVOutputFormat::IAVOutputFormat(const char *name, const char *ext) {
-    this->name = name;
-    this->ext  = ext;
-}
-
-bool IAVOutputFormat::match(const char *e) const {
-    int n = strlen(ext);
-    int m = strlen(ext);
-    return memcmp(ext, e, std::max(n, m)) == 0;
-}
-
-PIAVMuxer IAVOutputFormat::create2(PIWriter pw, PRequestUrl& url) {
-    auto muxer = _create(std::move(pw));
-    if (muxer) {
-        muxer->fmt = this;
-        muxer->url = url;
-    }
-    return muxer;
-}
-
-PIAVMuxer AVEncoderFactory::create(PIWriter p, PRequestUrl &url) {
-    auto& fmts = refs();
-
-    for (auto& f : fmts) {
-        if (f->match(url->get_ext())) {
-            return f->create2(std::move(p), url);
-        }
-    }
-    return nullptr;
-}
-
-PIAVMuxer AVEncoderFactory::create(PIWriter p, const std::string &url) {
-    PRequestUrl purl = std::make_shared<RequestUrl>();
-
-    if (purl->parse_url(url) != SUCCESS) {
-        sp_error("Invalid url %s.", url.c_str());
-        return nullptr;
-    }
-    return create(std::move(p), purl);
-}
-
-}  // namespace sps

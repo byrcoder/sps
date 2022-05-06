@@ -29,6 +29,7 @@ SOFTWARE.
 namespace sps {
     utime_t update_time();
     utime_t get_time();
+    std::string to_hex(const char* msg, int len);
 }  // namespace sps
 
 #endif  // SPS_UTIL_TIME_HPP

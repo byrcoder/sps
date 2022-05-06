@@ -30,6 +30,10 @@ SOFTWARE.
 #include <time.h>
 #include <sys/time.h>
 
+#include <string>
+#include <sstream>
+#include <iomanip>
+
 namespace sps {
 
 utime_t update_time() {
@@ -44,6 +48,16 @@ utime_t update_time() {
 
 utime_t get_time() {
     return update_time();
+}
+
+std::string to_hex(const char* msg, int len) {
+    std::stringstream ss;
+    ss << "hex: 0x";
+    for (int i = 0; i < len; ++i) {
+        ss << std::hex << (int) msg[i] << " ";
+    }
+
+    return ss.str();
 }
 
 }

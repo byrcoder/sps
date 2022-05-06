@@ -70,7 +70,7 @@ error_t FlvAVMuxer::write_header(PAVPacket& buffer) {
     return ret;
 }
 
-error_t FlvAVMuxer::write_message(PAVPacket& buffer) {
+error_t FlvAVMuxer::write_packet(PAVPacket& buffer) {
     tag_buffer->clear();
     BytesWriter head_writer(tag_buffer);
 

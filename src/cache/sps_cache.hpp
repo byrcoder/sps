@@ -57,6 +57,8 @@ class ICacheStream: public Subscriber<T>, public Publisher<T> {
     virtual bool empty() = 0;
     virtual bool eof() { return is_eof; }
     virtual void close() { is_eof = true; }
+    virtual void* get_ctx() { return nullptr; }
+    virtual void  set_ctx(void* ctx) {        }
 
  public:
     error_t do_event(T& o) override  { return SUCCESS; }
@@ -99,6 +101,14 @@ class CacheStream : public ICacheStream<T> {
         return pbs.empty();
     }
 
+    void* get_ctx() override {
+        return ctx;
+    }
+
+    void set_ctx(void* ctx) override {
+        this->ctx = ctx;
+    }
+
  public:
     error_t do_event(T& o) override {
         return put(o);
@@ -106,6 +116,7 @@ class CacheStream : public ICacheStream<T> {
 
  protected:
     std::list<T> pbs;
+    void* ctx = nullptr;
 };
 
 template<class T>

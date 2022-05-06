@@ -34,10 +34,14 @@ SOFTWARE.
 
 #include <sps_avformat_rtmpdec.hpp>
 #include <sps_avformat_rtmpenc.hpp>
+#include <sps_avformat_ffmpeg_dec.hpp>
+#include <sps_avformat_ffmpeg_enc.hpp>
 
 #include <sps_librtmp_packet.hpp>
 #include <sps_rtmp_server.hpp>
 #include <sps_rtmp_server_handler.hpp>
+
+#include <sps_url_rtmp_ffmpeg.hpp>
 
 namespace sps {
 
@@ -87,11 +91,20 @@ error_t RtmpServerStreamHandler::publish(ConnContext &ctx) {
 
     auto    rt  = dynamic_cast<RtmpConnHandler*>(ctx.conn);
     error_t ret = SUCCESS;
+    std::string url    =  ctx.req->host + ctx.req->get_path();
+
+#ifdef FFMPEG_ENABLED
+    auto    io  = std::make_shared<FFmpegRtmpUrlProtocol>(rt->hk);
+    FFmpegAVDemuxer demuxer(io);
+    if ((ret = demuxer.init()) != SUCCESS) {
+        return ret;
+    }
+#else
     auto    io  = std::make_shared<RtmpUrlProtocol>(rt->hk);
     RtmpDemuxer demuxer(io);
+#endif
 
-    std::string url    =  ctx.req->host + ctx.req->get_path();
-    auto cache         = StreamCache::get_streamcache(url);
+    auto cache         =  StreamCache::get_streamcache(url);
 
     if (cache) {
         sp_error("cannot publish twice");
@@ -99,6 +112,7 @@ error_t RtmpServerStreamHandler::publish(ConnContext &ctx) {
     }
 
     cache = StreamCache::create_av_streamcache(url);
+    cache->set_ctx(demuxer.get_av_ctx());
     sp_trace("Publish url %s", url.c_str());
 
     do {
@@ -140,8 +154,19 @@ error_t RtmpServerStreamHandler::play(ConnContext &ctx) {
         sp_error("rtmp edge not support!");
         return ERROR_RTMP_NOT_IMPL;
     }
+#ifdef FFMPEG_ENABLED
+    auto    io  = std::make_shared<FFmpegRtmpUrlProtocol>(rt->hk);
+    FFmpegAVMuxer muxer(io, nullptr);
+
+    if ((ret = muxer.set_av_ctx((IAVContext*) cache->get_ctx())) != SUCCESS) {
+        sp_error("fail init ctx ret %d", ret);
+        cache->cancel(cc);
+        return ret;
+    }
+#else
     auto    io  = std::make_shared<RtmpUrlProtocol>(rt->hk);
     RtmpAVMuxer muxer(io);
+#endif
 
     sp_trace("Playing url %s", url.c_str());
 
@@ -156,7 +181,7 @@ error_t RtmpServerStreamHandler::play(ConnContext &ctx) {
         }
 
         for (auto& p : vpb) {
-            if ((ret = muxer.write_message(p)) != SUCCESS) {
+            if ((ret = muxer.write_packet(p)) != SUCCESS) {
                 sp_error("fail playing send ret %d", ret);
                 break;
             }

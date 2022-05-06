@@ -21,40 +21,73 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-//
-// Created by byrcoder on 2021/6/16.
-//
-#ifndef SPS_AVFORMAT_FLVENC_HPP
-#define SPS_AVFORMAT_FLVENC_HPP
+#ifndef SPS_AVFORMAT_FFMPEG_ENC_HPP
+#define SPS_AVFORMAT_FFMPEG_ENC_HPP
 
+#include <sps_auto_header.hpp>
 #include <sps_avformat_enc.hpp>
-#include <sps_io.hpp>
-#include <sps_io_bytes.hpp>
+#include <sps_avformat_ffmpeg.hpp>
+
+#ifdef FFMPEG_ENABLED
+
+// #define FFMPEG_ENCODE_DEBUG
 
 namespace sps {
 
-class FlvAVMuxer : public IAVMuxer {
+class FFmpegAVMuxer : public IAVMuxer {
  public:
-    explicit FlvAVMuxer(PIWriter writer);
+    static int write_data(void* opaque, uint8_t* buf, int buf_size);
+
+ public:
+    explicit FFmpegAVMuxer(PIWriter writer, PRequestUrl url);
+    ~FFmpegAVMuxer();
 
  public:
     error_t write_header(PAVPacket& buffer) override;
     error_t write_packet(PAVPacket& buffer) override;
-    error_t write_tail(PAVPacket& buffer)    override;
-
- private:
-    PIWriter  writer;
-    PAVBuffer tag_buffer;
-    uint32_t  previous_size;
+    error_t write_tail(PAVPacket& buffer)   override;
+    error_t set_av_ctx(IAVContext* ctx) override;
 
  public:
-    bool      filter_video    = false;
-    bool      filter_metadata = false;
-    bool      filter_audio    = false;
+    error_t init();
+ public:
+    AVFormatContext* get_ctx();
+
+ public:
+    error_t on_av_stream(AVStream* stream);
+
+ private:
+    error_t init_ffmpeg_ctx();
+    void    free_ffmpeg_ctx();
+
+ private:
+    PIWriter writer;
+
+    //ffmpeg
+    AVFormatContext *ctx;
+    AVIOContext* pb;
+    uint8_t* avio_ctx_buffer;
+
+    // ffmpeg timestamp
+    int64_t cur_timestamp;
+
+#ifdef FFMPEG_ENCODE_DEBUG
+    PIWriter debug_output;
+#endif
 };
 
-AVOutputFormat(Flv, "flv", "flv");
+class FFmpegAVOutputFormat : public IAVOutputFormat {
+ public:
+    FFmpegAVOutputFormat();
+    bool match(const char* ext) const override;
+
+ public:
+    PIAVMuxer _create(PIWriter pw) const override;
+    PIAVMuxer create2(PIWriter pw, PRequestUrl& url) override;
+};
 
 }  // namespace sps
 
-#endif  // SPS_AVFORMAT_FLVENC_HPP
+#endif
+
+#endif  // SPS_AVFORMAT_FFMPEG_ENC_HPP

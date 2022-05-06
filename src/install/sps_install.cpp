@@ -30,6 +30,7 @@ SOFTWARE.
 #include <sps_url_protocol.hpp>
 #include <avformat/sps_avformat_dec.hpp>
 #include <avformat/sps_avformat_enc.hpp>
+#include <avformat/sps_avformat_ffmpeg.hpp>
 
 namespace sps {
 
@@ -80,6 +81,25 @@ void init_avformats() {
     }
 }
 
+#ifdef FFMPEG_ENABLED
+
+void init_ffmpeg() {
+
+#ifndef FF_API_NEXT
+    av_register_all();  // maybe deprecated
+    avcodec_register_all();  // maybe deprecated
+#endif
+    avformat_network_init();
+}
+
+#else
+
+void init_ffmpeg() {
+
+}
+
+#endif
+
 // TODO(byrcoder): FIXME thread safe
 void sps_once_install() {
     static bool installed = false;
@@ -88,6 +108,7 @@ void sps_once_install() {
     }
 
     installed = true;
+    init_ffmpeg();
     init_modules();
     init_url_protocol();
     init_avformats();
