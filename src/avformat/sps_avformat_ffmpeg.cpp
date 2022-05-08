@@ -22,39 +22,27 @@ SOFTWARE.
 *****************************************************************************/
 
 //
-// Created by byrcoder on 2021/6/16.
+// Created by byrcoder on 2022/5/8.
 //
-#ifndef SPS_AVFORMAT_FLVENC_HPP
-#define SPS_AVFORMAT_FLVENC_HPP
 
-#include <sps_avformat_enc.hpp>
-#include <sps_io.hpp>
-#include <sps_io_bytes.hpp>
+#include <sps_avformat_ffmpeg.hpp>
+
+#ifdef FFMPEG_ENABLED
 
 namespace sps {
 
-class FlvAVMuxer : public IAVMuxer {
- public:
-    explicit FlvAVMuxer(PIWriter writer);
+FFmpegPacket::FFmpegPacket(::AVPacket *pkt) : AVPacket(0, 0, 0) {
+    this->pkt = pkt;
+}
 
- public:
-    error_t write_header(PAVPacket& buffer) override;
-    error_t write_packet(PAVPacket& buffer) override;
-    error_t write_tail(PAVPacket& buffer)    override;
+FFmpegPacket::~FFmpegPacket() {
+    if (pkt) av_free_packet(pkt);
+}
 
- private:
-    PIWriter  writer;
-    PAVBuffer tag_buffer;
-    uint32_t  previous_size;
+::AVPacket* FFmpegPacket::packet() {
+    return pkt;
+}
 
- public:
-    bool      filter_video    = false;
-    bool      filter_metadata = false;
-    bool      filter_audio    = false;
-};
+}
 
-AVOutputFormat(Flv, "flv", "flv");
-
-}  // namespace sps
-
-#endif  // SPS_AVFORMAT_FLVENC_HPP
+#endif

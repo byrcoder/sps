@@ -120,7 +120,7 @@ error_t HttpStreamPhaseHandler::handler_play(ConnContext& ctx) {
         }
 
         for (auto& p : vpb) {
-            if ((ret = enc->write_message(p)) != SUCCESS) {
+            if ((ret = enc->write_packet(p)) != SUCCESS) {
                 sp_error("failed encoder write message url protocol for ret:%d",
                          ret);
                 break;

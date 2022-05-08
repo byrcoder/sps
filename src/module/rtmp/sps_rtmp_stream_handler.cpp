@@ -156,7 +156,7 @@ error_t RtmpServerStreamHandler::play(ConnContext &ctx) {
         }
 
         for (auto& p : vpb) {
-            if ((ret = muxer.write_message(p)) != SUCCESS) {
+            if ((ret = muxer.write_packet(p)) != SUCCESS) {
                 sp_error("fail playing send ret %d", ret);
                 break;
             }

@@ -21,40 +21,42 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-//
-// Created by byrcoder on 2021/6/16.
-//
-#ifndef SPS_AVFORMAT_FLVENC_HPP
-#define SPS_AVFORMAT_FLVENC_HPP
+#ifndef SPS_AVFORMAT_FFMPEG_HPP
+#define SPS_AVFORMAT_FFMPEG_HPP
 
-#include <sps_avformat_enc.hpp>
-#include <sps_io.hpp>
-#include <sps_io_bytes.hpp>
+#define FFMPEG_MAX_SIZE 2 * 1024 * 1024
+
+#include <sps_auto_header.hpp>
+#include <sps_avformat_packet.hpp>
+
+#ifdef FFMPEG_ENABLED
+
+extern "C" {
+
+#include <libavcodec/avcodec.h>
+#include <libavformat/avformat.h>
+#include <libavformat/avio_internal.h>
+#include <libswscale/swscale.h>
+#include <libavutil/imgutils.h>
+
+}
 
 namespace sps {
 
-class FlvAVMuxer : public IAVMuxer {
+class FFmpegPacket : public AVPacket {
  public:
-    explicit FlvAVMuxer(PIWriter writer);
+    FFmpegPacket(::AVPacket* pkt);
+    ~FFmpegPacket();
 
  public:
-    error_t write_header(PAVPacket& buffer) override;
-    error_t write_packet(PAVPacket& buffer) override;
-    error_t write_tail(PAVPacket& buffer)    override;
+    ::AVPacket* packet();
 
  private:
-    PIWriter  writer;
-    PAVBuffer tag_buffer;
-    uint32_t  previous_size;
-
- public:
-    bool      filter_video    = false;
-    bool      filter_metadata = false;
-    bool      filter_audio    = false;
+    ::AVPacket* pkt;
 };
-
-AVOutputFormat(Flv, "flv", "flv");
 
 }  // namespace sps
 
-#endif  // SPS_AVFORMAT_FLVENC_HPP
+#endif
+
+#endif  // SPS_AVFORMAT_FFMPEG_HPP

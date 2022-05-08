@@ -36,11 +36,14 @@ SOFTWARE.
 
 #include <sps_avformat_tsdec.hpp>
 
+#include <sps_avformat_ffmpeg_dec.hpp>
+
 namespace sps {
 
 #define AVINPUTFORMAT_INSTANCE(NAME) (std::make_shared<NAME##AVInputFormat>())
 
 PIAVInputFormat av_input_formats[] = {
+        AVINPUTFORMAT_INSTANCE(FFmpeg),
         AVINPUTFORMAT_INSTANCE(Flv),
         AVINPUTFORMAT_INSTANCE(Rtmp),
         AVINPUTFORMAT_INSTANCE(Ts),

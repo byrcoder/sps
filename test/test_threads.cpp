@@ -24,3 +24,41 @@ SOFTWARE.
 //
 // Created by byrcoder on 2022/3/9.
 //
+
+#include <gtest/gtest.h>
+#include <sps_log.hpp>
+
+using namespace std;
+
+struct Int32 {
+    int32_t a32;
+};
+
+struct Int64 {
+    int32_t a32;
+    int32_t b32;
+};
+
+struct Int96 {
+    int32_t a32;
+    int32_t b32;
+    int32_t c32;
+};
+
+GTEST_TEST(THREAD, ATOMIC) {
+    std::atomic<int> i32(1);
+    std::atomic<bool> b(false);
+    std::atomic<int64_t> i64;
+
+    std::atomic<Int32> si32;
+    std::atomic<Int64> si64;
+    std::atomic<Int96> si96;
+
+    EXPECT_TRUE(i32.is_lock_free());
+    EXPECT_TRUE(b.is_lock_free());
+    EXPECT_TRUE(i64.is_lock_free());
+    EXPECT_TRUE(si32.is_lock_free());
+    EXPECT_TRUE(si64.is_lock_free());
+    // EXPECT_TRUE(si96.is_lock_free());  compile error
+
+}

@@ -22,79 +22,92 @@ SOFTWARE.
 *****************************************************************************/
 
 //
-// Created by byrcoder on 2021/6/19.
+// Created by byrcoder on 2022/5/7.
 //
+
 #include <gtest/gtest.h>
 
-#include <sps_avformat_flvdec.hpp>
-#include <sps_avformat_flvenc.hpp>
+#include <sps_avformat_ffmpeg_dec.hpp>
+#include <sps_avformat_ffmpeg_enc.hpp>
 #include <sps_url_file.hpp>
 #include <sps_log.hpp>
+#include <sps_auto_header.hpp>
+
+#ifdef FFMPEG_ENABLED
+
+using namespace sps;
 
 extern const char* filename;
 extern const char* out_filename;
 
-namespace sps {
-
-error_t test_flv() {
+GTEST_TEST(FFMPEG, DEMUX) {
     auto in_file = std::make_shared<FileURLProtocol>();
     auto ret     = in_file->open(filename);
+    EXPECT_TRUE(ret == SUCCESS);
 
     if (ret != SUCCESS) {
         sp_error("open input filename failed ret: %d, %s", ret, filename);
-        return ret;
+        return;
+    }
+
+    FFmpegAVDemuxer ffmpeg_demuxer(in_file);
+    PAVPacket pkt;
+
+    ret = ffmpeg_demuxer.init();
+    EXPECT_TRUE(ret == SUCCESS);
+
+    if (ret != SUCCESS) {
+        sp_error("open output filename failed ret: %d, %s", ret, filename);
+        return;
     }
 
     auto out_file = std::make_shared<FileURLProtocol>(true, false);
-    ret           = out_file->open(out_filename);
+    ret = out_file->open(out_filename);
+    EXPECT_TRUE(ret == SUCCESS);
 
     if (ret != SUCCESS) {
         sp_error("open output filename failed ret: %d, %s", ret, out_filename);
-        return ret;
+        return;
     }
 
-    FlvDemuxer flv_demuxer(in_file);
-    PAVPacket pkt;
+    auto url = std::make_shared<RequestUrl>();
+    url->url = out_filename;
 
-    ret = flv_demuxer.read_header(pkt);
-    if (ret != SUCCESS) {
-        sp_error("fail read FLV HEADER ret: %d", ret);
-        return ret;
-    }
+    FFmpegAVMuxer ffmpeg_muxer(out_file, url);
 
-    FlvAVMuxer flv_muxer(out_file);
-    ret = flv_muxer.write_header(pkt);
-
-    pkt->debug();
+    ret = ffmpeg_muxer.init();
+    EXPECT_TRUE(ret == SUCCESS);
 
     if (ret != SUCCESS) {
-        sp_error("fail write FLV HEADER ret: %d", ret);
-        return ret;
+        sp_error("open output filename failed ret: %d, %s", ret, filename);
+        return;
     }
+
+    int n = 100;
 
     do {
         pkt.reset();
-        ret = flv_demuxer.read_packet(pkt);
+        ret = ffmpeg_demuxer.read_packet(pkt);
+
+        EXPECT_TRUE(ret == SUCCESS);
 
         if (ret != SUCCESS) {
-            sp_error("fail read FLV PACKET %d", ret);
-            break;
-        }
-        // pkt->debug();
-
-        ret = flv_muxer.write_packet(pkt);
-        if (ret != SUCCESS) {
-            sp_error("fail write FLV PACKET %d", ret);
+            sp_error("fail read ffmpeg PACKET %d", ret);
             break;
         }
 
-    } while(true);
+        ret = ffmpeg_muxer.write_packet(pkt);
 
-    return ret == ERROR_IO_EOF ? SUCCESS : ret;
+        EXPECT_TRUE(ret == SUCCESS);
+
+        if (ret != SUCCESS) {
+            sp_error("fail read ffmpeg PACKET %d", ret);
+            break;
+        }
+
+    } while(--n);
+
+    EXPECT_TRUE(ret == SUCCESS);
 }
 
-GTEST_TEST(FLV, DEMUX) {
-    EXPECT_TRUE(test_flv() == SUCCESS);
-}
-
-}
+#endif

@@ -44,10 +44,11 @@ bool IAVOutputFormat::match(const char *e) const {
     return memcmp(ext, e, std::max(n, m)) == 0;
 }
 
-PIAVMuxer IAVOutputFormat::create2(PIWriter pw) {
+PIAVMuxer IAVOutputFormat::create2(PIWriter pw, PRequestUrl& url) {
     auto muxer = _create(std::move(pw));
     if (muxer) {
         muxer->fmt = this;
+        muxer->url = url;
     }
     return muxer;
 }
@@ -57,7 +58,7 @@ PIAVMuxer AVEncoderFactory::create(PIWriter p, PRequestUrl &url) {
 
     for (auto& f : fmts) {
         if (f->match(url->get_ext())) {
-            return f->create2(std::move(p));
+            return f->create2(std::move(p), url);
         }
     }
     return nullptr;
