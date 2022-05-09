@@ -60,7 +60,6 @@ error_t FFmpegAVMuxer::write_header(PAVPacket &buffer) {
 error_t FFmpegAVMuxer::write_packet(PAVPacket& buffer) {
     auto pkt = dynamic_cast<FFmpegPacket*>(buffer.get());
     int ret = av_write_frame(ctx, pkt->packet());
-
     if (ret < 0) {
         sp_error("fail write pkt %d", ret);
         return ERROR_FFMPEG_WRITE;
@@ -92,6 +91,77 @@ error_t FFmpegAVMuxer::init() {
     return SUCCESS;
 }
 
+AVFormatContext *FFmpegAVMuxer::get_ctx() {
+    return ctx;
+}
+
+error_t FFmpegAVMuxer::on_av_stream(AVStream* new_stream) {
+    auto codec               = avcodec_find_encoder(new_stream->codecpar->codec_id);
+    AVCodecContext *code_ctx = avcodec_alloc_context3(codec);
+    int ret = avcodec_parameters_to_context(code_ctx, new_stream->codecpar);
+
+    if (ret < 0) {
+        avcodec_free_context(&code_ctx);
+        sp_error( "Failed to copy context from input to output stream codec context");
+        return ERROR_FFMPEG_WRITE;
+    }
+
+    AVStream *out_stream     = avformat_new_stream(ctx, codec);
+
+    if (!out_stream) {
+        avcodec_free_context(&code_ctx);
+        sp_error( "Failed allocating output stream\n");
+        return ERROR_FFMPEG_WRITE;
+    }
+
+    code_ctx->codec_tag = 0;
+    if (ctx->oformat->flags & AVFMT_GLOBALHEADER) {
+        code_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+    }
+
+    ret = avcodec_parameters_from_context(out_stream->codecpar, code_ctx);
+    if (ret < 0) {
+        avcodec_free_context(&code_ctx);
+        sp_error( "Failed to copy context from input to output stream codec context");
+        return ERROR_FFMPEG_WRITE;
+    }
+
+    out_stream->sample_aspect_ratio = new_stream->sample_aspect_ratio;
+    out_stream->time_base           = new_stream->time_base;
+    out_stream->avg_frame_rate      = new_stream->avg_frame_rate;
+
+    avcodec_free_context(&code_ctx);
+
+    return SUCCESS;
+}
+
+#if 0
+
+error_t FFmpegAVMuxer::on_av_stream(AVStream* new_stream) {
+    auto codec               = avcodec_find_encoder(new_stream->codecpar->codec_id);
+
+    if (!codec) {
+        sp_error( "Failed to copy context from input to output stream codec context");
+        return ERROR_FFMPEG_WRITE;
+    }
+
+    AVStream *out_stream     = avformat_new_stream(ctx, codec);
+
+    if (!out_stream) {
+        sp_error( "Failed allocating output stream\n");
+        return ERROR_FFMPEG_WRITE;
+    }
+
+    avcodec_parameters_copy(out_stream->codecpar, new_stream->codecpar);
+    out_stream->sample_aspect_ratio = new_stream->sample_aspect_ratio;
+    out_stream->time_base           = ffmpeg_1000_time_base;
+    out_stream->avg_frame_rate      = new_stream->avg_frame_rate;
+
+    return SUCCESS;
+}
+
+#endif
+
 error_t FFmpegAVMuxer::init_ffmpeg_ctx() {
     pb = nullptr;
     avio_ctx_buffer = nullptr;
@@ -102,10 +172,7 @@ error_t FFmpegAVMuxer::init_ffmpeg_ctx() {
 void FFmpegAVMuxer::free_ffmpeg_ctx() {
     if (pb) avio_context_free(&pb);
 
-    /**
-     * TODO: coredump?
-     */
-    // if (avio_ctx_buffer) av_free(avio_ctx_buffer);
+    if (avio_ctx_buffer) av_free(avio_ctx_buffer);
 
     if (ctx) avformat_free_context(ctx);
 }

@@ -70,17 +70,25 @@ error_t FFmpegAVDemuxer::read_header(PAVPacket& buffer) {
 }
 
 error_t FFmpegAVDemuxer::read_packet(PAVPacket& buffer) {
-    ::AVPacket pkt;
-    int ret = av_read_frame(ctx, &pkt);
+    auto pkt = std::make_shared<FFmpegPacket>();
+    auto ff_pkt = pkt->packet();
+    int ret = av_read_frame(ctx, ff_pkt);
 
     if (ret < 0) {
         sp_error("read frame ret %d", ret);
         return ERROR_FFMPEG_READ;
     }
 
-    cur_timestamp = av_rescale(pkt.pts, (int64_t) ctx->streams[0]->time_base.num * 90000, ctx->streams[0]->time_base.den);
+    pkt->set_time_base(ctx->streams[ff_pkt->stream_index]->time_base);
 
-    buffer = std::shared_ptr<FFmpegPacket>(new FFmpegPacket(&pkt));
+    ff_pkt->pts = av_rescale_q_rnd(pkt->pts, ctx->streams[ff_pkt->stream_index]->time_base,
+                                       *pkt->get_time_base(), (AVRounding)(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+    ff_pkt->dts = av_rescale_q_rnd(pkt->dts, ctx->streams[ff_pkt->stream_index]->time_base,
+                                       *pkt->get_time_base(), (AVRounding)(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+
+    cur_timestamp = av_rescale(pkt->pts, (int64_t) ctx->streams[0]->time_base.num * 90000, ctx->streams[0]->time_base.den);
+
+    buffer = pkt;
     return SUCCESS;
 }
 
@@ -103,7 +111,7 @@ error_t FFmpegAVDemuxer::init() {
     pb               = avio_alloc_context(avio_ctx_buffer, FFMPEG_MAX_SIZE, 0,
                                           this, read_data, NULL, NULL);
     ctx->flags = AVFMT_FLAG_CUSTOM_IO;
-    ctx->probesize = 1024 * 4;
+    ctx->probesize = 1024 * 1024 * 1;
     ctx->max_analyze_duration = 4 * AV_TIME_BASE;
 
     ctx->pb       = pb;
@@ -126,6 +134,10 @@ error_t FFmpegAVDemuxer::init() {
     return SUCCESS;
 }
 
+AVFormatContext* FFmpegAVDemuxer::get_ctx() {
+    return ctx;
+}
+
 error_t FFmpegAVDemuxer::init_ffmpeg_ctx() {
     pb = nullptr;
     avio_ctx_buffer = nullptr;
@@ -136,10 +148,7 @@ error_t FFmpegAVDemuxer::init_ffmpeg_ctx() {
 void FFmpegAVDemuxer::free_ffmpeg_ctx() {
     if (pb) avio_context_free(&pb);
 
-    /**
-     * TODO: coredump?
-     */
-    // if (avio_ctx_buffer) av_free(avio_ctx_buffer);
+    if (avio_ctx_buffer) av_free(avio_ctx_buffer);
 
     if (ctx) avformat_free_context(ctx);
 }

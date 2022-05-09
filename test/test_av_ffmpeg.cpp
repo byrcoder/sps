@@ -79,11 +79,27 @@ GTEST_TEST(FFMPEG, DEMUX) {
     EXPECT_TRUE(ret == SUCCESS);
 
     if (ret != SUCCESS) {
-        sp_error("open output filename failed ret: %d, %s", ret, filename);
+        sp_error("open output filename failed ret: %d, %s", ret, out_filename);
         return;
     }
 
-    int n = 100;
+    for (int i = 0; i < ffmpeg_demuxer.get_ctx()->nb_streams; i++) {
+        EXPECT_TRUE(ffmpeg_muxer.on_av_stream(ffmpeg_demuxer.get_ctx()->streams[i]) == SUCCESS);
+    }
+
+    sp_trace("nbstream %d", ffmpeg_demuxer.get_ctx()->nb_streams);
+    //输出一下格式------------------
+    av_dump_format(ffmpeg_muxer.get_ctx(), 0, out_filename, 1);
+
+    ret = ffmpeg_muxer.write_header(pkt);
+    EXPECT_TRUE(ret == SUCCESS);
+
+    if (ret != SUCCESS) {
+        sp_error("write header output filename failed ret: %d, %s", ret, out_filename);
+        return;
+    }
+
+    int n = 1000;
 
     do {
         pkt.reset();

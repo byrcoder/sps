@@ -46,6 +46,11 @@ class FFmpegAVMuxer : public IAVMuxer {
 
  public:
     error_t init();
+ public:
+    AVFormatContext* get_ctx();
+
+ public:
+    error_t on_av_stream(AVStream* new_stream);
 
  private:
     error_t init_ffmpeg_ctx();

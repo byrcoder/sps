@@ -43,16 +43,25 @@ extern "C" {
 
 namespace sps {
 
+
+const AVRational ffmpeg_1000_time_base = {
+    .num = 1,
+    .den = 1000
+};
+
 class FFmpegPacket : public AVPacket {
  public:
-    FFmpegPacket(::AVPacket* pkt);
+    FFmpegPacket();
     ~FFmpegPacket();
 
  public:
     ::AVPacket* packet();
+    void set_time_base(AVRational time_base);
+    const AVRational* get_time_base();
 
  private:
     ::AVPacket* pkt;
+    AVRational time_base;
 };
 
 }  // namespace sps

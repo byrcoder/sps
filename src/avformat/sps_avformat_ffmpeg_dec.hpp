@@ -55,6 +55,9 @@ class FFmpegAVDemuxer : public IAVDemuxer {
  public:
     error_t init();
 
+ public:
+    AVFormatContext* get_ctx();
+
  private:
     error_t init_ffmpeg_ctx();
     void    free_ffmpeg_ctx();

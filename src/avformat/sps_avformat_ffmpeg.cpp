@@ -31,16 +31,25 @@ SOFTWARE.
 
 namespace sps {
 
-FFmpegPacket::FFmpegPacket(::AVPacket *pkt) : AVPacket(0, 0, 0) {
-    this->pkt = pkt;
+FFmpegPacket::FFmpegPacket() : AVPacket(0, 0, 0) {
+    this->pkt = av_packet_alloc();
+    time_base = ffmpeg_1000_time_base;
 }
 
 FFmpegPacket::~FFmpegPacket() {
-    if (pkt) av_free_packet(pkt);
+    if (pkt) av_packet_free(&pkt);
 }
 
 ::AVPacket* FFmpegPacket::packet() {
     return pkt;
+}
+
+void FFmpegPacket::set_time_base(AVRational time_base) {
+    this->time_base = time_base;
+}
+
+const AVRational* FFmpegPacket::get_time_base() {
+    return &time_base;
 }
 
 }
