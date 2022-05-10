@@ -65,7 +65,7 @@ bool FFmpegPacket::is_script() const {
 }
 
 bool FFmpegPacket::is_keyframe() const {
-    return false;
+    return pkt->flags & AV_PKT_FLAG_KEY;
 }
 
 bool FFmpegPacket::is_video_sequence_header() const {

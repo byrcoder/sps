@@ -24,7 +24,7 @@ SOFTWARE.
 #ifndef SPS_AVFORMAT_FFMPEG_HPP
 #define SPS_AVFORMAT_FFMPEG_HPP
 
-#define FFMPEG_MAX_SIZE 100 * 1024
+#define FFMPEG_MAX_SIZE 600 * 1024
 
 #include <sps_auto_header.hpp>
 #include <sps_avformat_packet.hpp>
@@ -42,7 +42,6 @@ extern "C" {
 }
 
 namespace sps {
-
 
 const AVRational ffmpeg_1000_time_base = {
     .num = 1,

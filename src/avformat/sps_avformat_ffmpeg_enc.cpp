@@ -36,7 +36,7 @@ namespace sps {
 
 int FFmpegAVMuxer::write_data(void* opaque, uint8_t* buf, int buf_size) {
     FFmpegAVMuxer* ffmpeg = (FFmpegAVMuxer*) opaque;
-    size_t nr = 0;
+    int nr = 0;
     error_t ret = ffmpeg->writer->write((void*) buf, buf_size);
     if (ret != SUCCESS) {
         nr = ret > 0 ? -ret : ret;
@@ -44,12 +44,17 @@ int FFmpegAVMuxer::write_data(void* opaque, uint8_t* buf, int buf_size) {
         nr = buf_size;
     }
 
-    sp_info("write_data nr %lu", nr);
-    return (int) nr;
+    sp_info("write_data nr %d", nr);
+    return nr;
 }
 
 FFmpegAVMuxer::FFmpegAVMuxer(PIWriter writer, PRequestUrl url) : writer(std::move(writer)) {
     this->url = std::move(url);
+    init_ffmpeg_ctx();
+}
+
+FFmpegAVMuxer::~FFmpegAVMuxer() {
+    free_ffmpeg_ctx();
 }
 
 error_t FFmpegAVMuxer::write_header(PAVPacket &buffer) {
@@ -196,7 +201,7 @@ error_t FFmpegAVMuxer::init_ffmpeg_ctx() {
 void FFmpegAVMuxer::free_ffmpeg_ctx() {
     if (pb) avio_context_free(&pb);
 
-    if (avio_ctx_buffer) av_free(avio_ctx_buffer);
+    // if (avio_ctx_buffer) av_free(avio_ctx_buffer);
 
     if (ctx) avformat_free_context(ctx);
 }

@@ -38,6 +38,7 @@ class FFmpegAVMuxer : public IAVMuxer {
 
  public:
     explicit FFmpegAVMuxer(PIWriter writer, PRequestUrl url);
+    ~FFmpegAVMuxer();
 
  public:
     error_t write_header(PAVPacket& buffer) override;
