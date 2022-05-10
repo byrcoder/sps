@@ -101,6 +101,9 @@ error_t HttpStreamPhaseHandler::handler_play(ConnContext& ctx) {
         return ERROR_AVFORMAT_ENCODER_NOT_EXISTS;
     }
 
+    // support ffmpeg ctx
+    enc->set_av_ctx((IAVContext*) cache->get_ctx());
+
     PAVPacket buffer;
     ret = enc->write_header(buffer);
 
@@ -121,10 +124,12 @@ error_t HttpStreamPhaseHandler::handler_play(ConnContext& ctx) {
 
         for (auto& p : vpb) {
             if ((ret = enc->write_packet(p)) != SUCCESS) {
-                sp_error("failed encoder write message url protocol for ret:%d",
+                sp_error("fail encoder write message url protocol for ret:%d",
                          ret);
                 break;
             }
+
+            sp_info("write packet!");
         }
     } while (ret == SUCCESS);
 
@@ -164,7 +169,7 @@ error_t HttpStreamPhaseHandler::handler_publish(ConnContext& ctx) {
              ctx.req->get_ext(), dec->fmt->name);
 
     std::string url    =  get_cache_key(ctx.req);
-    auto cache         = StreamCache::get_streamcache(url);
+    auto cache         =  StreamCache::get_streamcache(url);
 
     if (cache) {
         sp_error("cannot publish twice");
@@ -175,6 +180,9 @@ error_t HttpStreamPhaseHandler::handler_publish(ConnContext& ctx) {
     sp_trace("Publish url %s", url.c_str());
 
     PAVPacket packet;
+
+    // support ffmpeg ctx
+    cache->set_ctx(dec->get_av_ctx());
 
     if ((ret = dec->read_header(packet)) != SUCCESS) {
         sp_error("fail read header recv ret %d", ret);

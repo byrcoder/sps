@@ -42,7 +42,8 @@ class FFmpegAVMuxer : public IAVMuxer {
  public:
     error_t write_header(PAVPacket& buffer) override;
     error_t write_packet(PAVPacket& buffer) override;
-    error_t write_tail(PAVPacket& buffer)    override;
+    error_t write_tail(PAVPacket& buffer)   override;
+    error_t set_av_ctx(IAVContext* ctx) override;
 
  public:
     error_t init();

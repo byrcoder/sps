@@ -43,14 +43,15 @@ class FFmpegAVDemuxer : public IAVDemuxer {
     static int read_data(void* opaque, uint8_t* buf, int buf_size);
 
  public:
-    FFmpegAVDemuxer(PIReader p);
-    ~FFmpegAVDemuxer();
+    explicit FFmpegAVDemuxer(PIReader p);
+    ~FFmpegAVDemuxer() override;
 
  public:
     error_t read_header(PAVPacket& buffer) override;
     error_t read_packet(PAVPacket& buffer) override;
     error_t read_tail(PAVPacket& buffer) override;
     error_t probe(PAVPacket& buffer) override;
+    IAVContext* get_av_ctx() override;
 
  public:
     error_t init();
@@ -65,6 +66,7 @@ class FFmpegAVDemuxer : public IAVDemuxer {
  private:
     PIReader rd;
 
+    std::shared_ptr<FFmpegAVContext> ffmpeg_av_ctx;
     AVFormatContext *ctx;
     AVIOContext* pb;
     uint8_t* avio_ctx_buffer;

@@ -45,7 +45,7 @@ int FFmpegAVDemuxer::nested_io_open(AVFormatContext *s, AVIOContext **pb, const 
 }
 
 int FFmpegAVDemuxer::read_data(void* opaque, uint8_t* buf, int buf_size) {
-    FFmpegAVDemuxer* ffmpeg = (FFmpegAVDemuxer*) opaque;
+    auto ffmpeg = (FFmpegAVDemuxer*) opaque;
     size_t nr = 0;
     error_t ret = ffmpeg->rd->read(buf, buf_size, nr);
     if (ret != SUCCESS) {
@@ -89,6 +89,8 @@ error_t FFmpegAVDemuxer::read_packet(PAVPacket& buffer) {
     cur_timestamp = av_rescale(pkt->pts, (int64_t) ctx->streams[0]->time_base.num * 90000, ctx->streams[0]->time_base.den);
 
     buffer = pkt;
+
+    sp_debug("pkt stream_index %d", ff_pkt->stream_index);
     return SUCCESS;
 }
 
@@ -100,6 +102,10 @@ error_t FFmpegAVDemuxer::probe(PAVPacket& buffer) {
     return SUCCESS;
 }
 
+IAVContext* FFmpegAVDemuxer::get_av_ctx() {
+    return ffmpeg_av_ctx.get();
+}
+
 error_t FFmpegAVDemuxer::init() {
     ff_const59 AVInputFormat *in_fmt = nullptr;
     AVDictionary  *in_fmt_opts  = nullptr;
@@ -108,6 +114,12 @@ error_t FFmpegAVDemuxer::init() {
 
     ctx              = avformat_alloc_context();
     avio_ctx_buffer  = (uint8_t*) av_malloc(FFMPEG_MAX_SIZE);
+
+    if (!avio_ctx_buffer) {
+        sp_error("Fail av_malloc %d", FFMPEG_MAX_SIZE);
+        return ERROR_FFMPEG_OPEN;
+    }
+
     pb               = avio_alloc_context(avio_ctx_buffer, FFMPEG_MAX_SIZE, 0,
                                           this, read_data, NULL, NULL);
     ctx->flags = AVFMT_FLAG_CUSTOM_IO;
@@ -121,15 +133,17 @@ error_t FFmpegAVDemuxer::init() {
     av_dict_free(&in_fmt_opts);
 
     if (ret < 0) {
-        sp_error("avformat_open_input ret %d", ret);
+        sp_error("Fail avformat_open_input ret %d", ret);
         return ERROR_FFMPEG_OPEN;
     }
 
-    ret = avformat_find_stream_info(ctx, NULL);
+    ret = avformat_find_stream_info(ctx, nullptr);
 
     if (ret < 0) {
         return ERROR_FFMPEG_OPEN;
     }
+
+    ffmpeg_av_ctx = std::make_shared<FFmpegAVContext>(ctx);
 
     return SUCCESS;
 }
@@ -148,7 +162,9 @@ error_t FFmpegAVDemuxer::init_ffmpeg_ctx() {
 void FFmpegAVDemuxer::free_ffmpeg_ctx() {
     if (pb) avio_context_free(&pb);
 
-    if (avio_ctx_buffer) av_free(avio_ctx_buffer);
+    // https://ffmpeg.org/pipermail/libav-user/2012-December/003257.html
+    // avio_ctx_buffer manage by pb
+    // if (avio_ctx_buffer) av_freep(&avio_ctx_buffer);
 
     if (ctx) avformat_free_context(ctx);
 }

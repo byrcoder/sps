@@ -29,9 +29,11 @@ SOFTWARE.
 
 namespace sps {
 
-const IAVOutputFormat * IAVMuxer::name() {
+const IAVOutputFormat* IAVMuxer::name() {
     return fmt;
 }
+
+error_t IAVMuxer::set_av_ctx(IAVContext *ctx) {  return SUCCESS; }
 
 IAVOutputFormat::IAVOutputFormat(const char *name, const char *ext) {
     this->name = name;

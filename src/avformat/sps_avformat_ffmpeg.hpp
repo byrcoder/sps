@@ -24,7 +24,7 @@ SOFTWARE.
 #ifndef SPS_AVFORMAT_FFMPEG_HPP
 #define SPS_AVFORMAT_FFMPEG_HPP
 
-#define FFMPEG_MAX_SIZE 2 * 1024 * 1024
+#define FFMPEG_MAX_SIZE 100 * 1024
 
 #include <sps_auto_header.hpp>
 #include <sps_avformat_packet.hpp>
@@ -59,9 +59,27 @@ class FFmpegPacket : public AVPacket {
     void set_time_base(AVRational time_base);
     const AVRational* get_time_base();
 
+ public:
+    bool is_video() const override;
+    bool is_audio() const override;
+    bool is_script() const override;
+    bool is_keyframe() const override;
+    bool is_video_sequence_header() const override;
+    bool is_audio_sequence_header() override;
+
+    bool is_pat() override;
+    bool is_pmt() override;
+    bool is_payload_unit_start_indicator() override;
+
  private:
     ::AVPacket* pkt;
     AVRational time_base;
+};
+
+class FFmpegAVContext : public IAVContext {
+ public:
+    FFmpegAVContext(AVFormatContext* ctx);
+    AVFormatContext *ctx;
 };
 
 }  // namespace sps

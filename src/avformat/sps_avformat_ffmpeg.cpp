@@ -52,6 +52,46 @@ const AVRational* FFmpegPacket::get_time_base() {
     return &time_base;
 }
 
+bool FFmpegPacket::is_video() const {
+    return true;
+}
+
+bool FFmpegPacket::is_audio() const {
+    return false;
+}
+
+bool FFmpegPacket::is_script() const {
+    return false;
+}
+
+bool FFmpegPacket::is_keyframe() const {
+    return false;
+}
+
+bool FFmpegPacket::is_video_sequence_header() const {
+    return false;
+}
+
+bool FFmpegPacket::is_audio_sequence_header() {
+    return false;
+}
+
+bool FFmpegPacket::is_pat() {
+    return false;
+}
+
+bool FFmpegPacket::is_pmt() {
+    return false;
+}
+
+bool FFmpegPacket::is_payload_unit_start_indicator() {
+    return false;
+}
+
+FFmpegAVContext::FFmpegAVContext(AVFormatContext *ctx) {
+    this->ctx = ctx;
+}
+
 }
 
 #endif

@@ -48,8 +48,9 @@ class IAVMuxer {
 
  public:
     virtual error_t write_header(PAVPacket& buffer)  = 0;
-    virtual error_t write_packet(PAVPacket& buffer) = 0;
+    virtual error_t write_packet(PAVPacket& buffer)  = 0;
     virtual error_t write_tail(PAVPacket& buffer)    = 0;
+    virtual error_t set_av_ctx(IAVContext* ctx);
 
  public:
     const IAVOutputFormat* fmt;

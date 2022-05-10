@@ -40,7 +40,11 @@ int FFmpegAVMuxer::write_data(void* opaque, uint8_t* buf, int buf_size) {
     error_t ret = ffmpeg->writer->write((void*) buf, buf_size);
     if (ret != SUCCESS) {
         nr = ret > 0 ? -ret : ret;
+    } else {
+        nr = buf_size;
     }
+
+    sp_info("write_data nr %lu", nr);
     return (int) nr;
 }
 
@@ -70,6 +74,26 @@ error_t FFmpegAVMuxer::write_packet(PAVPacket& buffer) {
 
 error_t FFmpegAVMuxer::write_tail(PAVPacket &buffer) {
     return SUCCESS;
+}
+
+error_t FFmpegAVMuxer::set_av_ctx(IAVContext* c) {
+    auto ffmpeg_ctx = dynamic_cast<FFmpegAVContext*>(c);
+    int  ret        = SUCCESS;
+
+    if (!ffmpeg_ctx) {
+        sp_warn("set av ctx empty!");
+        return SUCCESS;
+    }
+
+    for (int i = 0; i < ffmpeg_ctx->ctx->nb_streams; i++) {
+        if ((ret = on_av_stream(ffmpeg_ctx->ctx->streams[i])) != SUCCESS) {
+            break;
+        }
+    }
+
+    av_dump_format(get_ctx(), 0, nullptr, 1);
+
+    return ret;
 }
 
 error_t FFmpegAVMuxer::init() {
