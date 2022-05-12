@@ -24,7 +24,38 @@ SOFTWARE.
 #ifndef SPS_URL_RTMP_FFMPEG_HPP
 #define SPS_URL_RTMP_FFMPEG_HPP
 
+#include <memory>
+
+#include <sps_librtmp.hpp>
+#include <sps_url_protocol.hpp>
+
 namespace sps {
+
+/**
+ * match ffmpeg rtmpproto.c for rtmp io
+ */
+class FFmpegRtmpUrlProtocol : public IURLProtocol {
+ public:
+    FFmpegRtmpUrlProtocol() = default;
+
+    explicit FFmpegRtmpUrlProtocol(PRtmpHook hk);
+
+ public:
+    error_t open(PRequestUrl& url, Transport p) override;
+
+ public:
+    error_t read(void* buf, size_t size, size_t& nread) override;
+
+    error_t write(void* buf, size_t size) override;
+
+ public:
+    PResponse response() override;
+
+ private:
+    std::shared_ptr<RtmpHook> hk;
+    WrapRtmpPacket pkt;
+    uint32_t       pkt_offset = 0;
+};
 
 }  // namespace sps
 
