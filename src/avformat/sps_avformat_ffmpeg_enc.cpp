@@ -44,7 +44,7 @@ int FFmpegAVMuxer::write_data(void* opaque, uint8_t* buf, int buf_size) {
         nr = buf_size;
     }
 
-    sp_info("write_data nr %d", nr);
+    sp_debug("write_data nr %d", nr);
     return nr;
 }
 

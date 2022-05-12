@@ -80,10 +80,11 @@ error_t FFmpegAVDemuxer::read_packet(PAVPacket& buffer) {
     }
 
     pkt->set_time_base(ctx->streams[ff_pkt->stream_index]->time_base);
+    pkt->stream_type = from_ffmpeg(ctx->streams[ff_pkt->stream_index]->codecpar->codec_type);
 
-    ff_pkt->pts = av_rescale_q_rnd(pkt->pts, ctx->streams[ff_pkt->stream_index]->time_base,
+    pkt->pts = av_rescale_q_rnd(ff_pkt->pts, ctx->streams[ff_pkt->stream_index]->time_base,
                                        *pkt->get_time_base(), (AVRounding)(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
-    ff_pkt->dts = av_rescale_q_rnd(pkt->dts, ctx->streams[ff_pkt->stream_index]->time_base,
+    pkt->dts = av_rescale_q_rnd(ff_pkt->dts, ctx->streams[ff_pkt->stream_index]->time_base,
                                        *pkt->get_time_base(), (AVRounding)(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 
     cur_timestamp = av_rescale(pkt->pts, (int64_t) ctx->streams[0]->time_base.num * 90000, ctx->streams[0]->time_base.den);

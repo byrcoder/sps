@@ -37,6 +37,7 @@ extern "C" {
 #include <libavformat/avformat.h>
 #include <libavformat/avio_internal.h>
 #include <libswscale/swscale.h>
+#include <libavutil/avutil.h>
 #include <libavutil/imgutils.h>
 
 }
@@ -47,6 +48,8 @@ const AVRational ffmpeg_1000_time_base = {
     .num = 1,
     .den = 1000
 };
+
+AVStreamType from_ffmpeg(enum AVMediaType t);
 
 class FFmpegPacket : public AVPacket {
  public:

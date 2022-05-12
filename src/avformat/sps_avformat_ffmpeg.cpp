@@ -26,10 +26,24 @@ SOFTWARE.
 //
 
 #include <sps_avformat_ffmpeg.hpp>
+#include <sps_log.hpp>
 
 #ifdef FFMPEG_ENABLED
 
 namespace sps {
+
+AVStreamType from_ffmpeg(enum AVMediaType t) {
+    switch (t) {
+        case AVMEDIA_TYPE_VIDEO:
+            return AV_STREAM_TYPE_VIDEO;
+
+        case AVMEDIA_TYPE_AUDIO:
+            return AV_STREAM_TYPE_AUDIO;
+
+        default:
+            return AV_STREAM_TYPE_NB;
+    }
+}
 
 FFmpegPacket::FFmpegPacket() : AVPacket(0, 0, 0) {
     this->pkt = av_packet_alloc();
@@ -53,7 +67,7 @@ const AVRational* FFmpegPacket::get_time_base() {
 }
 
 bool FFmpegPacket::is_video() const {
-    return true;
+    return AVPacket::is_video();
 }
 
 bool FFmpegPacket::is_audio() const {
@@ -65,7 +79,7 @@ bool FFmpegPacket::is_script() const {
 }
 
 bool FFmpegPacket::is_keyframe() const {
-    return pkt->flags & AV_PKT_FLAG_KEY;
+    return is_video() && (pkt->flags & AV_PKT_FLAG_KEY) != 0;
 }
 
 bool FFmpegPacket::is_video_sequence_header() const {
