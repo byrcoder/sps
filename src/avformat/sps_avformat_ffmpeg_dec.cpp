@@ -34,6 +34,8 @@ SOFTWARE.
 #include <sps_io_bytes.hpp>
 #include <sps_log.hpp>
 
+#include <sps_url_file.hpp>
+
 #ifdef FFMPEG_ENABLED
 
 namespace sps {
@@ -49,8 +51,17 @@ int FFmpegAVDemuxer::read_data(void* opaque, uint8_t* buf, int buf_size) {
     size_t nr = 0;
     error_t ret = ffmpeg->rd->read(buf, buf_size, nr);
     if (ret != SUCCESS) {
+        sp_error("fail read ret %d", ret);
         nr = ret > 0 ? -ret : ret;
     }
+
+#ifdef FFMPEG_DECODE_DEBUG
+    if (ffmpeg->debug_output && nr > 0) {
+        ffmpeg->debug_output->write(buf, nr);
+    }
+#endif
+
+    sp_debug("demuxer read %lu", nr);
     return (int) nr;
 }
 
@@ -59,6 +70,16 @@ FFmpegAVDemuxer::FFmpegAVDemuxer(PIReader p) {
     cur_timestamp = -1;
 
     init_ffmpeg_ctx();
+
+#ifdef FFMPEG_DECODE_DEBUG
+    auto tmp = std::make_shared<FileURLProtocol>(true, false);
+    if (tmp->open("decode.flv") != SUCCESS) {
+        sp_error("fail open decode.flv");
+    } else {
+        sp_error("success open decode.flv");
+        debug_output = tmp;
+    }
+#endif
 }
 
 FFmpegAVDemuxer::~FFmpegAVDemuxer() {
@@ -75,7 +96,7 @@ error_t FFmpegAVDemuxer::read_packet(PAVPacket& buffer) {
     int ret = av_read_frame(ctx, ff_pkt);
 
     if (ret < 0) {
-        sp_error("read frame ret %d", ret);
+        sp_error("fail read frame ret %d", ret);
         return ERROR_FFMPEG_READ;
     }
 
@@ -117,7 +138,7 @@ error_t FFmpegAVDemuxer::init() {
     avio_ctx_buffer  = (uint8_t*) av_malloc(FFMPEG_MAX_SIZE);
 
     if (!avio_ctx_buffer) {
-        sp_error("Fail av_malloc %d", FFMPEG_MAX_SIZE);
+        sp_error("fail av_malloc %d", FFMPEG_MAX_SIZE);
         return ERROR_FFMPEG_OPEN;
     }
 
@@ -129,12 +150,13 @@ error_t FFmpegAVDemuxer::init() {
 
     ctx->pb       = pb;
     ctx->io_open  = nested_io_open;
+    ctx->format_probesize = 1024 * 1024;
 
     ret = avformat_open_input(&ctx, "", in_fmt, &in_fmt_opts);
     av_dict_free(&in_fmt_opts);
 
     if (ret < 0) {
-        sp_error("Fail avformat_open_input ret %d", ret);
+        sp_error("fail avformat_open_input ret %d", ret);
         return ERROR_FFMPEG_OPEN;
     }
 
@@ -144,7 +166,12 @@ error_t FFmpegAVDemuxer::init() {
         return ERROR_FFMPEG_OPEN;
     }
 
+    // https://ffmpeg.org/doxygen/3.4/transcoding_8c-example.html
     ffmpeg_av_ctx = std::make_shared<FFmpegAVContext>(ctx);
+
+    if ((ret = ffmpeg_av_ctx->init_input()) != SUCCESS) {
+        return ret;
+    }
 
     return SUCCESS;
 }

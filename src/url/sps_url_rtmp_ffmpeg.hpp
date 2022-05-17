@@ -29,6 +29,9 @@ SOFTWARE.
 #include <sps_librtmp.hpp>
 #include <sps_url_protocol.hpp>
 
+#define FLV_HEAD_SIZE 13
+#define FLV_TAG_SIZE 11
+
 namespace sps {
 
 /**
@@ -54,7 +57,10 @@ class FFmpegRtmpUrlProtocol : public IURLProtocol {
  private:
     std::shared_ptr<RtmpHook> hk;
     WrapRtmpPacket pkt;
-    uint32_t       pkt_offset = 0;
+    uint8_t        pkt_tag_head[FLV_TAG_SIZE];
+    uint32_t       pkt_offset = 0;  // flv head + pkt data offset
+    bool           flv_head_read = false;
+    uint32_t       previous_size = 0;
 };
 
 }  // namespace sps

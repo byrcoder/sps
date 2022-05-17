@@ -29,12 +29,13 @@ SOFTWARE.
 #include <sps_io_bytes.hpp>
 
 #include <sps_log.hpp>
+#include <sps_util_time.hpp>
 
 namespace sps {
 
 error_t parser_flv_head(uint8_t* buf, int size, uint8_t* tag_type, uint32_t* data_size,
                        uint32_t* dts, uint32_t* stream_id) {
-    if (size < 1 + 3 + 3 + 1 + 3) {  // 11
+    if (size < FLV_TAG_SIZE) {  // 11
         return ERROR_IO_NOT_ENOUGH;
     }
 
@@ -49,6 +50,25 @@ error_t parser_flv_head(uint8_t* buf, int size, uint8_t* tag_type, uint32_t* dat
     return SUCCESS;
 }
 
+// append_flv_data
+error_t write_flv_tag(uint8_t* buf, int size, uint32_t previous_size,
+                      uint8_t tag_type, uint32_t data_size,
+                      uint32_t dts, uint32_t stream_id) {
+    if (size < FLV_TAG_SIZE) {  // 11
+        return ERROR_IO_NOT_ENOUGH;
+    }
+
+    auto rd = BytesWriter::create_writer(buf, size);
+
+    // rd->write_int32(previous_size);
+    rd->write_int8(tag_type);
+    rd->write_int24(data_size);
+    rd->write_int24(dts & 0x00FFFFFF);
+    rd->write_int8(dts  >> 24);
+    rd->write_int24(stream_id);
+
+    return SUCCESS;
+}
 
 
 FFmpegRtmpUrlProtocol::FFmpegRtmpUrlProtocol(PRtmpHook hk) {
@@ -78,9 +98,32 @@ error_t FFmpegRtmpUrlProtocol::open(PRequestUrl &url, Transport p) {
 }
 
 error_t FFmpegRtmpUrlProtocol::read(void *buf, size_t size, size_t &nread) {
-    error_t ret = SUCCESS;
+    static const char flv_header[] = {'F', 'L', 'V', 0x01,
+                                      0x05,				/* 0x04 == audio, 0x01 == video */
+                                      0x00, 0x00, 0x00, 0x09,
+                                      0x00, 0x00, 0x00, 0x00   /* previous_size 0 */
+    };
 
-    while (pkt.size() <= pkt_offset) {
+    error_t ret = SUCCESS;
+    uint8_t* p  = (uint8_t*) buf;
+    size_t   r  = size;
+
+    if (!flv_head_read) {
+        if (size < FLV_HEAD_SIZE) {
+            return ERROR_IO_NOT_ENOUGH;
+        }
+
+        flv_head_read = true;
+        memcpy(buf, flv_header, FLV_HEAD_SIZE);
+        nread = FLV_HEAD_SIZE;
+
+        sp_info("FLV HEAD %s", to_hex(flv_header, sizeof(flv_header)).c_str());
+
+        return ret;
+    }
+
+    while (!pkt.data() ||
+           (pkt.size() + FLV_TAG_SIZE + 4 == pkt_offset)) {  // tag 11 + size + previous size 4
         pkt_offset = 0;
         pkt.reset();
         if ((ret = hk->recv_packet(pkt)) != SUCCESS) {
@@ -89,16 +132,53 @@ error_t FFmpegRtmpUrlProtocol::read(void *buf, size_t size, size_t &nread) {
         }
 
         // only read video/audio/script
+        // append flv
         if (pkt.is_video() || pkt.is_audio() || pkt.is_script()) {
+            write_flv_tag(pkt_tag_head, sizeof(pkt_tag_head), previous_size,
+                          pkt.packet.m_packetType, pkt.packet.m_nBodySize,
+                          pkt.packet.m_nTimeStamp, pkt.packet.m_nInfoField2);
+            sp_debug("rtmp->flv head type %d, size %u, timestamp %d, "
+                    "stream_id %d, %s", pkt.packet.m_packetType, pkt.packet.m_nBodySize,
+                    pkt.packet.m_nTimeStamp, pkt.packet.m_nInfoField2,
+                    to_hex((char*) pkt_tag_head, 11).c_str());
             break;
         }
 
         pkt.reset();
     }
 
-    nread = std::min(pkt.size() - pkt_offset, size);
-    memcpy(buf, pkt.data() + pkt_offset, nread);
-    pkt_offset += nread;
+    // flv tag header 11
+    if (size && pkt_offset < FLV_TAG_SIZE) {
+        size_t n   = std::min((int32_t) size, (int32_t) (FLV_TAG_SIZE - pkt_offset));
+        memcpy(p, pkt_tag_head + pkt_offset, n);
+        size       -= n;
+        pkt_offset += n;
+        p          += n;
+    }
+
+    // flv tag data
+    if (size && FLV_TAG_SIZE + pkt.size() > pkt_offset) {
+        size_t n = std::min((int32_t) size, (int32_t) (pkt.size() + FLV_TAG_SIZE - pkt_offset));
+        memcpy(p, pkt.data() + pkt_offset - FLV_TAG_SIZE, n);
+        size       -=n;
+        pkt_offset += n;
+        p          += n;
+    }
+
+    // flv previous size
+    if (size >= 4) {
+        auto rd = BytesWriter::create_writer((uint8_t*) p, 4);
+        rd->write_int32(pkt.size() + 11);
+        size       -= 4;
+        pkt_offset += 4;
+        p          += 4;
+
+        sp_debug("FLV tag %s, previous %s, total_size %lu", to_hex((char*) buf, 11).c_str(),
+                 to_hex((char*) buf + pkt_offset - 4, 4).c_str(), p - (uint8_t*) buf);
+
+    }
+
+    nread = p - (uint8_t*) buf;
 
     return ret;
 }
@@ -110,7 +190,7 @@ error_t FFmpegRtmpUrlProtocol::write(void *buf, size_t size) {
     uint32_t data_size;  // 3bytes
     uint32_t stream_id;  // 3bytes
 
-    if ((ret = parser_flv_head((uint8_t* )buf, size, &tag_type, &timestamp,
+    if ((ret = parser_flv_head((uint8_t*)buf, size, &tag_type, &timestamp,
                                &data_size, &stream_id)) != SUCCESS) {
         return ret;
     }
@@ -119,8 +199,8 @@ error_t FFmpegRtmpUrlProtocol::write(void *buf, size_t size) {
     WrapRtmpPacket packet(false);
     auto& pkt             = packet.packet;
 
-    pkt.m_body            = (char*) buf + 11;
-    pkt.m_nBodySize       = size - 11;
+    pkt.m_body            = (char*) buf + FLV_TAG_SIZE;
+    pkt.m_nBodySize       = size - FLV_TAG_SIZE;
     pkt.m_hasAbsTimestamp = 1;
     pkt.m_nTimeStamp      = timestamp;
     pkt.m_nInfoField2     = 1;

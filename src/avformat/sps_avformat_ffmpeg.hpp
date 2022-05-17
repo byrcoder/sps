@@ -27,7 +27,11 @@ SOFTWARE.
 #define FFMPEG_MAX_SIZE 600 * 1024
 
 #include <sps_auto_header.hpp>
+
+#include <vector>
+
 #include <sps_avformat_packet.hpp>
+#include <sps_typedef.hpp>
 
 #ifdef FFMPEG_ENABLED
 
@@ -81,7 +85,14 @@ class FFmpegPacket : public AVPacket {
 class FFmpegAVContext : public IAVContext {
  public:
     FFmpegAVContext(AVFormatContext* ctx);
-    AVFormatContext *ctx;
+    ~FFmpegAVContext();
+
+ public:
+    error_t init_input();
+
+ public:
+    AVFormatContext* ctx;
+    std::vector<AVCodecContext*>  codecs;
 };
 
 }  // namespace sps

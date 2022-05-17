@@ -29,6 +29,7 @@ SOFTWARE.
 #include <sps_avformat_ffmpeg.hpp>
 
 #include <sps_log.hpp>
+#include <sps_url_file.hpp>
 
 #ifdef FFMPEG_ENABLED
 
@@ -44,6 +45,12 @@ int FFmpegAVMuxer::write_data(void* opaque, uint8_t* buf, int buf_size) {
         nr = buf_size;
     }
 
+#ifdef FFMPEG_ENCODE_DEBUG
+    if (ffmpeg->debug_output && nr > 0) {
+        ffmpeg->debug_output->write(buf, nr);
+    }
+#endif
+
     sp_debug("write_data nr %d", nr);
     return nr;
 }
@@ -51,6 +58,16 @@ int FFmpegAVMuxer::write_data(void* opaque, uint8_t* buf, int buf_size) {
 FFmpegAVMuxer::FFmpegAVMuxer(PIWriter writer, PRequestUrl url) : writer(std::move(writer)) {
     this->url = std::move(url);
     init_ffmpeg_ctx();
+
+#ifdef FFMPEG_ENCODE_DEBUG
+    auto tmp = std::make_shared<FileURLProtocol>(true, false);
+    if (tmp->open("tmp.flv") != SUCCESS) {
+        sp_error("fail open tmp.flv");
+    } else {
+        sp_error("success open tmp.flv");
+        debug_output = tmp;
+    }
+#endif
 }
 
 FFmpegAVMuxer::~FFmpegAVMuxer() {
@@ -92,11 +109,14 @@ error_t FFmpegAVMuxer::set_av_ctx(IAVContext* c) {
 
     for (int i = 0; i < ffmpeg_ctx->ctx->nb_streams; i++) {
         if ((ret = on_av_stream(ffmpeg_ctx->ctx->streams[i])) != SUCCESS) {
+            sp_error( "fail init ctx stream %d < %d", i, ffmpeg_ctx->ctx->nb_streams);
             break;
         }
     }
 
-    av_dump_format(get_ctx(), 0, nullptr, 1);
+    if (ret == SUCCESS) {
+        av_dump_format(get_ctx(), 0, nullptr, 1);
+    }
 
     return ret;
 }
@@ -124,18 +144,32 @@ AVFormatContext *FFmpegAVMuxer::get_ctx() {
     return ctx;
 }
 
-error_t FFmpegAVMuxer::on_av_stream(AVStream* new_stream) {
-    auto codec               = avcodec_find_encoder(new_stream->codecpar->codec_id);
-    AVCodecContext *code_ctx = avcodec_alloc_context3(codec);
-    int ret = avcodec_parameters_to_context(code_ctx, new_stream->codecpar);
+error_t FFmpegAVMuxer::on_av_stream(AVStream* stream) {
+    AVCodec *dec     = nullptr;
+    AVCodecContext *codec_ctx = nullptr;
+    // subtitle
+    if (stream->codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE ||
+        stream->codecpar->codec_type == AVMEDIA_TYPE_DATA) {
 
-    if (ret < 0) {
+    } else {
+        AVCodec *dec = avcodec_find_encoder(stream->codecpar->codec_id);
+        if (!dec) {
+            sp_warn("Failed to find encoder for stream #%u(%d-%d)\n", stream->index,
+                    stream->codecpar->codec_type, stream->codecpar->codec_id);
+            return AVERROR(ENOMEM);
+        }
+    }
+
+    AVCodecContext *code_ctx = avcodec_alloc_context3(dec);
+    int ret = avcodec_parameters_to_context(code_ctx, stream->codecpar);
+
+    if (!code_ctx || ret < 0) {
         avcodec_free_context(&code_ctx);
-        sp_error( "Failed to copy context from input to output stream codec context");
+        sp_error("fail to copy context input %d", stream->codecpar->codec_id);
         return ERROR_FFMPEG_WRITE;
     }
 
-    AVStream *out_stream     = avformat_new_stream(ctx, codec);
+    AVStream *out_stream = avformat_new_stream(ctx, dec);
 
     if (!out_stream) {
         avcodec_free_context(&code_ctx);
@@ -155,11 +189,13 @@ error_t FFmpegAVMuxer::on_av_stream(AVStream* new_stream) {
         return ERROR_FFMPEG_WRITE;
     }
 
-    out_stream->sample_aspect_ratio = new_stream->sample_aspect_ratio;
-    out_stream->time_base           = new_stream->time_base;
-    out_stream->avg_frame_rate      = new_stream->avg_frame_rate;
+    out_stream->sample_aspect_ratio = stream->sample_aspect_ratio;
+    out_stream->time_base           = stream->time_base;
+    out_stream->avg_frame_rate      = stream->avg_frame_rate;
 
     avcodec_free_context(&code_ctx);
+
+    sp_trace("success copy context input %d", stream->codecpar->codec_id);
 
     return SUCCESS;
 }

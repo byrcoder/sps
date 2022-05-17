@@ -129,7 +129,7 @@ error_t HttpStreamPhaseHandler::handler_play(ConnContext& ctx) {
                 break;
             }
 
-            sp_info("write packet!");
+            sp_debug("write packet!");
         }
     } while (ret == SUCCESS);
 

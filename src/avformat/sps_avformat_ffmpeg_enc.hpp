@@ -30,6 +30,8 @@ SOFTWARE.
 
 #ifdef FFMPEG_ENABLED
 
+// #define FFMPEG_ENCODE_DEBUG
+
 namespace sps {
 
 class FFmpegAVMuxer : public IAVMuxer {
@@ -52,7 +54,7 @@ class FFmpegAVMuxer : public IAVMuxer {
     AVFormatContext* get_ctx();
 
  public:
-    error_t on_av_stream(AVStream* new_stream);
+    error_t on_av_stream(AVStream* stream);
 
  private:
     error_t init_ffmpeg_ctx();
@@ -68,6 +70,10 @@ class FFmpegAVMuxer : public IAVMuxer {
 
     // ffmpeg timestamp
     int64_t cur_timestamp;
+
+#ifdef FFMPEG_ENCODE_DEBUG
+    PIWriter debug_output;
+#endif
 };
 
 class FFmpegAVOutputFormat : public IAVOutputFormat {

@@ -106,6 +106,51 @@ FFmpegAVContext::FFmpegAVContext(AVFormatContext *ctx) {
     this->ctx = ctx;
 }
 
+FFmpegAVContext::~FFmpegAVContext() {
+    for (auto c : codecs) {
+        avcodec_free_context(&c);
+    }
+}
+
+error_t FFmpegAVContext::init_input() {
+    error_t ret = SUCCESS;
+
+    for (int i = 0; i < ctx->nb_streams; ++i) {
+        AVStream *stream = ctx->streams[i];
+        AVCodec *dec     = nullptr;
+        AVCodecContext *codec_ctx = nullptr;
+        // subtitle
+        if (stream->codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE ||
+            stream->codecpar->codec_type == AVMEDIA_TYPE_DATA) {
+
+        } else {
+            AVCodec *dec = avcodec_find_decoder(stream->codecpar->codec_id);
+            if (!dec) {
+                sp_warn("Failed to find decoder for stream #%u(%d-%d)\n", i,
+                        stream->codecpar->codec_type, stream->codecpar->codec_id);
+                return AVERROR(ENOMEM);
+            }
+        }
+
+        codec_ctx = avcodec_alloc_context3(dec);
+        if (!codec_ctx) {
+            sp_error("Failed to allocate the decoder context for stream #%u\n", i);
+            return AVERROR(ENOMEM);
+        }
+        ret = avcodec_parameters_to_context(codec_ctx, stream->codecpar);
+        if (ret < 0) {
+            sp_error("Failed to copy decoder parameters to input decoder context "
+                                       "for stream #%u\n", i);
+            return ret;
+        }
+
+        sp_trace("Success to find decoder for stream #%u(%d-%d)\n", i,
+                stream->codecpar->codec_type, stream->codecpar->codec_id);
+        codecs.push_back(codec_ctx);
+    }
+    return SUCCESS;
+}
+
 }
 
 #endif

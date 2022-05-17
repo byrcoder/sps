@@ -34,6 +34,8 @@ SOFTWARE.
 
 #ifdef FFMPEG_ENABLED
 
+#define FFMPEG_DECODE_DEBUG
+
 namespace sps {
 
 class FFmpegAVDemuxer : public IAVDemuxer {
@@ -73,6 +75,10 @@ class FFmpegAVDemuxer : public IAVDemuxer {
 
     // ffmpeg timestamp
     int64_t cur_timestamp;
+
+#ifdef FFMPEG_DECODE_DEBUG
+    PIWriter debug_output;
+#endif
 };
 
 class FFmpegAVInputFormat : public IAVInputFormat {
