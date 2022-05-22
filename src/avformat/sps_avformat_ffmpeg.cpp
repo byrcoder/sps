@@ -112,6 +112,7 @@ FFmpegAVContext::~FFmpegAVContext() {
     }
 }
 
+// https://ffmpeg.org/doxygen/3.4/transcoding_8c-example.html
 error_t FFmpegAVContext::init_input() {
     error_t ret = SUCCESS;
 
