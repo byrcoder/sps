@@ -123,13 +123,13 @@ GTEST_TEST(RTP, H264) {
                          AVPacketType {0},
                          seq_header, size, 0, 0,
                          0x17, 7);
-        flv_muxer->write_packet(h);
+        flv_muxer->write_message(h);
     }
 
 
     PAVPacket pkt;
     while ((ret = rtp.read_packet(pkt)) == SUCCESS) {
-        ret = flv_muxer->write_packet(pkt);
+        ret = flv_muxer->write_message(pkt);
 
         EXPECT_TRUE(ret == SUCCESS);
         // pkt->debug();
@@ -174,13 +174,13 @@ GTEST_TEST(RTP, AAC) {
                                   AVPacketType {0},
                                   seq_header, size, 0, 0,
                                   0x17, 7);
-        flv_muxer->write_packet(h);
+        flv_muxer->write_message(h);
     }
 
 
     PAVPacket pkt;
     while ((ret = rtp.read_packet(pkt)) == SUCCESS) {
-        ret = flv_muxer->write_packet(pkt);
+        ret = flv_muxer->write_message(pkt);
 
         EXPECT_TRUE(ret == SUCCESS);
         // pkt->debug();
@@ -224,13 +224,13 @@ GTEST_TEST(RTP, TS) {
                                   AVPacketType {0},
                                   seq_header, size, 0, 0,
                                   0x17, 7);
-        flv_muxer->write_packet(h);
+        flv_muxer->write_message(h);
     }
 
 
     PAVPacket pkt;
     while ((ret = rtp.read_packet(pkt)) == SUCCESS) {
-        ret = flv_muxer->write_packet(pkt);
+        ret = flv_muxer->write_message(pkt);
 
         EXPECT_TRUE(ret == SUCCESS);
         // pkt->debug();

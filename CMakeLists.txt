@@ -14,11 +14,6 @@ option(OPENSSL_ENABLED "openssl enabled" OFF)
 option(OPENSSL_INCLUDE "" "")
 option(OPENSSL_LIB "" "")
 
-# ffmpeg option
-option(FFMPEG_ENABLED "ffmpeg enabled" OFF)
-option(FFMPEG_INCLUDE "ffmpeg include" "")
-option(FFMPEG_LIB "ffmpeg lib" "")
-
 # unit test option
 option(ENABLE_UNITTESTS "Enable unit tests" ON)
 
@@ -43,28 +38,10 @@ execute_process(
 )
 
 message("git version ${GIT_VERSION} ${GIT_VERSION} ${GIT_BRANCH}
-        srt_enabled :${SRT_ENABLED}
+        srt_enabled:${SRT_ENABLED}
         openssl_enabled: ${OPENSSL_ENABLED}
         openssl_include: ${OPENSSL_INCLUDE}
-        openssl_lib: ${OPENSSL_LIB}
-        ffmpeg_enabled: ${FFMPEG_ENABLED}
-        ffmpeg_include: ${FFMPEG_INCLUDE}
-        ffmpeg_lib: ${FFMPEG_LIB}")
-
-# lib option
-function(lib_opt def incl lib)
-    if (${${def}})
-        file(APPEND ${AUTO_HEAD} "#define ${def} \r\n")
-        if (incl)
-            include_directories(${${incl}})
-        endif()
-
-        if (lib)
-            link_directories(${${lib}})
-        endif()
-        message("${def} ${${def}} inc ${${incl}} ${${lib}}")
-    endif()
-endfunction(lib_opt)
+        openssl_lib: ${OPENSSL_LIB}" )
 
 # auto header
 set(AUTO_HEAD ${PROJECT_SOURCE_DIR}/src/sps_auto_header.hpp)
@@ -81,26 +58,9 @@ if (SRT_ENABLED)
     file(APPEND ${AUTO_HEAD} "#define SRT_ENABLED\r\n")
 endif()
 
-# if (OPENSSL_ENABLED)
-#    file(APPEND ${AUTO_HEAD} "#define OPENSSL_ENABLED\r\n")
-# endif()
-
-#if (FFMPEG_ENABLED)
-#    file(APPEND ${AUTO_HEAD} "#define FFMPEG_ENABLED\r\n")
-#endif()
-
-#if (OPENSSL_ENABLED)
-#    if (OPENSSL_INCLUDE)
-#        include_directories(${OPENSSL_INCLUDE})
-#    endif()
-#
-#    if (OPENSSL_LIB)
-#        link_directories(${OPENSSL_LIB})
-#    endif()
-#endif()
-
-lib_opt(OPENSSL_ENABLED OPENSSL_INCLUDE OPENSSL_LIB)
-lib_opt(FFMPEG_ENABLED  FFMPEG_INCLUDE FFMPEG_LIB)
+if (OPENSSL_ENABLED)
+    file(APPEND ${AUTO_HEAD} "#define OPENSSL_ENABLED\r\n")
+endif()
 
 file(APPEND ${AUTO_HEAD} "\r\n")
 file(APPEND ${AUTO_HEAD} "#endif")
@@ -122,6 +82,16 @@ link_directories(
         ${PROJECT_SOURCE_DIR}/3rdparty/http-parser
         ${PROJECT_SOURCE_DIR}/3rdparty/rtmpdump/librtmp
         )
+
+if (OPENSSL_ENABLED)
+    if (OPENSSL_INCLUDE)
+        include_directories(${OPENSSL_INCLUDE})
+    endif()
+
+    if (OPENSSL_LIB)
+        link_directories(${OPENSSL_LIB})
+    endif()
+endif()
 
 include_directories(
         ${PROJECT_SOURCE_DIR}/src
@@ -214,10 +184,7 @@ if (SRT_ENABLED)
     target_link_libraries(sps ${PROJECT_SOURCE_DIR}/3rdparty/srt/libsrt.a)
 endif()
 if (OPENSSL_ENABLED)
-    target_link_libraries(sps ${OPENSSL_LIB}/libssl.a ${OPENSSL_LIB}/libcrypto.a)
-endif()
-if (FFMPEG_ENABLED)
-    target_link_libraries(sps avformat avcodec avdevice avfilter avutil swresample swscale)
+    target_link_libraries(sps ${OPENSSL_LIB}libssl.a ${OPENSSL_LIB}libcrypto.a)
 endif()
 
 if(ENABLE_UNITTESTS)
@@ -235,11 +202,7 @@ if(ENABLE_UNITTESTS)
         target_link_libraries(test_all ${PROJECT_SOURCE_DIR}/3rdparty/srt/libsrt.a)
     endif()
     if (OPENSSL_ENABLED)
-        target_link_libraries(test_all ${OPENSSL_LIB}/libssl.a ${OPENSSL_LIB}/libcrypto.a)
-    endif()
-
-    if (FFMPEG_ENABLED)
-        target_link_libraries(test_all avformat avcodec avdevice avfilter avutil swresample swscale)
+        target_link_libraries(test_all ${OPENSSL_LIB}libssl.a ${OPENSSL_LIB}libcrypto.a)
     endif()
 
     add_test(
@@ -261,9 +224,6 @@ if (SRT_ENABLED)
     target_link_libraries(srt_http_client libst.a libhttp_parser.a librtmp.a)
     target_link_libraries(srt_http_client ${PROJECT_SOURCE_DIR}/3rdparty/srt/libsrt.a)
     if (OPENSSL_ENABLED)
-        target_link_libraries(srt_http_client ${OPENSSL_LIB}/libssl.a  ${OPENSSL_LIB}/libcrypto.a)
-    endif()
-    if (FFMPEG_ENABLED)
-        target_link_libraries(srt_http_client avformat avcodec avdevice avfilter avutil swresample swscale)
+        target_link_libraries(srt_http_client ${OPENSSL_LIB}libssl.a  ${OPENSSL_LIB}libcrypto.a)
     endif()
 endif()

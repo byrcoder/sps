@@ -49,10 +49,9 @@ class IAVDemuxer {
 
  public:
     virtual error_t read_header(PAVPacket & buffer)  = 0;
-    virtual error_t read_packet(PAVPacket& buffer)  = 0;
+    virtual error_t read_packet(PAVPacket& buffer) = 0;
     virtual error_t read_tail(PAVPacket& buffer)    = 0;
     virtual error_t probe(PAVPacket& buffer)        = 0;
-    virtual IAVContext*  get_av_ctx() { return nullptr; }
 
  public:
     const IAVInputFormat* fmt;

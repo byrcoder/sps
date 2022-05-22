@@ -39,7 +39,7 @@ class FlvAVMuxer : public IAVMuxer {
 
  public:
     error_t write_header(PAVPacket& buffer) override;
-    error_t write_packet(PAVPacket& buffer) override;
+    error_t write_message(PAVPacket& buffer) override;
     error_t write_tail(PAVPacket& buffer)    override;
 
  private:

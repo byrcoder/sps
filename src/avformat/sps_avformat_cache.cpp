@@ -45,7 +45,7 @@ error_t AVGopCacheStream::put(PAVPacket pb) {
     }  else if (pb->is_keyframe()) {
         pbs.clear();  // new keyframe
         pbs.push_back(pb);
-        sp_info("%d. new keyframe dts %lld", pb->number, pb->dts);
+        sp_info("new keyframe dts %lld", pb->dts);
     } else {
         if (!pbs.empty()) {
             pbs.push_back(pb);  // in case no keyframe

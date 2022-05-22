@@ -44,7 +44,7 @@ error_t RtmpAVMuxer::write_header(PAVPacket& buffer) {
 }
 
 // TODO(byrcoder): FIXME
-error_t RtmpAVMuxer::write_packet(PAVPacket& buffer) {
+error_t RtmpAVMuxer::write_message(PAVPacket& buffer) {
     WrapRtmpPacket packet(false);
     auto& pkt = packet.packet;
 

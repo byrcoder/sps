@@ -37,19 +37,15 @@ PCharBuffer CharBuffer::create_buf(uint32_t cap) {
 }
 
 CharBuffer::CharBuffer(uint8_t *buf, uint32_t len, uint32_t head_len) {
-    if (head_len + len == 0) {
-        this->buf = nullptr;
-    } else {
-        this->buf = new uint8_t[len + head_len];
-        memcpy(this->buf + head_len, buf, len);
-    }
+    this->buf = new uint8_t[len + head_len];
     this->len = len;
     this->head_len = head_len;
+    memcpy(this->buf + head_len, buf, len);
     cap_len = len;
 }
 
 CharBuffer::CharBuffer(uint32_t cap, uint32_t head_len) {
-    buf      = cap + head_len > 0 ? new uint8_t[cap + head_len] : nullptr;
+    buf      = new uint8_t[cap + head_len];
     len      = 0;
     cap_len  = cap;
     this->head_len = head_len;

@@ -82,7 +82,7 @@ error_t test_flv() {
         }
         // pkt->debug();
 
-        ret = flv_muxer.write_packet(pkt);
+        ret = flv_muxer.write_message(pkt);
         if (ret != SUCCESS) {
             sp_error("fail write FLV PACKET %d", ret);
             break;

@@ -1,13 +1,9 @@
 #!/bin/bash
 
-SRT_ENABLED=ON
+SRT_ENABLED=OFF
 OPENSSL_ENABLED=OFF
 OPENSSL_INCLUDE=""
 OPENSSL_LIB=""
-
-FFMPEG_ENABLED=OFF
-FFMPEG_INCLUDE=""
-FFMPEG_LIB=""
 
 function parse_key_value() {
     opt=$1
@@ -21,14 +17,6 @@ function parse_key_value() {
       -openssl_lib)
         OPENSSL_LIB=$value
         echo "OPENSSL_LIB $value"
-        ;;
-      -ffmpeg_include)
-        FFMPEG_INCLUDE=$value
-        echo "FFMPEG_INCLUDE $value"
-        ;;
-      -ffmpeg_lib)
-        FFMPEG_LIB=$value
-        echo "FFMPEG_LIB $value"
         ;;
       *)
         echo "unknown key value $opt $value"
@@ -59,10 +47,6 @@ function parse_opts() {
               ;;
             --with-openssl)
               OPENSSL_ENABLED=ON
-              shift
-              ;;
-            --with-ffmpeg)
-              FFMPEG_ENABLED=ON
               shift
               ;;
 

@@ -29,11 +29,9 @@ SOFTWARE.
 
 namespace sps {
 
-const IAVOutputFormat* IAVMuxer::name() {
+const IAVOutputFormat * IAVMuxer::name() {
     return fmt;
 }
-
-error_t IAVMuxer::set_av_ctx(IAVContext *ctx) {  return SUCCESS; }
 
 IAVOutputFormat::IAVOutputFormat(const char *name, const char *ext) {
     this->name = name;
@@ -46,11 +44,10 @@ bool IAVOutputFormat::match(const char *e) const {
     return memcmp(ext, e, std::max(n, m)) == 0;
 }
 
-PIAVMuxer IAVOutputFormat::create2(PIWriter pw, PRequestUrl& url) {
+PIAVMuxer IAVOutputFormat::create2(PIWriter pw) {
     auto muxer = _create(std::move(pw));
     if (muxer) {
         muxer->fmt = this;
-        muxer->url = url;
     }
     return muxer;
 }
@@ -60,7 +57,7 @@ PIAVMuxer AVEncoderFactory::create(PIWriter p, PRequestUrl &url) {
 
     for (auto& f : fmts) {
         if (f->match(url->get_ext())) {
-            return f->create2(std::move(p), url);
+            return f->create2(std::move(p));
         }
     }
     return nullptr;

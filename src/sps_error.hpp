@@ -24,8 +24,6 @@ SOFTWARE.
 #ifndef SPS_SPS_ERROR_HPP
 #define SPS_SPS_ERROR_HPP
 
-#include <sps_auto_header.hpp>
-
 #define SUCCESS 0L
 
 #define ERROR_CO_CREATE                     50
@@ -158,13 +156,5 @@ SOFTWARE.
 #define ERROR_H264_NOT_IMPL                 3502
 
 #define ERROR_AAC_DECODER                   3600
-
-#ifdef FFMPEG_ENABLED
-
-#define ERROR_FFMPEG_OPEN                   5000
-#define ERROR_FFMPEG_READ                   5001
-#define ERROR_FFMPEG_WRITE                  5002
-
-#endif
 
 #endif  // SPS_SPS_ERROR_HPP

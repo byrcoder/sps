@@ -199,11 +199,7 @@ error_t BytesReader::acquire(uint32_t n) {
     return ret;
 }
 
-PBytesWriter BytesWriter::create_writer(uint8_t *buf, int len) {
-    return std::make_shared<BytesWriter>(std::make_shared<AVBuffer>(buf, len, false));
-}
-
-BytesWriter::BytesWriter(PAVBuffer b): buf(std::move(b)) {
+BytesWriter::BytesWriter(PAVBuffer& buf): buf(buf) {
 }
 
 error_t BytesWriter::acquire(uint32_t n) {

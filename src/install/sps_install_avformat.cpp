@@ -36,35 +36,24 @@ SOFTWARE.
 
 #include <sps_avformat_tsdec.hpp>
 
-#include <sps_avformat_ffmpeg_dec.hpp>
-#include <sps_avformat_ffmpeg_enc.hpp>
-
 namespace sps {
 
 #define AVINPUTFORMAT_INSTANCE(NAME) (std::make_shared<NAME##AVInputFormat>())
 
 PIAVInputFormat av_input_formats[] = {
-#ifdef FFMPEG_ENABLED
-        AVINPUTFORMAT_INSTANCE(FFmpeg),
-#else
         AVINPUTFORMAT_INSTANCE(Flv),
         AVINPUTFORMAT_INSTANCE(Rtmp),
         AVINPUTFORMAT_INSTANCE(Ts),
         nullptr,
-#endif
 };
 
 
 #define AVOUTPUTFORMAT_INSTANCE(NAME) (std::make_shared<NAME##AVOutputFormat>())
 
 PIAVOutputFormat av_output_formats[] = {
-#ifdef FFMPEG_ENABLED
-        AVOUTPUTFORMAT_INSTANCE(FFmpeg),
-#else
         AVOUTPUTFORMAT_INSTANCE(Flv),
         AVOUTPUTFORMAT_INSTANCE(Rtmp),
         nullptr,
-#endif
 };
 
 }  // namespace sps

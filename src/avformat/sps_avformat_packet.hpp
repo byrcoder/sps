@@ -120,16 +120,16 @@ class AVPacket : public CharBuffer {
     AVPacket(uint32_t cap, int head_len = 0);
 
  public:
-    virtual bool is_video() const;
-    virtual bool is_audio() const;
-    virtual bool is_script() const;
-    virtual bool is_keyframe() const;
-    virtual bool is_video_sequence_header() const;
-    virtual bool is_audio_sequence_header();
+    bool is_video() const;
+    bool is_audio() const;
+    bool is_script() const;
+    bool is_keyframe() const;
+    bool is_video_sequence_header() const;
+    bool is_audio_sequence_header();
 
-    virtual bool is_pat();
-    virtual bool is_pmt();
-    virtual bool is_payload_unit_start_indicator();
+    bool is_pat();
+    bool is_pmt();
+    bool is_payload_unit_start_indicator();
 
  public:
     /**
@@ -178,11 +178,6 @@ class AVPacket : public CharBuffer {
 
  public:
     void debug();
-};
-
-class IAVContext {
- public:
-    virtual ~IAVContext() = default;
 };
 
 }  // namespace sps

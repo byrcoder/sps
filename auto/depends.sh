@@ -9,12 +9,8 @@ function cmake_project() {
       TMP_BUILD_FLAG=$3
     fi
 
-    cd ${TMP_TARGET_DIR} && cmake . -DENABLE_ENCRYPTION=OFF -DENABLE_UNITTESTS=OFF && make ${TMP_BUILD_FLAG} && cd -
-    ret=$?;
-    if [[ $ret -ne 0 ]];
-      then echo "build srt failed, cmake ${TMP_TARGET_DIR} -DENABLE_ENCRYPTION=OFF -DENABLE_UNITTESTS=OFF, ret=$ret";
-      exit $ret;
-     fi
+    cd ${TMP_TARGET_DIR} && cmake ${TMP_TARGET_DIR} -DENABLE_ENCRYPTION=OFF -DENABLE_UNITTESTS=OFF && make ${TMP_BUILD_FLAG} && cd -
+    ret=$?;  if [[ $ret -ne 0 ]]; then echo "build srt failed, ret=$ret"; exit $ret; fi
 
     ln -s ${TMP_TARGET_DIR} ${TMP_BUILD_DIR}
 
@@ -36,8 +32,8 @@ function makefile_project() {
 
 if [ ${SRT_ENABLED} = "ON" ]
 then
+  echo "======building srt====="
   SRT_TARGET_DIR=${WORK_DIR}/3rdparty/srt
-  echo "======building srt ${BUILD_SRT} ${SRT_TARGET_DIR}====="
   cmake_project ${SRT_TARGET_DIR} ${BUILD_SRT}
   echo "======build srt success ${BUILD_SRT} ${SRT_TARGET_DIR}====="
 fi

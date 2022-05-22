@@ -48,13 +48,11 @@ class IAVMuxer {
 
  public:
     virtual error_t write_header(PAVPacket& buffer)  = 0;
-    virtual error_t write_packet(PAVPacket& buffer)  = 0;
+    virtual error_t write_message(PAVPacket& buffer) = 0;
     virtual error_t write_tail(PAVPacket& buffer)    = 0;
-    virtual error_t set_av_ctx(IAVContext* ctx);
 
  public:
     const IAVOutputFormat* fmt;
-    PRequestUrl url;
 };
 
 typedef std::shared_ptr<IAVMuxer> PIAVMuxer;
@@ -71,7 +69,7 @@ class IAVOutputFormat {
     virtual PIAVMuxer _create(PIWriter pw) const = 0;
 
  public:
-    virtual PIAVMuxer create2(PIWriter pw, PRequestUrl& url);
+    PIAVMuxer create2(PIWriter pw);
 
  public:
     const char* name;
