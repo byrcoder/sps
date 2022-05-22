@@ -119,9 +119,14 @@ class BytesReader {
     PAVBuffer buf;
 };
 
+class BytesWriter;
+typedef std::shared_ptr<BytesWriter> PBytesWriter;
 class BytesWriter {
  public:
-    explicit BytesWriter(PAVBuffer& buf);
+    static PBytesWriter create_writer(uint8_t* buf, int len);
+
+ public:
+    explicit BytesWriter(PAVBuffer buf);
 
     error_t acquire(uint32_t n);
 
@@ -137,7 +142,7 @@ class BytesWriter {
     void    skip(size_t n);
 
  private:
-    PAVBuffer& buf;
+    PAVBuffer buf;
 };
 
 }  // namespace sps

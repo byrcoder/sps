@@ -21,42 +21,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#include <sps_cache_buffer.hpp>
-
-#include <cstring>
-
-namespace sps {
-
-PCharBuffer CharBuffer::deep_copy(uint8_t *buf, uint32_t len,
-                                  uint32_t head_len) {
-    return std::make_shared<CharBuffer>(buf, len, head_len);
-}
-
-PCharBuffer CharBuffer::create_buf(uint32_t cap) {
-    return std::make_shared<CharBuffer>(cap);
-}
-
-CharBuffer::CharBuffer(uint8_t *buf, uint32_t len, uint32_t head_len) {
-    if (head_len + len == 0) {
-        this->buf = nullptr;
-    } else {
-        this->buf = new uint8_t[len + head_len];
-        memcpy(this->buf + head_len, buf, len);
-    }
-    this->len = len;
-    this->head_len = head_len;
-    cap_len = len;
-}
-
-CharBuffer::CharBuffer(uint32_t cap, uint32_t head_len) {
-    buf      = cap + head_len > 0 ? new uint8_t[cap + head_len] : nullptr;
-    len      = 0;
-    cap_len  = cap;
-    this->head_len = head_len;
-}
-
-CharBuffer::~CharBuffer() {
-    delete []buf;
-}
-
-}  // namespace sps
+//
+// Created by byrcoder on 2021/12/19.
+//

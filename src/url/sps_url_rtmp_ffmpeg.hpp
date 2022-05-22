@@ -21,59 +21,48 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#include <sps_avformat_enc.hpp>
+#ifndef SPS_URL_RTMP_FFMPEG_HPP
+#define SPS_URL_RTMP_FFMPEG_HPP
 
-#include <algorithm>
+#include <memory>
 
-#include <sps_log.hpp>
+#include <sps_librtmp.hpp>
+#include <sps_url_protocol.hpp>
+
+#define FLV_HEAD_SIZE 13
+#define FLV_TAG_SIZE 11
 
 namespace sps {
 
-const IAVOutputFormat* IAVMuxer::name() {
-    return fmt;
-}
+/**
+ * match ffmpeg rtmpproto.c for rtmp io
+ */
+class FFmpegRtmpUrlProtocol : public IURLProtocol {
+ public:
+    FFmpegRtmpUrlProtocol() = default;
 
-error_t IAVMuxer::set_av_ctx(IAVContext *ctx) {  return SUCCESS; }
+    explicit FFmpegRtmpUrlProtocol(PRtmpHook hk);
 
-IAVOutputFormat::IAVOutputFormat(const char *name, const char *ext) {
-    this->name = name;
-    this->ext  = ext;
-}
+ public:
+    error_t open(PRequestUrl& url, Transport p) override;
 
-bool IAVOutputFormat::match(const char *e) const {
-    int n = strlen(ext);
-    int m = strlen(ext);
-    return memcmp(ext, e, std::max(n, m)) == 0;
-}
+ public:
+    error_t read(void* buf, size_t size, size_t& nread) override;
 
-PIAVMuxer IAVOutputFormat::create2(PIWriter pw, PRequestUrl& url) {
-    auto muxer = _create(std::move(pw));
-    if (muxer) {
-        muxer->fmt = this;
-        muxer->url = url;
-    }
-    return muxer;
-}
+    error_t write(void* buf, size_t size) override;
 
-PIAVMuxer AVEncoderFactory::create(PIWriter p, PRequestUrl &url) {
-    auto& fmts = refs();
+ public:
+    PResponse response() override;
 
-    for (auto& f : fmts) {
-        if (f->match(url->get_ext())) {
-            return f->create2(std::move(p), url);
-        }
-    }
-    return nullptr;
-}
-
-PIAVMuxer AVEncoderFactory::create(PIWriter p, const std::string &url) {
-    PRequestUrl purl = std::make_shared<RequestUrl>();
-
-    if (purl->parse_url(url) != SUCCESS) {
-        sp_error("Invalid url %s.", url.c_str());
-        return nullptr;
-    }
-    return create(std::move(p), purl);
-}
+ private:
+    std::shared_ptr<RtmpHook> hk;
+    WrapRtmpPacket pkt;
+    uint8_t        pkt_tag_head[FLV_TAG_SIZE];
+    uint32_t       pkt_offset = 0;  // flv head + pkt data offset
+    bool           flv_head_read = false;
+    uint32_t       previous_size = 0;
+};
 
 }  // namespace sps
+
+#endif  // SPS_URL_RTMP_FFMPEG_HPP
