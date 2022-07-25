@@ -522,11 +522,12 @@ error_t RtmpHook::send_set_chunked_size() {
 error_t RtmpHook::recv_packet(WrapRtmpPacket &pkt) {
     error_t ret  = SUCCESS;
     auto &packet = pkt.packet;
+    pkt.reset();
 
     do {
-        pkt.reset();
         if (RTMP_ReadPacket(rtmp, &packet) != TRUE) {
-            ret = error;
+            ret           = error;
+            packet.m_body = nullptr;
             sp_error("rtmp recv failed ret: %d", ret);
             return ret;
         }

@@ -110,7 +110,7 @@ class WrapRtmpPacket {
 
  public:
     bool own;
-    RTMPPacket packet{0};
+    RTMPPacket packet;
 };
 
 class IRtmpPacket {

@@ -118,6 +118,7 @@ bool equal_val(AVal *src, const char *c) {
 
 WrapRtmpPacket::WrapRtmpPacket(bool own) {
     this->own = own;
+    memset(&packet, 0, sizeof(packet));
 }
 
 WrapRtmpPacket::~WrapRtmpPacket() {
