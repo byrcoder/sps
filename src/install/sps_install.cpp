@@ -86,8 +86,8 @@ void init_avformats() {
 void init_ffmpeg() {
 
 #ifndef FF_API_NEXT
-    av_register_all();  // maybe deprecated
-    avcodec_register_all();  // maybe deprecated
+//    av_register_all();  // maybe deprecated
+//    avcodec_register_all();  // maybe deprecated
 #endif
     avformat_network_init();
 }

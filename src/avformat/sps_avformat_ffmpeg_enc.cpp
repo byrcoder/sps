@@ -85,7 +85,23 @@ error_t FFmpegAVMuxer::write_header(PAVPacket &buffer) {
 
 error_t FFmpegAVMuxer::write_packet(PAVPacket& buffer) {
     auto pkt = dynamic_cast<FFmpegPacket*>(buffer.get());
-    int ret = av_write_frame(ctx, pkt->packet());
+
+    if (pkt->packet()->stream_index >= stream_mapping.size() ||
+        stream_mapping[pkt->packet()->stream_index] < 0) {
+        sp_warn("ignore packet index %d", pkt->packet()->stream_index);
+        return SUCCESS;
+    }
+
+    ::AVPacket out_pkt;
+
+    int ret = av_packet_ref(&out_pkt, pkt->packet());
+
+    /* copy packet */
+    av_packet_rescale_ts(&out_pkt, *pkt->get_time_base(), ctx->streams[pkt->packet()->stream_index]->time_base);
+    out_pkt.pos = -1;
+
+    ret = av_write_frame(ctx, &out_pkt);
+    av_packet_unref(&out_pkt);
     if (ret < 0) {
         sp_error("fail write pkt %d", ret);
         return ERROR_FFMPEG_WRITE;
@@ -144,57 +160,34 @@ AVFormatContext *FFmpegAVMuxer::get_ctx() {
     return ctx;
 }
 
+// https://github.com/FFmpeg/FFmpeg/blob/master/doc/examples/remuxing.c
 error_t FFmpegAVMuxer::on_av_stream(AVStream* stream) {
-    AVCodec *dec     = nullptr;
-    AVCodecContext *codec_ctx = nullptr;
-    // subtitle
-    if (stream->codecpar->codec_type == AVMEDIA_TYPE_SUBTITLE ||
-        stream->codecpar->codec_type == AVMEDIA_TYPE_DATA) {
+    AVCodecParameters *in_codecpar = stream->codecpar;
 
-    } else {
-        AVCodec *dec = avcodec_find_encoder(stream->codecpar->codec_id);
-        if (!dec) {
-            sp_warn("Failed to find encoder for stream #%u(%d-%d)\n", stream->index,
-                    stream->codecpar->codec_type, stream->codecpar->codec_id);
-            return AVERROR(ENOMEM);
-        }
+    if (in_codecpar->codec_type != AVMEDIA_TYPE_AUDIO &&
+        in_codecpar->codec_type != AVMEDIA_TYPE_VIDEO &&
+        in_codecpar->codec_type != AVMEDIA_TYPE_SUBTITLE &&
+        in_codecpar->codec_type != AVMEDIA_TYPE_DATA) {
+        sp_warn( "ignore code type %d\n", in_codecpar->codec_type);
+        stream_mapping.push_back(-1);
+        return SUCCESS;
     }
 
-    AVCodecContext *code_ctx = avcodec_alloc_context3(dec);
-    int ret = avcodec_parameters_to_context(code_ctx, stream->codecpar);
-
-    if (!code_ctx || ret < 0) {
-        avcodec_free_context(&code_ctx);
-        sp_error("fail to copy context input %d", stream->codecpar->codec_id);
-        return ERROR_FFMPEG_WRITE;
-    }
-
-    AVStream *out_stream = avformat_new_stream(ctx, dec);
+    AVStream *out_stream = avformat_new_stream(ctx, nullptr);
 
     if (!out_stream) {
-        avcodec_free_context(&code_ctx);
         sp_error( "Failed allocating output stream\n");
         return ERROR_FFMPEG_WRITE;
     }
 
-    code_ctx->codec_tag = 0;
-    if (ctx->oformat->flags & AVFMT_GLOBALHEADER) {
-        code_ctx->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
-    }
-
-    ret = avcodec_parameters_from_context(out_stream->codecpar, code_ctx);
+    int ret = avcodec_parameters_copy(out_stream->codecpar, in_codecpar);
     if (ret < 0) {
-        avcodec_free_context(&code_ctx);
         sp_error( "Failed to copy context from input to output stream codec context");
         return ERROR_FFMPEG_WRITE;
     }
 
-    out_stream->sample_aspect_ratio = stream->sample_aspect_ratio;
-    out_stream->time_base           = stream->time_base;
-    out_stream->avg_frame_rate      = stream->avg_frame_rate;
-
-    avcodec_free_context(&code_ctx);
-
+    out_stream->codecpar->codec_tag = 0;
+    stream_mapping.push_back(stream_mapping.size());
     sp_trace("success copy context input %d", stream->codecpar->codec_id);
 
     return SUCCESS;
@@ -269,3 +262,4 @@ PIAVMuxer FFmpegAVOutputFormat::create2(PIWriter pw, PRequestUrl &url) {
 }
 
 #endif
+

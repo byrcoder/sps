@@ -267,3 +267,4 @@ if (SRT_ENABLED)
         target_link_libraries(srt_http_client avformat avcodec avdevice avfilter avutil swresample swscale)
     endif()
 endif()
+

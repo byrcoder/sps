@@ -125,11 +125,11 @@ error_t FFmpegAVContext::init_input() {
             stream->codecpar->codec_type == AVMEDIA_TYPE_DATA) {
 
         } else {
-            AVCodec *dec = avcodec_find_decoder(stream->codecpar->codec_id);
+            const AVCodec *dec = avcodec_find_decoder(stream->codecpar->codec_id);
             if (!dec) {
                 sp_warn("Failed to find decoder for stream #%u(%d-%d)\n", i,
                         stream->codecpar->codec_type, stream->codecpar->codec_id);
-                return AVERROR(ENOMEM);
+                continue;
             }
         }
 
@@ -140,9 +140,11 @@ error_t FFmpegAVContext::init_input() {
         }
         ret = avcodec_parameters_to_context(codec_ctx, stream->codecpar);
         if (ret < 0) {
+            avcodec_free_context(&codec_ctx);
             sp_error("Failed to copy decoder parameters to input decoder context "
                                        "for stream #%u\n", i);
-            return ret;
+            continue;
+
         }
 
         sp_trace("Success to find decoder for stream #%u(%d-%d)\n", i,
@@ -155,3 +157,4 @@ error_t FFmpegAVContext::init_input() {
 }
 
 #endif
+

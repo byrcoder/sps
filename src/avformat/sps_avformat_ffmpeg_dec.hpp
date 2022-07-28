@@ -34,7 +34,7 @@ SOFTWARE.
 
 #ifdef FFMPEG_ENABLED
 
-#define FFMPEG_DECODE_DEBUG
+//#define FFMPEG_DECODE_DEBUG
 
 namespace sps {
 

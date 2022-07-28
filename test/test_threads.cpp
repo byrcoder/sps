@@ -44,7 +44,7 @@ struct Int96 {
     int32_t b32;
     int32_t c32;
 };
-
+#if 0
 GTEST_TEST(THREAD, ATOMIC) {
     std::atomic<int> i32(1);
     std::atomic<bool> b(false);
@@ -62,3 +62,4 @@ GTEST_TEST(THREAD, ATOMIC) {
     // EXPECT_TRUE(si96.is_lock_free());  compile error
 
 }
+#endif

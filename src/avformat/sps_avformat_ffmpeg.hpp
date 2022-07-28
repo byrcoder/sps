@@ -39,12 +39,18 @@ extern "C" {
 
 #include <libavcodec/avcodec.h>
 #include <libavformat/avformat.h>
-#include <libavformat/avio_internal.h>
+#include <libavformat/avio.h>
 #include <libswscale/swscale.h>
 #include <libavutil/avutil.h>
 #include <libavutil/imgutils.h>
 
 }
+
+#if FF_API_AVIOFORMAT
+#define ff_const59
+#else
+#define ff_const59 const
+#endif
 
 namespace sps {
 

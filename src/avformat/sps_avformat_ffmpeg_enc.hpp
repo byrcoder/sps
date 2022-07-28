@@ -70,6 +70,7 @@ class FFmpegAVMuxer : public IAVMuxer {
 
     // ffmpeg timestamp
     int64_t cur_timestamp;
+    std::vector<int> stream_mapping;
 
 #ifdef FFMPEG_ENCODE_DEBUG
     PIWriter debug_output;
@@ -91,3 +92,4 @@ class FFmpegAVOutputFormat : public IAVOutputFormat {
 #endif
 
 #endif  // SPS_AVFORMAT_FFMPEG_ENC_HPP
+
