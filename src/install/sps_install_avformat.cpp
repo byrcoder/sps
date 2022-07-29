@@ -50,8 +50,8 @@ PIAVInputFormat av_input_formats[] = {
         AVINPUTFORMAT_INSTANCE(Flv),
         AVINPUTFORMAT_INSTANCE(Rtmp),
         AVINPUTFORMAT_INSTANCE(Ts),
-        nullptr,
 #endif
+        nullptr,
 };
 
 
@@ -63,8 +63,8 @@ PIAVOutputFormat av_output_formats[] = {
 #else
         AVOUTPUTFORMAT_INSTANCE(Flv),
         AVOUTPUTFORMAT_INSTANCE(Rtmp),
-        nullptr,
 #endif
+        nullptr,
 };
 
 }  // namespace sps
