@@ -96,9 +96,31 @@ error_t FFmpegAVMuxer::write_packet(PAVPacket& buffer) {
 
     int ret = av_packet_ref(&out_pkt, pkt->packet());
 
+    if (ret < 0) {
+        sp_error("Fail ref pkt %d", ret);
+        return ERROR_FFMPEG_WRITE;
+    }
+
+    out_pkt.dts = pkt->packet()->dts;
+    out_pkt.pts = pkt->packet()->pts;
     /* copy packet */
     av_packet_rescale_ts(&out_pkt, *pkt->get_time_base(), ctx->streams[pkt->packet()->stream_index]->time_base);
     out_pkt.pos = -1;
+
+    // TODO fix rtmp
+    if (out_pkt.dts < 0 || out_pkt.pts < 0) {
+        sp_info("out_pkt (dts pts) (%lld, %lld) -> (%lld, %lld), "
+                "tb (%d, %d) -> (%d, %d)",
+                out_pkt.dts, out_pkt.pts, pkt->packet()->dts, pkt->packet()->pts,
+                pkt->get_time_base()->den, pkt->get_time_base()->num,
+                ctx->streams[pkt->packet()->stream_index]->time_base.den,
+                ctx->streams[pkt->packet()->stream_index]->time_base.num);
+
+        out_pkt.dts = pkt->packet()->dts;
+        out_pkt.pts = pkt->packet()->pts;
+
+        exit(0);
+    }
 
     ret = av_write_frame(ctx, &out_pkt);
     av_packet_unref(&out_pkt);
@@ -141,12 +163,13 @@ error_t FFmpegAVMuxer::init() {
     // TODO: impl
     std::string full_url = url->schema.empty() ?
             url->url : url->schema + ":/" + url->url;
-    ff_const59 AVOutputFormat* out_format = av_guess_format(nullptr,
-                                                            full_url.c_str(), nullptr);
-    int ret = avformat_alloc_output_context2(&ctx, out_format, nullptr, nullptr);
 
-    if (ret < 0 || !out_format || !ctx) {
-        sp_error("ffmpeg output url %s ret %d", full_url.c_str(), ret);
+    ff_const59 AVOutputFormat* out_format = nullptr;
+    out_format = av_guess_format(nullptr, full_url.c_str(), nullptr);
+    int ret = avformat_alloc_output_context2(&ctx, out_format, nullptr, full_url.c_str());
+
+    if (ret < 0 || !ctx || !out_format) {
+        sp_error("Fail init ffmpeg url %s ret %d", full_url.c_str(), ret);
         return ERROR_FFMPEG_OPEN;
     }
 
@@ -155,6 +178,8 @@ error_t FFmpegAVMuxer::init() {
                                           this, nullptr, write_data, nullptr);
     ctx->pb          = pb;
     ctx->oformat     = out_format;
+
+    sp_info("Success found %s", full_url.c_str());
 
     return SUCCESS;
 }

@@ -110,10 +110,10 @@ error_t RtmpServerStreamHandler::publish(ConnContext &ctx) {
     auto    dec     = std::make_shared<RtmpDemuxer>(io);
 #endif
 
-    auto cache         =  StreamCache::get_streamcache(url);
+    auto cache   =  StreamCache::get_streamcache(url);
 
     if (cache) {
-        sp_error("cannot publish twice");
+        sp_error("Fail publish twice %s", url.c_str());
         return ERROR_RTMP_HAS_SOURCE;
     }
 
@@ -167,14 +167,14 @@ error_t RtmpServerStreamHandler::play(ConnContext &ctx) {
         return ret;
     }
 #else
-    auto    io  = std::make_shared<RtmpUrlProtocol>(rt->hk);
+    auto    io    = std::make_shared<RtmpUrlProtocol>(rt->hk);
     auto    muxer = std::make_shared<RtmpAVMuxer>(io);
 #endif
 
     sp_trace("Playing url %s", url.c_str());
-    StreamEncoder stream_encoder(muxer, cc, false);
+    StreamEncoder stream_encoder(muxer, cc, true);
     ret = stream_encoder.encode();
-final:
+
     cache->cancel(cc);
     return ret;  // ignore
 }

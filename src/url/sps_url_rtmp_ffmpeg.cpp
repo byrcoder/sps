@@ -33,13 +33,11 @@ SOFTWARE.
 
 namespace sps {
 
-error_t parser_flv_head(uint8_t* buf, int size, uint8_t* tag_type, uint32_t* data_size,
-                       uint32_t* dts, uint32_t* stream_id) {
-    if (size < FLV_TAG_SIZE) {  // 11
+error_t parser_flv_head(PBytesReader& rd, uint8_t* tag_type, uint32_t* data_size,
+                        uint32_t* dts, uint32_t* stream_id) {
+    if (rd->size() < FLV_TAG_SIZE) {  // 11 + 4
         return ERROR_IO_NOT_ENOUGH;
     }
-
-    auto rd = BytesReader::create_reader(buf, size);
 
     *tag_type      = rd->read_int8();   // tag_type
     *data_size     = rd->read_int24();  // data_size
@@ -190,26 +188,65 @@ error_t FFmpegRtmpUrlProtocol::write(void *buf, size_t size) {
     uint32_t data_size;  // 3bytes
     uint32_t stream_id;  // 3bytes
 
-    if ((ret = parser_flv_head((uint8_t*)buf, size, &tag_type, &timestamp,
-                               &data_size, &stream_id)) != SUCCESS) {
-        return ret;
+    char* p  = (char*) buf;
+    int   pz = size;
+    if (!flv_head_read) {
+        if (size < FLV_HEAD_SIZE) {
+            sp_error("Fail flv must wrote flv head 11");
+            return ERROR_FLV_TAG;
+        }
+
+        sp_info("flv header %s", to_hex((char*) p, FLV_HEAD_SIZE).c_str());
+        p    += FLV_HEAD_SIZE;
+        pz   -= FLV_HEAD_SIZE;
+        flv_head_read = true;
+
+        if (size == 0) {
+            return SUCCESS;
+        }
     }
 
+    auto rd = BytesReader::create_reader((uint8_t*) p, pz);
 
-    WrapRtmpPacket packet(false);
-    auto& pkt             = packet.packet;
+    while(rd->size() > 0) {
+        if ((ret = parser_flv_head(rd, &tag_type, &data_size, &timestamp, &stream_id)) != SUCCESS) {
+            sp_error("Fail flv parse size %d", pz);
+            return ret;
+        }
 
-    pkt.m_body            = (char*) buf + FLV_TAG_SIZE;
-    pkt.m_nBodySize       = size - FLV_TAG_SIZE;
-    pkt.m_hasAbsTimestamp = 1;
-    pkt.m_nTimeStamp      = timestamp;
-    pkt.m_nInfoField2     = 1;
-    pkt.m_headerType      = RTMP_PACKET_SIZE_LARGE;
-    pkt.m_packetType      = tag_type;
+        if (rd->size() < data_size + 4) {
+            sp_error("Fatal flv tag need size pre_size %u, timestamp %u, tag_type %d, data_size %u(%d)",
+                     previous_size, timestamp, tag_type, data_size, pz);
+            return ERROR_FLV_TAG;
+        }
 
-    if ((ret = hk->send_packet(pkt, false)) != SUCCESS) {
-        sp_error("failed RTMP SEND packet ret %d", ret);
-        return ret;
+        WrapRtmpPacket packet(false);
+        auto& pkt             = packet.packet;
+
+        pkt.m_body            = (char*) rd->pos();
+        pkt.m_nBodySize       = data_size;
+        pkt.m_hasAbsTimestamp = 1;
+        pkt.m_nTimeStamp      = timestamp;
+        pkt.m_nInfoField2     = 1;
+        pkt.m_headerType      = RTMP_PACKET_SIZE_LARGE;
+        pkt.m_packetType      = tag_type;
+        pkt.m_nChannel        = (tag_type == RTMP_PACKET_TYPE_AUDIO ||
+                                 tag_type == RTMP_PACKET_TYPE_INFO) ? 4 : 6;
+
+        rd->skip_bytes(data_size);
+        previous_size         = rd->read_int32();
+        if (previous_size != data_size + FLV_TAG_SIZE) {
+            sp_error("Fatal flv parse flv tag pre_size %u, timestamp %u, tag_type %d, data_size %u(%d)",
+                     previous_size, timestamp, tag_type, data_size, pz);
+            return ERROR_FLV_TAG;
+        }
+
+        if ((ret = hk->send_packet(pkt, false)) != SUCCESS) {
+            sp_error("failed RTMP SEND packet ret %d", ret);
+            return ret;
+        }
+        sp_debug("parse flv tag head pre_size %u, timestamp %u, tag_type %d, data_size %u(%d)",
+                previous_size, timestamp, tag_type, data_size, pz);
     }
 
     return ret;
