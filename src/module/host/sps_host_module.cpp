@@ -41,6 +41,17 @@ error_t HostModule::post_sub_module(PIModule sub) {
         }
 
         return SUCCESS;
+    } else if (sub->is_module("upstream")) {
+        upstream_module = std::dynamic_pointer_cast<UpStreamModule>(sub);
+        if (!upstream_module) {
+            sp_error("http sub module not upstream %s,%s. %s",
+                     sub->module_type.c_str(),
+                     sub->module_name.c_str(),
+                     typeid(sub.get()).name());
+            return ERROR_MODULE_TYPE_NOT_MATCH;
+        }
+
+        return SUCCESS;
     } else {
         sp_error("http not found sub module type %s", sub->module_type.c_str());
         return ERROR_MODULE_TYPE_NOT_MATCH;

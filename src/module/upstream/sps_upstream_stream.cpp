@@ -21,21 +21,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#include <sps_upstream_module.hpp>
-#include <memory>
-
-namespace sps {
-
-error_t UpStreamModule::post_conf() {
-    auto& obj = SingleInstance<UpStreamModules>::get_instance();
-    obj.ups[this->module_name] = std::dynamic_pointer_cast<UpStreamModule>(
-            shared_from_this());
-    return SUCCESS;
-}
-
-PUpStreamModule UpStreamModules::get(std::string& name) {
-    auto it = ups.find(name);
-    return it == ups.end() ? nullptr : it->second;
-}
-
-}  // namespace sps
+//
+// Created by byrcoder on 2022/7/31.
+//

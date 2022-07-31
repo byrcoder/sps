@@ -21,56 +21,11 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_UPSTREAM_MODULE_HPP
-#define SPS_UPSTREAM_MODULE_HPP
-
-#include <map>
-#include <memory>
-#include <string>
-
-#include <sps_module.hpp>
+#ifndef SPS_UPSTREAM_STREAM_HPP
+#define SPS_UPSTREAM_STREAM_HPP
 
 namespace sps {
 
-// conf value defines
-struct UpStreamConfCtx : public ConfCtx {
-    std::string name;
-    std::string server;
-    int keepalive;
-};
-
-#define OFFSET(x) offsetof(UpStreamConfCtx, x)
-const ConfigOption upstream_options[] = {
-        {"name",       "upstream name",    OFFSET(name),    CONF_OPT_TYPE_STRING, { .str = "unknown upstream name" }, },
-        {"server",     "server array",     OFFSET(server),  CONF_OPT_TYPE_STRING, { .str = "unknown upstream server" }, },
-        {"keepalive",  "timeout to keep",  OFFSET(keepalive),  CONF_OPT_TYPE_INT,    { .str = "10"  }, },
-        {nullptr }
-};
-#undef OFFSET
-
-// module
-class UpStreamModule : public IModule {
- public:
-    MODULE_CONSTRUCT(UpStream, upstream_options);
-
- public:
-    MODULE_CREATE_CTX(UpStream);
-
-    error_t post_conf() override;
-};
-
-typedef std::shared_ptr<UpStreamModule> PUpStreamModule;
-
-class UpStreamModules : public Single<UpStreamModules> {
- public:
-    PUpStreamModule get(std::string& name);
- public:
-    std::map<std::string, PUpStreamModule> ups;
-};
-
-MODULE_FACTORY(UpStream)
-class UpStreamModuleFactory;
-
 }  // namespace sps
 
-#endif  // SPS_UPSTREAM_MODULE_HPP
+#endif  // SPS_UPSTREAM_STREAM_HPP

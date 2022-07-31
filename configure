@@ -10,7 +10,24 @@ BUILD_RTMPDUMP=${BUILD_DIR}/rtmpdump
 
 mkdir -p ${BUILD_DIR}
 
+function show_help() {
+    echo -e "configure options: \r\n"\
+      "--with-srt: enable srt \r\n"\
+      "--with-openssl: enable https \r\n"\
+      "     -openssl_include=/usr/include/openssl/ \r\n"\
+      "     -openssl_lib=/usr/lib/openssl/ \r\n"\
+      "--with-ffmpeg: enable ffmpeg \r\n"\
+      "     -ffmpeg_include=/usr/include/ffmpeg/ \r\n"\
+      "     -ffmpeg_lib=/usr/lib/ffmpeg/ \r\n"
+}
+
 . auto/opt.sh
+
+if [ ${SHOW_HELP} == "ON" ]; then
+  show_help
+  exit 0
+fi
+
 . auto/depends.sh
 
 echo "====== build sps ${BUILD_DIR}."

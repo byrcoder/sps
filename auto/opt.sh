@@ -1,5 +1,6 @@
 #!/bin/bash
 
+SHOW_HELP=OFF
 SRT_ENABLED=ON
 OPENSSL_ENABLED=OFF
 OPENSSL_INCLUDE=""
@@ -63,6 +64,10 @@ function parse_opts() {
               ;;
             --with-ffmpeg)
               FFMPEG_ENABLED=ON
+              shift
+              ;;
+            --help)
+              SHOW_HELP=ON
               shift
               ;;
 

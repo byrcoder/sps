@@ -31,6 +31,7 @@ SOFTWARE.
 #include <sps_module.hpp>
 #include <sps_st_io_ssl.hpp>
 #include <sps_stream_module.hpp>
+#include <sps_upstream_module.hpp>
 
 #define HOST_OPTIONS \
             { "enabled",    "enabled",    OFFSET(enabled), CONF_OPT_TYPE_BOOL,   {.str = "on"} }, \
@@ -93,6 +94,7 @@ class HostModule : public IModule {
      * @deprecated stream module not used
      */
     PStreamModule stream_module;
+    PUpStreamModule upstream_module;
 };
 typedef std::shared_ptr<HostModule> PHostModule;
 

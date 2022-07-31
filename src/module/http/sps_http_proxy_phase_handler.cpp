@@ -47,13 +47,25 @@ error_t HttpProxyPhaseHandler::handler(ConnContext &ctx) {
     auto  proxy_req     = std::make_shared<RequestUrl>(*ctx.req);
     auto& protocols     = SingleInstance<UrlProtocol>::get_instance();
     auto  ret           = SUCCESS;
-    auto  n             = host_conf->pass_proxy.find(':');
+    auto  pass_proxy    = host_conf->pass_proxy;
+    auto  upstream      = ctx.host->upstream_module;
 
+    if (!upstream) {
+        upstream = SingleInstance<UpStreamModules>::get_instance().get(pass_proxy);
+    }
+
+    if (upstream) {
+        sp_trace("found upstream");
+    }
+
+    auto proxy  = upstream.get() ?
+                    std::static_pointer_cast<UpStreamConfCtx>(upstream->conf)->server : pass_proxy;
+    auto  n     = proxy.find(':');
     if (n != std::string::npos) {
-        proxy_req->ip   = host_conf->pass_proxy.substr(0, n);
-        proxy_req->port = atoi(host_conf->pass_proxy.substr(n+1).c_str());
+        proxy_req->ip   = proxy.substr(0, n);
+        proxy_req->port = atoi(proxy.substr(n+1).c_str());
     } else {
-        proxy_req->ip   = host_conf->pass_proxy;
+        proxy_req->ip   = proxy;
         proxy_req->port = 80;
     }
 
