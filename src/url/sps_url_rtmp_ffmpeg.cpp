@@ -208,7 +208,7 @@ error_t FFmpegRtmpUrlProtocol::write(void *buf, size_t size) {
     pkt.m_packetType      = tag_type;
 
     if ((ret = hk->send_packet(pkt, false)) != SUCCESS) {
-        sp_error("failed RTMP RCV packet ret %d", ret);
+        sp_error("failed RTMP SEND packet ret %d", ret);
         return ret;
     }
 

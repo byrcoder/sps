@@ -21,11 +21,40 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_UPSTREAM_STREAM_HPP
-#define SPS_UPSTREAM_STREAM_HPP
+#ifndef SPS_STREAM_HPP
+#define SPS_STREAM_HPP
+
+#include <sps_avformat_dec.hpp>
+#include <sps_avformat_enc.hpp>
+#include <sps_stream_cache.hpp>
 
 namespace sps {
 
+class StreamDecoder {
+ public:
+    StreamDecoder(PIAVDemuxer demuxer, StreamCache::PICacheStream cache);
+
+ public:
+    error_t decode();
+
+ private:
+    PIAVDemuxer dec;
+    StreamCache::PICacheStream cache;
+};
+
+class StreamEncoder {
+ public:
+    StreamEncoder(PIAVMuxer muxer, PAVDumpCacheStream cache, bool wrote_header = true);
+
+ public:
+    error_t encode();
+
+ private:
+    PIAVMuxer enc;
+    PAVDumpCacheStream cache;
+    bool      wrote_header;
+};
+
 }  // namespace sps
 
-#endif  // SPS_UPSTREAM_STREAM_HPP
+#endif  // SPS_STREAM_HPP

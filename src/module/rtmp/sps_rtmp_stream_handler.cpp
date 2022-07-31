@@ -41,6 +41,7 @@ SOFTWARE.
 #include <sps_rtmp_server.hpp>
 #include <sps_rtmp_server_handler.hpp>
 
+#include <sps_stream.hpp>
 #include <sps_url_rtmp_ffmpeg.hpp>
 
 namespace sps {
@@ -94,14 +95,19 @@ error_t RtmpServerStreamHandler::publish(ConnContext &ctx) {
     std::string url    =  ctx.req->host + ctx.req->get_path();
 
 #ifdef FFMPEG_ENABLED
+    auto    flv_url = "http://" + ctx.req->host + ctx.req->url + ".flv";
+    PRequestUrl flv_req;
+    RequestUrl::from(flv_url, flv_req);
     auto    io  = std::make_shared<FFmpegRtmpUrlProtocol>(rt->hk);
-    FFmpegAVDemuxer demuxer(io);
-    if ((ret = demuxer.init()) != SUCCESS) {
+
+    auto dec    = SingleInstance<AVDemuxerFactory>::get_instance().create(io, flv_req);
+    if (!dec) {
+        sp_error("Failed create rtmp url %s", flv_url.c_str());
         return ret;
     }
 #else
-    auto    io  = std::make_shared<RtmpUrlProtocol>(rt->hk);
-    RtmpDemuxer demuxer(io);
+    auto    io      = std::make_shared<RtmpUrlProtocol>(rt->hk);
+    auto    dec     = std::make_shared<RtmpDemuxer>(io);
 #endif
 
     auto cache         =  StreamCache::get_streamcache(url);
@@ -112,17 +118,11 @@ error_t RtmpServerStreamHandler::publish(ConnContext &ctx) {
     }
 
     cache = StreamCache::create_av_streamcache(url);
-    cache->set_ctx(demuxer.get_av_ctx());
+    cache->set_ctx(dec->get_av_ctx());
     sp_trace("Publish url %s", url.c_str());
 
-    do {
-        PAVPacket packet;
-        if ((ret = demuxer.read_packet(packet)) != SUCCESS) {
-            sp_error("fail publishing recv ret %d", ret);
-            break;
-        }
-        cache->put(packet);
-    } while (true);
+    StreamDecoder stream_encoder(dec, cache);
+    ret = stream_encoder.decode();
 
 final:
     StreamCache::release_av_streamcache(url);
@@ -155,39 +155,25 @@ error_t RtmpServerStreamHandler::play(ConnContext &ctx) {
         return ERROR_RTMP_NOT_IMPL;
     }
 #ifdef FFMPEG_ENABLED
-    auto    io  = std::make_shared<FFmpegRtmpUrlProtocol>(rt->hk);
-    FFmpegAVMuxer muxer(io, nullptr);
+    auto    flv_url = "http://" + ctx.req->host + ctx.req->url + ".flv";
+    PRequestUrl flv_req;
+    RequestUrl::from(flv_url, flv_req);
+    auto    io    = std::make_shared<FFmpegRtmpUrlProtocol>(rt->hk);
+    auto    muxer = SingleInstance<AVEncoderFactory>::get_instance().create(io, flv_req);
 
-    if ((ret = muxer.set_av_ctx((IAVContext*) cache->get_ctx())) != SUCCESS) {
+    if (!muxer || (ret = muxer->set_av_ctx((IAVContext*) cache->get_ctx())) != SUCCESS) {
         sp_error("fail init ctx ret %d", ret);
         cache->cancel(cc);
         return ret;
     }
 #else
     auto    io  = std::make_shared<RtmpUrlProtocol>(rt->hk);
-    RtmpAVMuxer muxer(io);
+    auto    muxer = std::make_shared<RtmpAVMuxer>(io);
 #endif
 
     sp_trace("Playing url %s", url.c_str());
-
-    do {
-        std::list<PAVPacket> vpb;
-        int n = cc->dump(vpb, false);
-
-        if (n == 0) {
-            ret = ERROR_SOCKET_TIMEOUT;
-            sp_error("fail timeout playing recv ret %d", ret);
-            break;
-        }
-
-        for (auto& p : vpb) {
-            if ((ret = muxer.write_packet(p)) != SUCCESS) {
-                sp_error("fail playing send ret %d", ret);
-                break;
-            }
-        }
-    } while (ret == SUCCESS);
-
+    StreamEncoder stream_encoder(muxer, cc, false);
+    ret = stream_encoder.encode();
 final:
     cache->cancel(cc);
     return ret;  // ignore

@@ -130,6 +130,7 @@ SOFTWARE.
 #define ERROR_STREAM_EOF                    3000
 #define ERROR_STREAM_NOT_IMPL               3001
 #define ERROR_STREAM_NOT_CONF               3002
+#define ERROR_STREAM_IO_FAIL                3003
 
 #define ERROR_AVFORMAT_ENCODER_NOT_EXISTS   3100
 #define ERROR_AVFORMAT_DEMUX_NOT_EXISTS     3101

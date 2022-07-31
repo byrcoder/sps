@@ -33,6 +33,7 @@ SOFTWARE.
 
 #include <sps_http_socket.hpp>
 
+#include <sps_stream.hpp>
 #include <sps_stream_cache.hpp>
 
 namespace sps {
@@ -94,44 +95,20 @@ error_t HttpStreamPhaseHandler::handler_play(ConnContext& ctx) {
 
     auto& encoder = SingleInstance<AVEncoderFactory>::get_instance();
     auto enc      = encoder.create(rsp, ctx.req);
-    auto cc       = StreamCache::get_client_streamcache(url, 10 * 1000 * 1000);
 
     if (!enc) {
-        sp_error("failed found encoder for ext %s", ctx.req->ext.c_str());
+        sp_error("Failed found encoder for ext %s", ctx.req->ext.c_str());
         return ERROR_AVFORMAT_ENCODER_NOT_EXISTS;
     }
+    auto cc       = StreamCache::get_client_streamcache(url, 10 * 1000 * 1000);
 
     // support ffmpeg ctx
     enc->set_av_ctx((IAVContext*) cache->get_ctx());
 
-    PAVPacket buffer;
-    ret = enc->write_header(buffer);
+    StreamEncoder stream_encoder(enc, cc);
+    ret = stream_encoder.encode();
 
-    if (ret != SUCCESS) {
-        sp_error("failed encoder write header url protocol for ret:%d", ret);
-        return ret;
-    }
-
-    do {
-        std::list<PAVPacket> vpb;
-        int n = cc->dump(vpb, false);
-
-        if (n == 0) {
-            ret = ERROR_SOCKET_TIMEOUT;
-            sp_error("fail timeout playing recv ret %d", ret);
-            break;
-        }
-
-        for (auto& p : vpb) {
-            if ((ret = enc->write_packet(p)) != SUCCESS) {
-                sp_error("fail encoder write message url protocol for ret:%d",
-                         ret);
-                break;
-            }
-
-            sp_debug("write packet!");
-        }
-    } while (ret == SUCCESS);
+    cache->cancel(cc);
 
     return ret;
 }
@@ -165,8 +142,8 @@ error_t HttpStreamPhaseHandler::handler_publish(ConnContext& ctx) {
         return ERROR_AVFORMAT_DEMUX_NOT_EXISTS;
     }
 
-    sp_info("success found decoder for %s, %s",
-             ctx.req->get_ext(), dec->fmt->name);
+    sp_info("success found decoder for %s[%s], %s",
+             ctx.req->get_url(), ctx.req->get_ext(), dec->fmt->name);
 
     std::string url    =  get_cache_key(ctx.req);
     auto cache         =  StreamCache::get_streamcache(url);
@@ -179,25 +156,8 @@ error_t HttpStreamPhaseHandler::handler_publish(ConnContext& ctx) {
     cache = StreamCache::create_av_streamcache(url);
     sp_trace("Publish url %s", url.c_str());
 
-    PAVPacket packet;
-
-    // support ffmpeg ctx
-    cache->set_ctx(dec->get_av_ctx());
-
-    if ((ret = dec->read_header(packet)) != SUCCESS) {
-        sp_error("fail read header recv ret %d", ret);
-        goto final;
-    }
-
-    do {
-        if ((ret = dec->read_packet(packet)) != SUCCESS) {
-            sp_error("fail publishing recv ret %d", ret);
-            break;
-        }
-
-        // packet->debug();
-        cache->put(packet);
-    } while (true);
+    StreamDecoder stream_decode(dec, cache);
+    ret = stream_decode.decode();
 
 final:
     StreamCache::release_av_streamcache(url);

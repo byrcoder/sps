@@ -139,11 +139,14 @@ error_t FFmpegAVMuxer::set_av_ctx(IAVContext* c) {
 
 error_t FFmpegAVMuxer::init() {
     // TODO: impl
-    ff_const59 AVOutputFormat* out_format = av_guess_format(nullptr, url->get_url(), nullptr);
+    std::string full_url = url->schema.empty() ?
+            url->url : url->schema + ":/" + url->url;
+    ff_const59 AVOutputFormat* out_format = av_guess_format(nullptr,
+                                                            full_url.c_str(), nullptr);
     int ret = avformat_alloc_output_context2(&ctx, out_format, nullptr, nullptr);
 
-    if (ret < 0) {
-        sp_error("ffmpeg output %s ret %d", url->url.c_str(), ret);
+    if (ret < 0 || !out_format || !ctx) {
+        sp_error("ffmpeg output url %s ret %d", full_url.c_str(), ret);
         return ERROR_FFMPEG_OPEN;
     }
 

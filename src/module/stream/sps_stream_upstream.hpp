@@ -21,6 +21,29 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-//
-// Created by byrcoder on 2022/7/31.
-//
+#ifndef SPS_STREAM_UPSTREAM_HPP
+#define SPS_STREAM_UPSTREAM_HPP
+
+#include <sps_url.hpp>
+#include <sps_stream_cache.hpp>
+
+namespace sps {
+
+class StreamUpStream {
+ public:
+    StreamUpStream(PRequestUrl url, std::string& server, int port, StreamCache::PICacheStream cache);
+
+ public:
+    error_t streaming();
+    void    stop();
+ private:
+    bool          running;
+    PRequestUrl   url;
+    std::string   server;
+    int           port;
+    StreamCache::PICacheStream cache;
+};
+
+}  // namespace sps
+
+#endif  // SPS_STREAM_UPSTREAM_HPP
