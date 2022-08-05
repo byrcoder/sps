@@ -40,10 +40,6 @@ class HttpStreamPhaseHandler : public IPhaseHandler {
 
  public:
     error_t handler(ConnContext& ctx) override;
-
-    error_t handler_play(ConnContext& ctx);
-
-    error_t handler_publish(ConnContext& ctx);
 };
 
 }  // namespace sps

@@ -21,56 +21,46 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-//
-// Created by byrcoder on 2022/7/31.
-//
+#ifndef SPS_STREAM_EDGE_HPP
+#define SPS_STREAM_EDGE_HPP
 
-#include <sps_stream_upstream.hpp>
-
-#include <sps_avformat_dec.hpp>
-#include <sps_url.hpp>
+#include <sps_typedef.hpp>
+#include <sps_stream.hpp>
 
 namespace sps {
 
-StreamUpStream::StreamUpStream(PRequestUrl url, std::string &server, int port,
-                               StreamCache::PICacheStream cache) :
-    url (std::move(url)), server (server), port(port), cache(std::move(cache)) {
-    running = true;
-}
+class StreamEdge;
+typedef std::shared_ptr<StreamEdge> PStreamEdge;
+class StreamEdgeManager : public KeyRegisters<std::string, PStreamEdge> {
+};
 
-error_t StreamUpStream::streaming() {
-    error_t ret = SUCCESS;
-    auto& avf   = SingleInstance<AVDemuxerFactory>::get_instance();
-    auto  io    = SingleInstance<sps::UrlProtocol>::get_instance().create(url);
+class StreamEdge : public ICoHandler, public std::enable_shared_from_this<StreamEdge> {
+ public:
+    StreamEdge(const std::string& key, PRequestUrl url, const std::string& server, int port,
+               StreamCache::PICacheStream cache);
 
-    if (!io) {
-        sp_error("Fail create url %s", url->get_url());
-        return ERROR_STREAM_IO_FAIL;
-    }
-    auto enc = avf.create(io, url);
+ public:
+    error_t handler() override;
 
-    PAVPacket packet;
-    ret = enc->read_header(packet);
+ public:
+    error_t start();
+    error_t stop();
 
-    if (ret != SUCCESS) {
-        sp_error("Fail read header %d", ret);
-        return ret;
-    }
+ private:
+    bool started;
+    std::string    key;  // cache key
+    StreamCache::PICacheStream cache;
+    PRequestUrl url;
+    std::string server;
+    int         port;
+    PStreamDecoder decoder;
+};
 
-    while (running) {
-        if ((ret = enc->read_packet(packet)) != SUCCESS) {
-            sp_error("Fail read packet %d", ret);
-            break;
-        }
-        cache->put(packet);
-    }
+class StreamEdgeEnter {
+ public:
+    static error_t start_edge(const std::string& key, PHostModule& host, PRequestUrl& url);
+};
 
-    running = false;
-    return ret;
-}
+}  // namespace sps
 
-void StreamUpStream::stop() {
-    running = false;
-}
-
-}
+#endif  // SPS_STREAM_EDGE_HPP

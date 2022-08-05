@@ -31,6 +31,7 @@ namespace sps {
 
 StreamDecoder::StreamDecoder(PIAVDemuxer demuxer, StreamCache::PICacheStream cache) :
     dec(std::move(demuxer)), cache(std::move(cache)) {
+    running = true;
 }
 
 error_t StreamDecoder::decode() {
@@ -53,9 +54,14 @@ error_t StreamDecoder::decode() {
 
         // packet->debug();
         cache->put(packet);
-    } while (true);
+    } while (running);
 
     return ret;
+}
+
+error_t StreamDecoder::stop() {
+    running = false;
+    return SUCCESS;
 }
 
 StreamEncoder::StreamEncoder(PIAVMuxer muxer, PAVDumpCacheStream cache, bool wh) : enc(std::move(muxer)),

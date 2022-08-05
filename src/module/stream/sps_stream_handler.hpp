@@ -21,29 +21,30 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#ifndef SPS_STREAM_UPSTREAM_HPP
-#define SPS_STREAM_UPSTREAM_HPP
+#ifndef SPS_STREAM_HANDLER_HPP
+#define SPS_STREAM_HANDLER_HPP
 
-#include <sps_url.hpp>
-#include <sps_stream_cache.hpp>
+#include <sps_host_phase_handler.hpp>
 
 namespace sps {
 
-class StreamUpStream {
+class StreamHandler : public IPhaseHandler {
  public:
-    StreamUpStream(PRequestUrl url, std::string& server, int port, StreamCache::PICacheStream cache);
+    std::string get_cache_key(PRequestUrl& req);
 
  public:
-    error_t streaming();
-    void    stop();
+    StreamHandler(std::shared_ptr<Socket> io, bool publish);
+
+ public:
+    error_t handler(ConnContext& ctx) override;
+    error_t publish(ConnContext &ctx);
+    error_t play(ConnContext &ctx);
+
  private:
-    bool          running;
-    PRequestUrl   url;
-    std::string   server;
-    int           port;
-    StreamCache::PICacheStream cache;
+    std::shared_ptr<Socket> io;
+    bool                    pub;
 };
 
 }  // namespace sps
 
-#endif  // SPS_STREAM_UPSTREAM_HPP
+#endif  // SPS_STREAM_HANDLER_HPP

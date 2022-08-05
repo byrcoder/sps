@@ -27,14 +27,8 @@ SOFTWARE.
 
 #include <sps_http_stream_phase_handler.hpp>
 
-#include <sps_avformat_cache.hpp>
-#include <sps_avformat_dec.hpp>
-#include <sps_avformat_enc.hpp>
-
 #include <sps_http_socket.hpp>
-
-#include <sps_stream.hpp>
-#include <sps_stream_cache.hpp>
+#include <sps_stream_handler.hpp>
 
 namespace sps {
 
@@ -51,117 +45,26 @@ HttpStreamPhaseHandler::HttpStreamPhaseHandler()
 
 error_t HttpStreamPhaseHandler::handler(ConnContext& ctx) {
     error_t ret  = SUCCESS;
+    auto    rsp  = std::make_shared<HttpResponseSocket>(ctx.socket, ctx.ip, ctx.port);
+    auto    sh   = std::make_shared<StreamHandler>(rsp, ctx.req->method == "POST");
 
-    if (!ctx.host->is_streaming()) {
-        sp_error("fatal not support streaming!");
-        return ERROR_AVFORMAT_SOURCE_NOT_SUPPORT;
-    }
+    rsp->init(200, nullptr, -1, false);
+    ret = sh->handler(ctx);
 
-    if (ctx.req->method == "POST") {
-        return handler_publish(ctx);
-    }
-
-    if (!ctx.host->publish()) {
-        auto rsp = std::make_shared<HttpResponseSocket>(ctx.socket,
-            ctx.ip, ctx.port);
-
-        rsp->init(500, nullptr, 0, false);
+    if (ret == ERROR_STREAM_PUBLISH_NOT_SUPPORT) {
+        rsp->init(403, nullptr, -1, false);
         ret = rsp->write_header();
-        sp_error("not support proxy for streaming! http rsp %d, ret %d",
-                 500, ret);
-        return ERROR_AVFORMAT_SOURCE_NOT_SUPPORT;
-    }
-
-    return handler_play(ctx);
-}
-
-error_t HttpStreamPhaseHandler::handler_play(ConnContext& ctx) {
-    error_t ret  = SUCCESS;
-    auto rsp     = std::make_shared<HttpResponseSocket>(ctx.socket,
-        ctx.ip, ctx.port);
-
-    std::string url   = get_cache_key(ctx.req);
-    auto cache        =  StreamCache::get_streamcache(url);
-
-    if (!cache) {
-        rsp->init(404, nullptr, 0, false);
+        sp_error("not support proxy for streaming! http rsp %d, ret %d", 403, ret);
+        return ret;
+    } else if (ret == ERROR_STREAM_SOURCE_NOT_EXITS) {
+        rsp->init(404, nullptr, -1, false);
         ret = rsp->write_header();
-        sp_error("not publishing for streaming! url %s http rsp %d, ret %d, method %s",
-                 url.c_str(), 404, ret, ctx.req->get_method());
+        sp_error("not publishing or edge for streaming! url %s http rsp %d, ret %d, method %s",
+                 ctx.req->get_url(), 404, ret, ctx.req->get_method());
         return ret;
     }
 
-    rsp->init(200, nullptr, -1, false);
-
-    auto& encoder = SingleInstance<AVEncoderFactory>::get_instance();
-    auto enc      = encoder.create(rsp, ctx.req);
-
-    if (!enc) {
-        sp_error("Failed found encoder for ext %s", ctx.req->ext.c_str());
-        return ERROR_AVFORMAT_ENCODER_NOT_EXISTS;
-    }
-    auto cc       = StreamCache::get_client_streamcache(url, 10 * 1000 * 1000);
-
-    // support ffmpeg ctx
-    enc->set_av_ctx((IAVContext*) cache->get_ctx());
-
-    StreamEncoder stream_encoder(enc, cc);
-    ret = stream_encoder.encode();
-
-    cache->cancel(cc);
-
     return ret;
-}
-
-error_t HttpStreamPhaseHandler::handler_publish(ConnContext& ctx) {
-    error_t ret  = SUCCESS;
-    auto rsp     = std::make_shared<HttpResponseSocket>(ctx.socket, ctx.ip, ctx.port);
-
-    if (!ctx.host->publish()) {
-        rsp->init(500, nullptr, 0, false);
-        ret = rsp->write_header();
-        sp_error("not support http publish for streaming! http rsp %d, ret %d",
-                 500, ret);
-        return ERROR_AVFORMAT_SOURCE_NOT_SUPPORT;
-    }
-
-    if (!ctx.host->support_publish(ctx.req->ext)) {
-        rsp->init(404, nullptr, 0, false);
-        ret = rsp->write_header();
-        sp_error("not support http format(publishing) for streaming %s! "
-                 "http rsp %d, ret %d, source_format %s",
-                 ctx.req->get_ext(), 500, ret, ctx.host->edge_format().c_str());
-        return ERROR_AVFORMAT_SOURCE_NOT_SUPPORT;
-    }
-
-    auto& decoder = SingleInstance<AVDemuxerFactory>::get_instance();
-    auto  dec     = decoder.create(ctx.socket, ctx.req);
-
-    if (!dec) {
-        sp_error("failed found decoder for ext %s", ctx.req->ext.c_str());
-        return ERROR_AVFORMAT_DEMUX_NOT_EXISTS;
-    }
-
-    sp_info("success found decoder for %s[%s], %s",
-             ctx.req->get_url(), ctx.req->get_ext(), dec->fmt->name);
-
-    std::string url    =  get_cache_key(ctx.req);
-    auto cache         =  StreamCache::get_streamcache(url);
-
-    if (cache) {
-        sp_error("cannot publish twice");
-        return ERROR_HTTP_HAS_SOURCE;
-    }
-
-    cache = StreamCache::create_av_streamcache(url);
-    sp_trace("Publish url %s", url.c_str());
-
-    StreamDecoder stream_decode(dec, cache);
-    ret = stream_decode.decode();
-
-final:
-    StreamCache::release_av_streamcache(url);
-    return ret;  // ignore
 }
 
 }  // namespace sps

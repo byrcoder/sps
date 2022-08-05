@@ -25,7 +25,7 @@ SOFTWARE.
 
 namespace sps {
 
-const char* krole_proxy = "proxy";
+const char* krole_edge = "edge";
 const char* krole_source = "source";
 
 error_t HostModule::post_sub_module(PIModule sub) {
@@ -68,9 +68,9 @@ bool HostModule::publish() {
     return host->role == krole_source;
 }
 
-bool HostModule::proxy() {
+bool HostModule::edge() {
     auto host = static_cast<HostConfCtx*>(conf.get());
-    return host->role == krole_proxy;
+    return host->role == krole_edge;
 }
 
 bool HostModule::is_streaming() {
@@ -92,6 +92,11 @@ std::string HostModule::edge_format() {
 std::string HostModule::pass_proxy() {
     auto host = static_cast<HostConfCtx*>(conf.get());
     return host->pass_proxy;
+}
+
+std::string HostModule::pass_url() {
+    auto host = static_cast<HostConfCtx*>(conf.get());
+    return host->pass_url;
 }
 
 std::string HostModule::role() {

@@ -43,7 +43,7 @@ SOFTWARE.
 
 namespace sps {
 
-extern const char* krole_proxy;
+extern const char* krole_edge;
 extern const char* krole_source;
 
 struct HostConfCtx : public ConfCtx {
@@ -80,11 +80,12 @@ class HostModule : public IModule {
  public:
     bool        enabled();
     bool        publish();
-    bool        proxy();
+    bool        edge();
     bool        is_streaming();
     bool        support_publish(const std::string& format);
     std::string edge_format();
     std::string pass_proxy();
+    std::string pass_url();
     std::string role();
     std::string ssl_key_file();
     std::string ssl_cert_file();

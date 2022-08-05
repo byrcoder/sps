@@ -36,11 +36,14 @@ class StreamDecoder {
 
  public:
     error_t decode();
+    error_t stop();
 
  private:
+    bool running;
     PIAVDemuxer dec;
     StreamCache::PICacheStream cache;
 };
+typedef std::shared_ptr<StreamDecoder> PStreamDecoder;
 
 class StreamEncoder {
  public:
