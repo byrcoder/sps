@@ -70,7 +70,7 @@ void librtmp_init_once() {
         return;
     }
     inited = true;
-    RTMP_LogSetLevel(RTMP_LOGDEBUG);
+    RTMP_LogSetLevel(RTMP_LOGINFO);
 }
 
 
@@ -156,7 +156,7 @@ error_t RtmpHook::on_recv_packet(RTMPPacket &packet) {
         case RTMP_PACKET_TYPE_CHUNK_SIZE:
             if (packet.m_nBodySize >= 4) {
                 rtmp->m_inChunkSize = (int) AMF_DecodeInt32(packet.m_body);
-                sp_info("recv set chunked size %d", rtmp->m_inChunkSize);
+                sp_trace("rcv set chunked size %d", rtmp->m_inChunkSize);
             }
             break;
         case RTMP_PACKET_TYPE_CONTROL: {

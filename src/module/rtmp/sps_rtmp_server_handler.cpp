@@ -38,7 +38,7 @@ RtmpServer404Handler::RtmpServer404Handler()
 }
 
 error_t RtmpServer404Handler::handler(ConnContext &ctx) {
-    sp_error("host not found host: %s", ctx.req ? ctx.req->get_host() : "");
+    sp_error("Fail found host: %s", ctx.req ? ctx.req->get_host() : "");
     return ERROR_UPSTREAM_NOT_FOUND;
 }
 
@@ -53,14 +53,14 @@ error_t RtmpPrepareHandler::handler(ConnContext &ctx) {
 
     // handshake
     if ((ret = shk.handshake()) != SUCCESS) {
-        sp_error("rtmp s-handshake failed ret: %d", ret);
+        sp_error("Fail s-handshake %d", ret);
         return ERROR_RTMP_HANDSHAKE;
     }
 
     // connect
     RtmpPreRequest pre(rt->hk.get());
     if ((ret = pre.connect()) != SUCCESS) {
-        sp_error("rtmp s-connect failed ret: %d", ret);
+        sp_error("Fail s-connect %d", ret);
         return ret;
     }
 
@@ -70,12 +70,12 @@ error_t RtmpPrepareHandler::handler(ConnContext &ctx) {
     ctx.req = std::make_shared<RequestUrl>();
     std::string tc_url = pre.tc_url + pre.stream_params;
     if ((ret = ctx.req->parse_url(tc_url)) != SUCCESS) {
-        sp_error("rtmp tc_url parse failed ret: %d, %s", ret, tc_url.c_str());
+        sp_error("Fail parse tc_url %s %d", tc_url.c_str(), ret);
         return ret;
     }
 
-    sp_info("rtmp conn success %s:%d", ctx.socket->get_cip().c_str(),
-            ctx.socket->get_port());
+    sp_trace("Request client %s:%d, %s", ctx.socket->get_cip().c_str(),
+            ctx.socket->get_port(), tc_url.c_str());
 
     return SUCCESS;
 }
@@ -100,19 +100,20 @@ error_t RtmpPreRequest::connect() {
 
     do {
         if ((ret = hook->recv_packet(pkt)) != SUCCESS) {
+            sp_error("Fail rcv paket %d", ret);
             return ret;
         }
 
         ret = RtmpPacketDecoder::decode(pkt, connect_packet);
         if (ret != SUCCESS) {
-            sp_error("conn decoded failed ret: %d", ret);
+            sp_error("Fail decoded paket %d", ret);
             return ret;
         }
 
         auto conn_packet = dynamic_cast<ConnectRtmpPacket *>(connect_packet.get());
         if (!conn_packet) {
             // ret = ERROR_RTMP_AMF_DECODE;
-            sp_error("expect amf conn ret: %d", ret);
+            sp_error("Fatal expect ConnectRtmpPacket");
             continue;;
         }
 
@@ -134,7 +135,7 @@ error_t RtmpPreRequest::connect() {
 
     if (((ret = hook->send_set_chunked_size()) != SUCCESS) ||
             ((ret = hook->send_connect_result(txn)) != SUCCESS)) {
-        sp_error("failed send connect result ret %d", ret);
+        sp_error("Failed send connect result %d", ret);
         return ret;
     }
 
@@ -143,7 +144,7 @@ error_t RtmpPreRequest::connect() {
         ret = RtmpPacketDecoder::decode(pkt, conn);
 
         if (ret != SUCCESS) {
-            sp_error("fail decode packet type %d", pkt.packet.m_packetType);
+            sp_error("Fail decode pkt_type %d %d", pkt.packet.m_packetType, ret);
             return ret;
         }
 
@@ -206,11 +207,11 @@ error_t RtmpPreRequest::on_recv_create_stream(
     ret = hook->send_result(create_stream->transaction_id, 1.0);
 
     if (ret != SUCCESS) {
-        sp_error("fail res __result %.*s failed, ret %d",
+        sp_error("Fail send __result %.*s failed, ret %d",
                   create_stream->name.av_len, create_stream->name.av_val, ret);
         return ret;
     }
-    sp_info("send __result %.*s, txn %lf, i. %d", create_stream->name.av_len,
+    sp_debug("send __result %.*s, txn %lf, i. %d", create_stream->name.av_len,
             create_stream->name.av_val, create_stream->transaction_id, 0);
     return ret;
 }
@@ -219,28 +220,28 @@ error_t RtmpPreRequest::on_recv_play(PlayRtmpPacket* play) {
     error_t ret  = SUCCESS;
     stream_params = "/" + play->stream_params;
 
-    sp_info("play stream %s, playing: %d",
+    sp_info("Play stream %s, playing: %d",
             stream_params.c_str(), hook->get_rtmp()->m_bPlaying);
 
     if ((ret = hook->send_play_start(play->transaction_id)) != SUCCESS) {
-        sp_error("fail res __result %.*s failed, ret %d", play->name.av_len,
+        sp_error("Fail send __result %.*s failed, ret %d", play->name.av_len,
                  play->name.av_val, ret);
         return ret;
     }
-    sp_info("success send play __result %.*s, txn %lf, i. %d",
+    sp_trace("OK send play __result %.*s, txn %lf, i. %d",
             play->name.av_len, play->name.av_val,
             play->transaction_id, 0);
 
     if ((ret = hook->send_sample_access()) != SUCCESS) {
-        sp_error("fail send sample access ret %d", ret);
+        sp_error("Fail send sample access ret %d", ret);
         return ret;
     }
 
     if ((ret = hook->send_stream_begin()) != SUCCESS) {
-        sp_error("fail send stream begin access ret %d", ret);
+        sp_error("Fail send stream begin access ret %d", ret);
         return ret;
     }
-    sp_info("success send sample access");
+    sp_debug("success send sample access");
     return ret;
 }
 
@@ -248,26 +249,26 @@ error_t RtmpPreRequest::on_recv_publish(PublishRtmpPacket* publish) {
     error_t ret = SUCCESS;
     stream_params = "/" + publish->stream_params;
 
-    sp_info("publish stream %s, %s, playing %d",
+    sp_info("Publish stream %s, %s, playing %d",
              stream_params.c_str(), publish->publish_type.c_str(),
              hook->get_rtmp()->m_bPlaying);
 
     if ((ret = hook->send_publish_start(publish->transaction_id)) != SUCCESS) {
-        sp_error("fail resp __result %.*s failed, ret %d",
+        sp_error("Fail send __result %.*s failed, ret %d",
                   publish->name.av_len, publish->name.av_val, ret);
         return ret;
     }
 
-    sp_info("success send publish __result %.*s, txn %lf, i. %d",
+    sp_info("OK send publish __result %.*s, txn %lf, i. %d",
              publish->name.av_len, publish->name.av_val,
              publish->transaction_id, 0);
 
     if ((ret = hook->send_stream_begin()) != SUCCESS) {
-        sp_error("fail send stream begin access ret %d", ret);
+        sp_error("Fail send stream begin access ret %d", ret);
         return ret;
     }
 
-    sp_info("success send stream begin");
+    sp_info("OK send stream begin");
     return ret;
 }
 
@@ -275,11 +276,11 @@ error_t RtmpPreRequest::on_recv_fcpublish(FCPublishRtmpPacket* p) const {
     auto ret = hook->send_result(p->transaction_id, 0);
 
     if (ret != SUCCESS) {
-        sp_error("fail resp __result fcpublish %d,", ret);
+        sp_error("Fail send __result fcpublish %d,", ret);
         return ret;
     }
 
-    sp_info("success send fcpublish __result");
+    sp_info("OK send fcpublish __result");
     return ret;
 }
 
@@ -288,11 +289,11 @@ error_t RtmpPreRequest::on_recv_release_stream(
     auto ret = hook->send_result(p->transaction_id, 0);
 
     if (ret != SUCCESS) {
-        sp_error("fail resp __result releaseStream %d,", ret);
+        sp_error("Fail send __result releaseStream %d,", ret);
         return ret;
     }
 
-    sp_info("success send releaseStream __result");
+    sp_info("OK send releaseStream __result");
     return ret;
 }
 

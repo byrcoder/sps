@@ -61,23 +61,21 @@ error_t StreamHandler::publish(ConnContext &ctx) {
     auto  dec     = decoder.create(io, ctx.req);
 
     if (!dec) {
-        sp_error("failed found decoder for ext %s", ctx.req->ext.c_str());
+        sp_error("Fail found decoder %s-%s", ctx.req->get_host(), ctx.req->get_url());
         return ERROR_AVFORMAT_DEMUX_NOT_EXISTS;
     }
-
-    sp_info("success found decoder for %s[%s], %s",
-            ctx.req->get_url(), ctx.req->get_ext(), dec->fmt->name);
 
     std::string url    =  get_cache_key(ctx.req);
     auto cache         =  StreamCache::get_streamcache(url);
 
     if (cache) {
-        sp_error("cannot publish twice");
+        sp_trace("Fail Publish twice %s-%s", ctx.req->get_host(), ctx.req->get_url());
         return ERROR_HTTP_HAS_SOURCE;
     }
 
     cache = StreamCache::create_av_streamcache(url);
-    sp_trace("Publish url %s", url.c_str());
+    sp_trace("OK Publish %s-%s, %s",
+             ctx.req->get_host(), ctx.req->get_url(), dec->fmt->name);
 
     StreamDecoder stream_decode(dec, cache);
     error_t ret = stream_decode.decode();
@@ -96,8 +94,8 @@ error_t StreamHandler::play(ConnContext &ctx) {
     }
 
     if (!cache || ret != SUCCESS) {
-        sp_error("%s. not publishing or edge for streaming! url %s http rsp %d, ret %d, method %s",
-                 ctx.host->role().c_str(), url.c_str(), 404, ret, ctx.req->get_method());
+        sp_error("No publish and No edge(%s)  %s-%s.",
+                 ctx.host->role().c_str(), ctx.req->get_host(), ctx.req->get_url());
         return ERROR_STREAM_SOURCE_NOT_EXITS;
     }
 

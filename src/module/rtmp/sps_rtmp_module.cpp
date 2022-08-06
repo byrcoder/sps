@@ -103,8 +103,7 @@ error_t RtmpModule::install() {
             sp_error("failed install %s rtmp server", s->module_name.c_str());
             return ret;
         }
-        sp_info("success install %s rtmp server listen",
-                 s->module_name.c_str());
+        sp_info("success install %s rtmp server listen", s->module_name.c_str());
     }
     return ret;
 }

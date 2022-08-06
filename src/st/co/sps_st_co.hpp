@@ -28,7 +28,19 @@ SOFTWARE.
 
 #include <public.h>
 
+#include <unordered_map>
+
 namespace sps {
+
+class STContext : public SingleInstance<STContext> {
+ private:
+    std::unordered_map<st_thread_t, int> ids;
+
+ public:
+    int  get_id();
+    void set_id();
+    void remove_id();
+};
 
 class STCo : public ICo {
  public:

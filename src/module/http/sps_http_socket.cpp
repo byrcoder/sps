@@ -200,7 +200,7 @@ error_t HttpResponseSocket::write_header() {
 
     ret = Socket::write((void*) http_header.c_str(), http_header.size());
 
-    sp_info("http wrote rsp header ret: %d,  chunked: %d, %s.",
+    sp_debug("http wrote rsp header ret: %d,  chunked: %d, %s.",
              ret, chunked, http_header.c_str());
 
     return ret;

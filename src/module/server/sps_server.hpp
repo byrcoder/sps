@@ -103,7 +103,7 @@ class Server : public ICoHandler {
     utime_t                    send_timeout = -1;
     Transport                  tran;
     std::string                listen_ip;
-    std::string                listen_port;
+    int                        listen_port;
 };
 typedef std::shared_ptr<Server> PServer;
 

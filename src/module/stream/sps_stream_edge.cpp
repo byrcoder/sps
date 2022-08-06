@@ -59,10 +59,12 @@ error_t StreamEdge::handler() {
 
     ret = io->open(url, TCP);
     if (ret != SUCCESS || !io->response()->success()) {
-        sp_error("Fail open url %s ret %d %s", url->get_url(), ret,
-                 io->response() ? io->response()->error().c_str() : "");
+        sp_error("Fail Init upstream %s-%s-%s %d %s", url->get_host(), url->get_url(), url->get_params(),
+                 ret, io->response() ? io->response()->error().c_str() : "");
         goto fail;
     }
+
+    sp_trace("OK upstream %s-%s-%s", url->get_host(), url->get_url(), url->get_params());
 
     do {
         auto dec = avf.create(io, url);
@@ -149,7 +151,7 @@ error_t StreamEdgeEnter::start_edge(const std::string& key, PHostModule& host, P
     ret   = edge->start();
 
 fail:
-    sp_trace("starting edge %s:%d, url %s", ip.c_str(), port, proxy_url.c_str());
+    sp_trace("Starting edge %s:%d, url %s", ip.c_str(), port, proxy_url.c_str());
     return wait_edge(key);
 }
 

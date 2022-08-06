@@ -101,7 +101,7 @@ int HttpParserContext::parse_response() {
     res->chunked        = http.uses_transfer_encoding;
     res->headers        = headers;
 
-    sp_info("header size:%lu, status_code:%d, cl:%llu, chunked:%d",
+    sp_debug("header size:%lu, status_code:%d, cl:%llu, chunked:%d",
              headers.size(), http.status_code,
              http.content_length, http.uses_transfer_encoding);
 
@@ -138,17 +138,14 @@ int HttpParser::parse_header(PIReader io, HttpType ht) {
         int left = max_header - buf_read;
 
         if (state > left) {
-            sp_error("state %d, left %d, %.*s.", state, left,
-                      buf_read, buf.get());
+            sp_error("state %d, left %d, %.*s.", state, left, buf_read, buf.get());
             return -1;
         }
 
-        if ((ret = io->read_fully(buf.get() + buf_read, state,
-                nullptr)) != SUCCESS) {
-            sp_error("failed read ret:%d", ret);
+        if ((ret = io->read_fully(buf.get() + buf_read, state,nullptr)) != SUCCESS) {
+            sp_debug("failed read ret:%d", ret);
             return ret > 0 ? -ret : ret;
         }
-
         buf_read += state;
 
         char *p = buf.get() + (buf_read-1);
@@ -179,7 +176,7 @@ int HttpParser::parse_header(PIReader io, HttpType ht) {
         ht = HttpType::REQUEST;
     }
 
-    sp_info("http head: %s", buf.get());
+    sp_debug("http head: %s", buf.get());
     return parse_header(buf.get(), buf_read, ht);
 }
 
@@ -199,7 +196,7 @@ int HttpParser::parse_header(const char *b, int len, HttpType ht) {
         ctx->parse_response();
     }
 
-    sp_info("parsed: %zu, ht:%u", parsed, ht);
+    sp_debug("parsed: %zu, ht:%u", parsed, ht);
     return parsed;
 }
 

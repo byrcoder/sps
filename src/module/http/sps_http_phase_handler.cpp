@@ -37,22 +37,21 @@ error_t HttpParsePhaseHandler::handler(ConnContext &ctx) {
     auto http_parser = std::make_shared<HttpParser>();
     error_t ret = SUCCESS;
 
-    sp_debug("Request Http Parse");
-
     if ((ret = http_parser->parse_header(ctx.socket,
                                       HttpType::REQUEST)) <= SUCCESS) {
-        sp_error("failed get http request ret:%d", ret);
+        sp_debug("failed get http request ret:%d", ret);
         return ret;
     }
 
-    ctx.req = http_parser->get_request();
+    ctx.req    = http_parser->get_request();
     ctx.socket = std::make_shared<HttpRequestSocket>(ctx.socket,
-            ctx.ip, ctx.port, ctx.req->is_chunked(),
-            ctx.req->get_content_length());
+                  ctx.ip, ctx.port, ctx.req->is_chunked(),
+                  ctx.req->get_content_length());
 
-    sp_trace("request info %s, %s, chunked %d, content-length cl %d",
-              ctx.req->host.c_str(), ctx.req->url.c_str(),
-              ctx.req->is_chunked(), ctx.req->get_content_length());
+    sp_trace("Request %s:%d %s-%s-%s, chunked %d, content-length %d",
+             ctx.ip.c_str(), ctx.port,
+             ctx.req->host.c_str(), ctx.req->url.c_str(), ctx.req->params.c_str(),
+             ctx.req->is_chunked(), ctx.req->get_content_length());
 
     return SPS_PHASE_CONTINUE;
 }
@@ -69,14 +68,12 @@ error_t Http404PhaseHandler::handler(ConnContext& ctx) {
             socket->get_port());
 
     if (!http_socket) {
-        sp_error("Fatal not http socket type(socket):%s",
-                  typeid(ctx.socket.get()).name());
+        sp_error("Fatal not http socket type(socket):%s", typeid(ctx.socket.get()).name());
         return ERROR_HTTP_SOCKET_CREATE;
     }
 
     http_socket->init(404, nullptr, 0, false);
-
-    auto ret =  http_socket->write_header();
+    auto ret = http_socket->write_header();
 
     sp_trace("Response http 404 %d", ret);
     return SPS_PHASE_SUCCESS_NO_CONTINUE;

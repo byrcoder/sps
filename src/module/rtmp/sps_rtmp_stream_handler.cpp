@@ -57,7 +57,10 @@ error_t RtmpServerStreamHandler::handler(ConnContext &ctx) {
 #ifdef FFMPEG_ENABLED
     auto        io       = std::make_shared<FFmpegRtmpUrlProtocol>(rt->hk);
     auto        sh       = std::make_shared<StreamHandler>(io, rt->publishing);
-    auto        flv_url  = "http://" + ctx.req->host + ctx.req->url + ".flv";
+    auto        flv_url  = "http://" + ctx.req->host + ctx.req->path + ".flv";
+    if (!ctx.req->params.empty()) {
+        flv_url += "?" + ctx.req->params;
+    }
     PRequestUrl flv_req;
 
     RequestUrl::from(flv_url, flv_req);

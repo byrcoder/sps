@@ -37,13 +37,13 @@ HttpConnHandler::HttpConnHandler(PSocket io, PServerPhaseHandler& handler) :
 
 error_t HttpConnHandler::handler() {
     ConnContext ctx(nullptr, io, this);
-    do {
-        error_t ret = SUCCESS;
+    error_t     ret = SUCCESS;
 
+    do {
         if ((ret = hd->handler(ctx)) != SUCCESS) {
             return ret;
         }
-        sp_trace("success handler ret %d", ret);
+        sp_debug("success handler ret %d", ret);
     } while (true);
 
     return SUCCESS;

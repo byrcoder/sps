@@ -111,12 +111,12 @@ error_t ServerModule::merge_global(PIModule& module) {
     auto dm = dynamic_cast<GlobalHostModule*>(module.get());
 
     if (!dm) {
-        sp_error("not globalhost module!");
+        sp_error("not global-host module!");
         exit(-1);
     }
 
     for (auto& hm : dm->host_modules) {
-        sp_info("server merge global host %s", hm->module_name.c_str());
+        sp_debug("server merge global host %s", hm->module_name.c_str());
         host_modules.push_back(hm);
     }
 

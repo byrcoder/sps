@@ -22,3 +22,18 @@ SOFTWARE.
 *****************************************************************************/
 
 #include <sps_log.hpp>
+
+#include <public.h>
+#include <cstdarg>
+
+namespace sps {
+
+void SPSLog::printf(const char *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    vsnprintf(buf, sizeof(buf), fmt, ap);
+    va_end(ap);
+    printf(buf);
+}
+
+}
