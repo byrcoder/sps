@@ -81,7 +81,7 @@ error_t RequestUrl::parse_url(const std::string& url) {
     auto off_pre = 0;
 
     do {
-        auto off_key   = params.find_first_of('=', off_pre);
+        auto off_key = params.find_first_of('=', off_pre);
         if (off_key == std::string::npos) break;
 
         std::string key = params.substr(off_pre, off_key - off_pre), value;
@@ -114,7 +114,6 @@ error_t RequestUrl::parse_url(const std::string& url) {
     }
 
     this->url = path + (params.empty() ? "" : "?" + params);
-
     if (schema == "file") {
         this->url    = url.substr(sizeof("file://"));
         this->path   = url;
@@ -122,10 +121,10 @@ error_t RequestUrl::parse_url(const std::string& url) {
         this->port   = -1;
     }
 
-    sp_info("url:%s -> [%s] [%s:%d] [%s] [%s] [%s] [%s]",
-            url.c_str(), schema.c_str(), host.c_str(), port, path.c_str(),
-            ext.c_str(), params.c_str(),
-            this->url.c_str());
+    sp_debug("url:%s -> [%s] [%s:%d] [%s] [%s] [%s] [%s]",
+             url.c_str(), schema.c_str(), host.c_str(), port, path.c_str(),
+             ext.c_str(), params.c_str(),
+             this->url.c_str());
 
     return SUCCESS;
 }
@@ -205,6 +204,19 @@ utime_t RequestUrl::get_timeout() {
 
 std::string RequestUrl::get_ip() {
     return ip;
+}
+
+void RequestUrl::set_ip_port(std::string ip, int port) {
+    this->ip   = std::move(ip);
+    this->port = port;
+}
+
+bool Response::success() {
+    return true;
+}
+
+std::string Response::error() {
+    return "";
 }
 
 }  // namespace sps

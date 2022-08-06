@@ -59,7 +59,7 @@ error_t IModule::post_conf() {
     error_t ret = SUCCESS;
     auto self   = shared_from_this();
 
-    sp_info("%s -> post conf", module_type.c_str());
+    sp_debug("%s -> post conf", module_type.c_str());
     for (auto& sub : subs) {
         for (auto& v : sub.second) {
             if ((ret = v->merge(self)) != SUCCESS) {
@@ -178,7 +178,7 @@ error_t IModule::init_conf(PIReader rd) {
                     return ret;
                 }
 
-                sp_info("success add submodule %s->%s", module_type.c_str(),
+                sp_debug("success add submodule %s->%s", module_type.c_str(),
                          sub->module_type.c_str());
                 break;
             }

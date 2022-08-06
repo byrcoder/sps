@@ -80,7 +80,7 @@ error_t HttpUrlProtocol::open(PRequestUrl& url, Transport tp) {
         return ret;
     }
 
-    sp_trace("success open %s:%d -> request %s.", ip.c_str(),
+    sp_debug("success open %s:%d -> request %s.", ip.c_str(),
               url->get_port(), req.c_str());
 
     HttpParser parser;

@@ -57,6 +57,8 @@ class UpStreamModule : public IModule {
     MODULE_CREATE_CTX(UpStream);
 
     error_t post_conf() override;
+
+    std::string get_server();
 };
 
 typedef std::shared_ptr<UpStreamModule> PUpStreamModule;

@@ -76,8 +76,10 @@ error_t Server::accept() {
 
         io->set_recv_timeout(recv_timeout);
         io->set_send_timeout(send_timeout);
-        sp_info("success accept new client rcv_timeout: %llu, "
-                "send_timeout :%llu", recv_timeout, send_timeout);
+        sp_trace("Accept client %s:%d -> %s:%d rcv_timeout: %llu, "
+                 "send_timeout: %llu", io->get_cip().c_str(), io->get_port(),
+                 listen_ip.c_str(), listen_port,
+                 recv_timeout, send_timeout);
 
         if (ICoFactory::get_instance().start(h) != SUCCESS) {
             sp_error("failed start handler");

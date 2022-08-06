@@ -82,8 +82,9 @@ class RequestUrl {
     int  get_content_length();
 
  public:
-    utime_t get_timeout();
+    utime_t      get_timeout();
     std::string  get_ip();
+    void         set_ip_port(std::string ip, int port);
 
  public:
     std::string url;
@@ -107,6 +108,8 @@ typedef std::shared_ptr<RequestUrl> PRequestUrl;
 class Response {
  public:
     virtual ~Response() = default;
+    virtual bool success();
+    virtual std::string error();
 };
 
 typedef std::shared_ptr<Response> PResponse;

@@ -21,56 +21,30 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-//
-// Created by byrcoder on 2022/7/31.
-//
+#ifndef SPS_STREAM_HANDLER_HPP
+#define SPS_STREAM_HANDLER_HPP
 
-#include <sps_stream_upstream.hpp>
-
-#include <sps_avformat_dec.hpp>
-#include <sps_url.hpp>
+#include <sps_host_phase_handler.hpp>
 
 namespace sps {
 
-StreamUpStream::StreamUpStream(PRequestUrl url, std::string &server, int port,
-                               StreamCache::PICacheStream cache) :
-    url (std::move(url)), server (server), port(port), cache(std::move(cache)) {
-    running = true;
-}
+class StreamHandler : public IPhaseHandler {
+ public:
+    std::string get_cache_key(PRequestUrl& req);
 
-error_t StreamUpStream::streaming() {
-    error_t ret = SUCCESS;
-    auto& avf   = SingleInstance<AVDemuxerFactory>::get_instance();
-    auto  io    = SingleInstance<sps::UrlProtocol>::get_instance().create(url);
+ public:
+    StreamHandler(std::shared_ptr<Socket> io, bool publish);
 
-    if (!io) {
-        sp_error("Fail create url %s", url->get_url());
-        return ERROR_STREAM_IO_FAIL;
-    }
-    auto enc = avf.create(io, url);
+ public:
+    error_t handler(ConnContext& ctx) override;
+    error_t publish(ConnContext &ctx);
+    error_t play(ConnContext &ctx);
 
-    PAVPacket packet;
-    ret = enc->read_header(packet);
+ private:
+    std::shared_ptr<Socket> io;
+    bool                    pub;
+};
 
-    if (ret != SUCCESS) {
-        sp_error("Fail read header %d", ret);
-        return ret;
-    }
+}  // namespace sps
 
-    while (running) {
-        if ((ret = enc->read_packet(packet)) != SUCCESS) {
-            sp_error("Fail read packet %d", ret);
-            break;
-        }
-        cache->put(packet);
-    }
-
-    running = false;
-    return ret;
-}
-
-void StreamUpStream::stop() {
-    running = false;
-}
-
-}
+#endif  // SPS_STREAM_HANDLER_HPP

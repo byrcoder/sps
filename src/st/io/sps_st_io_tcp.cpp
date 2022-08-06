@@ -323,7 +323,7 @@ error_t StTcpServerSocket::listen(std::string sip, int sport, bool reuse_sport,
                   reuse_sport ? "true" : "false");
         return ret;
     }
-    sp_trace("success listen %s:%d, backlog: %d, reuse: %u", sip.c_str(),
+    sp_debug("success listen %s:%d, backlog: %d, reuse: %u", sip.c_str(),
               sport, back_log, reuse_sport);
 
     this->backlog    = back_log;
@@ -346,10 +346,10 @@ PSocket StTcpServerSocket::accept() {
         buf[0] = '\0';  // 防止内存写乱
     }
 
-    sp_trace("accept client %s:%u, cfd:%d, from %s:%d",
+    sp_debug("accept client %s:%u, cfd:%d, from %s:%d",
               std::string(buf, INET6_ADDRSTRLEN).c_str(),
-             ntohs(addr.sin_port),
-             st_tcp_fd(cfd), ip.c_str(), port);
+              ntohs(addr.sin_port),
+              st_tcp_fd(cfd), ip.c_str(), port);
 
     auto io = std::make_shared<StTcpSocket>(cfd);
     return std::make_shared<Socket>(io, std::string(buf), ntohs(addr.sin_port));

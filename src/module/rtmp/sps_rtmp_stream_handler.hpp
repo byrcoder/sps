@@ -35,10 +35,6 @@ class RtmpServerStreamHandler : public IPhaseHandler {
 
  public:
     error_t handler(ConnContext &ctx) override;
-
-    error_t publish(ConnContext &ctx);
-
-    error_t play(ConnContext &ctx);
 };
 
 }  // namespace sps

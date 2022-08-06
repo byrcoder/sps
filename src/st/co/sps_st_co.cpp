@@ -29,6 +29,25 @@ SOFTWARE.
 
 namespace sps {
 
+int STContext::get_id() {
+    auto self = st_thread_self();
+    if (!self) {
+        return -1;
+    }
+
+    auto it   = ids.find(self);
+    return it != ids.end() ? it->second : -1;
+}
+
+void STContext::set_id() {
+    static int id;
+    ids[st_thread_self()] = id++;
+}
+
+void STContext::remove_id() {
+    ids.erase(st_thread_self());
+}
+
 STCo::STCo(PWICoHandler h) {
     this->h = h;
 }
@@ -48,10 +67,17 @@ void* STCo::main_co(void* co) {
         return nullptr;
     }
 
+#ifndef ST_THREAD_HAS_CONTEXT_ID
+    STContext::get_instance().set_id();
+#endif
+
     ph->on_start();
     error_t err = ph->handler();
     ph->on_stop();
 
+#ifndef ST_THREAD_HAS_CONTEXT_ID
+    STContext::get_instance().remove_id();
+#endif
     return p;
 }
 
@@ -65,6 +91,14 @@ PICo STCoFactory::_start(PICoHandler handler) const {
         return nullptr;
     }
     return co;
+}
+
+int get_context_id() {
+#ifdef ST_THREAD_HAS_CONTEXT_ID
+    return st_context();
+#else
+    return STContext::get_instance().get_id();
+#endif
 }
 
 }  // namespace sps

@@ -161,12 +161,14 @@ error_t FFmpegAVMuxer::set_av_ctx(IAVContext* c) {
 
 error_t FFmpegAVMuxer::init() {
     // TODO: impl
-    std::string full_url = url->schema.empty() ?
-            url->url : url->schema + ":/" + url->url;
+    std::string full_url =  url->host + url->path;
+    if (!url->schema.empty()) {
+        full_url = url->schema + "://" + full_url;
+    }
 
     ff_const59 AVOutputFormat* out_format = nullptr;
     out_format = av_guess_format(nullptr, full_url.c_str(), nullptr);
-    int ret = avformat_alloc_output_context2(&ctx, out_format, nullptr, full_url.c_str());
+    int ret    = avformat_alloc_output_context2(&ctx, out_format, nullptr, full_url.c_str());
 
     if (ret < 0 || !ctx || !out_format) {
         sp_error("Fail init ffmpeg url %s ret %d", full_url.c_str(), ret);
@@ -178,8 +180,7 @@ error_t FFmpegAVMuxer::init() {
                                           this, nullptr, write_data, nullptr);
     ctx->pb          = pb;
     ctx->oformat     = out_format;
-
-    sp_info("Success found %s", full_url.c_str());
+    sp_info("Success init muxer %s", full_url.c_str());
 
     return SUCCESS;
 }
@@ -216,7 +217,8 @@ error_t FFmpegAVMuxer::on_av_stream(AVStream* stream) {
 
     out_stream->codecpar->codec_tag = 0;
     stream_mapping.push_back(stream_mapping.size());
-    sp_trace("success copy context input %d", stream->codecpar->codec_id);
+    sp_trace("Success new stream %d->%d codec %d(%d)", stream->index, out_stream->index,
+             stream->codecpar->codec_type, stream->codecpar->codec_id);
 
     return SUCCESS;
 }

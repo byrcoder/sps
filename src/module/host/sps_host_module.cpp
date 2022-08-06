@@ -25,7 +25,7 @@ SOFTWARE.
 
 namespace sps {
 
-const char* krole_proxy = "proxy";
+const char* krole_edge = "edge";
 const char* krole_source = "source";
 
 error_t HostModule::post_sub_module(PIModule sub) {
@@ -68,9 +68,9 @@ bool HostModule::publish() {
     return host->role == krole_source;
 }
 
-bool HostModule::proxy() {
+bool HostModule::edge() {
     auto host = static_cast<HostConfCtx*>(conf.get());
-    return host->role == krole_proxy;
+    return host->role == krole_edge;
 }
 
 bool HostModule::is_streaming() {
@@ -94,6 +94,11 @@ std::string HostModule::pass_proxy() {
     return host->pass_proxy;
 }
 
+std::string HostModule::pass_url() {
+    auto host = static_cast<HostConfCtx*>(conf.get());
+    return host->pass_url;
+}
+
 std::string HostModule::role() {
     auto host = static_cast<HostConfCtx*>(conf.get());
     return host->role;
@@ -107,6 +112,20 @@ std::string HostModule::ssl_key_file() {
 std::string HostModule::ssl_cert_file() {
     auto host = static_cast<HostConfCtx*>(conf.get());
     return host->ssl_crt_file;
+}
+
+error_t HostModule::get_proxy_info(std::string& ip, int& port) {
+    auto proxy = upstream_module ? upstream_module->get_server() : pass_proxy();
+    auto n     = proxy.find(':', 0);
+
+    if (n != std::string::npos) {
+        ip   = proxy.substr(0, n);
+        port = atoi(proxy.substr(n+1).c_str());
+    } else {
+        ip   = proxy;
+    }
+
+    return SUCCESS;
 }
 
 std::string HostModulesRouter::get_wildcard_host(std::string host) {

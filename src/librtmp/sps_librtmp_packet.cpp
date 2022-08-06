@@ -182,7 +182,7 @@ error_t AmfRtmpPacket::decode(WrapRtmpPacket &pkt) {
     error_t ret = SUCCESS;
     auto &packet = pkt.packet;
 
-    sp_info("amf type: %d", pkt.packet.m_packetType);
+    sp_debug("amf type: %d", pkt.packet.m_packetType);
 
     if (RtmpPacketDecoder::is_amf3_command(pkt.packet.m_packetType)) {
         ret = AMF3_Decode(&amf_object, packet.m_body, packet.m_nBodySize, 0);
@@ -198,7 +198,7 @@ error_t AmfRtmpPacket::decode(WrapRtmpPacket &pkt) {
         return ret;
     }
 
-    sp_info("amf num: %d", amf_object.o_num);
+    sp_debug("amf num: %d", amf_object.o_num);
     for (int i = 0; i < amf_object.o_num; ++i) {
         auto amf = amf_object.o_props + i;
         sp_debug("%d. %s", i, debug_amf_object(amf).c_str());
@@ -219,7 +219,7 @@ error_t AmfRtmpPacket::convert_self(PIRTMPPacket &result) {
         return ret;
     }
 
-    sp_info("amf name: %.*s, %d", name.av_len, name.av_val, name.av_len);
+    sp_debug("amf name: %.*s, %d", name.av_len, name.av_val, name.av_len);
     if (equal_val(&name, "connect")) {
         auto conn = std::make_unique<ConnectRtmpPacket>();
 
@@ -481,7 +481,7 @@ error_t RtmpPacketDecoder::decode(WrapRtmpPacket &pkt, PIRTMPPacket &result) {
     auto &packet = pkt.packet;
     int pkt_type = packet.m_packetType;
 
-    sp_info("pkt_type: %d", pkt_type);
+    sp_debug("pkt_type: %d", pkt_type);
     switch (pkt_type) {
         case RTMP_PACKET_TYPE_SET_CHUNK_SIZE:
             result = std::make_unique<SetChunkSizeRtmpPacket>();
@@ -509,13 +509,13 @@ error_t RtmpPacketDecoder::decode(WrapRtmpPacket &pkt, PIRTMPPacket &result) {
             auto amf = std::make_unique<AmfRtmpPacket>();
             ret = amf->decode(pkt);
 
-            sp_info("amf pkt_type: %d", pkt_type);
+            sp_debug("amf pkt_type: %d", pkt_type);
             if (ret != SUCCESS) {
                 sp_error("decode failed ret %d", ret);
                 return ret;
             }
             ret = amf->convert_self(result);
-            sp_info("final decode ret %d", ret);
+            sp_debug("final decode ret %d", ret);
         }
             break;
         case RTMP_PACKET_TYPE_AUDIOS:

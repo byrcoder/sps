@@ -33,6 +33,10 @@ error_t UpStreamModule::post_conf() {
     return SUCCESS;
 }
 
+std::string UpStreamModule::get_server() {
+    return std::static_pointer_cast<UpStreamConfCtx>(conf)->server;
+}
+
 PUpStreamModule UpStreamModules::get(std::string& name) {
     auto it = ups.find(name);
     return it == ups.end() ? nullptr : it->second;

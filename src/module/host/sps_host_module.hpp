@@ -35,15 +35,15 @@ SOFTWARE.
 
 #define HOST_OPTIONS \
             { "enabled",    "enabled",    OFFSET(enabled), CONF_OPT_TYPE_BOOL,   {.str = "on"} }, \
-            { "pass_proxy", "pass_proxy",    OFFSET(pass_proxy), CONF_OPT_TYPE_STRING,   {.str = "- pass_proxy"} }, \
-            { "pass_url",   "pass_url",      OFFSET(pass_url),   CONF_OPT_TYPE_STRING,   {.str = "- pass_url"} }, \
-            { "role",       "proxy/source",  OFFSET(role),       CONF_OPT_TYPE_STRING, {.str = "proxy"} }, \
+            { "pass_proxy", "pass_proxy",    OFFSET(pass_proxy), CONF_OPT_TYPE_STRING,   {.str = ""} }, \
+            { "pass_url",   "pass_url",      OFFSET(pass_url),   CONF_OPT_TYPE_STRING,   {.str = ""} }, \
+            { "role",       "edge/source",  OFFSET(role),       CONF_OPT_TYPE_STRING, {.str = "edge"} }, \
             { "streaming",  "streaming",     OFFSET(streaming),  CONF_OPT_TYPE_BOOL,   { .str = "on" }, }, \
             { "edge_avformat",  "stream_avformat",     OFFSET(edge_avformat),  CONF_OPT_TYPE_STRING,   { .str = "-" }, }
 
 namespace sps {
 
-extern const char* krole_proxy;
+extern const char* krole_edge;
 extern const char* krole_source;
 
 struct HostConfCtx : public ConfCtx {
@@ -80,14 +80,16 @@ class HostModule : public IModule {
  public:
     bool        enabled();
     bool        publish();
-    bool        proxy();
+    bool        edge();
     bool        is_streaming();
     bool        support_publish(const std::string& format);
     std::string edge_format();
     std::string pass_proxy();
+    std::string pass_url();
     std::string role();
     std::string ssl_key_file();
     std::string ssl_cert_file();
+    error_t     get_proxy_info(std::string& ip, int& port);
 
  public:
     /**
