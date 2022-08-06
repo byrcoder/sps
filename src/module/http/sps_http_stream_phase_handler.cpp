@@ -32,13 +32,6 @@ SOFTWARE.
 
 namespace sps {
 
-std::string HttpStreamPhaseHandler::get_cache_key(PRequestUrl& req) {
-    std::string path   = req->get_path();
-    std::string url    = req->host + (req->ext.empty() ? path
-            : path.substr(0, path.size()-req->ext.size()-1));
-    return url;
-}
-
 HttpStreamPhaseHandler::HttpStreamPhaseHandler()
     : IPhaseHandler("http-stream-handler") {
 }

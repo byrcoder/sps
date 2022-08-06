@@ -207,4 +207,17 @@ std::string RequestUrl::get_ip() {
     return ip;
 }
 
+void RequestUrl::set_ip_port(std::string ip, int port) {
+    this->ip   = std::move(ip);
+    this->port = port;
+}
+
+bool Response::success() {
+    return true;
+}
+
+std::string Response::error() {
+    return "";
+}
+
 }  // namespace sps

@@ -36,8 +36,8 @@ class StreamEdgeManager : public KeyRegisters<std::string, PStreamEdge> {
 
 class StreamEdge : public ICoHandler, public std::enable_shared_from_this<StreamEdge> {
  public:
-    StreamEdge(const std::string& key, PRequestUrl url, const std::string& server, int port,
-               StreamCache::PICacheStream cache);
+    StreamEdge(const std::string& key, PRequestUrl url);
+    ~StreamEdge();
 
  public:
     error_t handler() override;
@@ -45,20 +45,21 @@ class StreamEdge : public ICoHandler, public std::enable_shared_from_this<Stream
  public:
     error_t start();
     error_t stop();
+    error_t wait(utime_t timeout);
 
  private:
-    bool started;
+    bool           started;
     std::string    key;  // cache key
-    StreamCache::PICacheStream cache;
-    PRequestUrl url;
-    std::string server;
-    int         port;
+    PRequestUrl    url;
     PStreamDecoder decoder;
+    StreamCache::PICacheStream cache;
+    PCondition     cond;
 };
 
 class StreamEdgeEnter {
  public:
     static error_t start_edge(const std::string& key, PHostModule& host, PRequestUrl& url);
+    static error_t wait_edge(const std::string& key);
 };
 
 }  // namespace sps

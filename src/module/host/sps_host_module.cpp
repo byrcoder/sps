@@ -114,6 +114,20 @@ std::string HostModule::ssl_cert_file() {
     return host->ssl_crt_file;
 }
 
+error_t HostModule::get_proxy_info(std::string& ip, int& port) {
+    auto proxy = upstream_module ? upstream_module->get_server() : pass_proxy();
+    auto n     = proxy.find(':', 0);
+
+    if (n != std::string::npos) {
+        ip   = proxy.substr(0, n);
+        port = atoi(proxy.substr(n+1).c_str());
+    } else {
+        ip   = proxy;
+    }
+
+    return SUCCESS;
+}
+
 std::string HostModulesRouter::get_wildcard_host(std::string host) {
     // host *.github.com; -> moc.buhtig
 

@@ -26,6 +26,14 @@ SOFTWARE.
 
 namespace sps {
 
+bool HttpResponse::success() {
+    return status_code == 200;
+}
+
+std::string HttpResponse::error() {
+    return std::to_string(status_code);
+}
+
 // http parse的结果
 int HttpParserContext::content_length() {
     return http.content_length;

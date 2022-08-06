@@ -33,9 +33,6 @@ namespace sps {
 
 class HttpStreamPhaseHandler : public IPhaseHandler {
  public:
-    static std::string get_cache_key(PRequestUrl& url);
-
- public:
     HttpStreamPhaseHandler();
 
  public:

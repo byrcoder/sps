@@ -28,7 +28,6 @@ SOFTWARE.
 #include <sps_http_proxy_phase_handler.hpp>
 
 #include <memory>
-#include <string>
 
 #include <sps_http_parser.hpp>
 #include <sps_http_socket.hpp>
@@ -42,55 +41,31 @@ HttpProxyPhaseHandler::HttpProxyPhaseHandler()
 }
 
 error_t HttpProxyPhaseHandler::handler(ConnContext &ctx) {
-    auto& host_ctx       = ctx.host;
-    auto  host_conf     = std::static_pointer_cast<HostConfCtx>(host_ctx->conf);
-    auto  proxy_req     = std::make_shared<RequestUrl>(*ctx.req);
-    auto& protocols     = SingleInstance<UrlProtocol>::get_instance();
-    auto  ret           = SUCCESS;
-    auto  pass_proxy    = host_conf->pass_proxy;
-    auto  upstream      = ctx.host->upstream_module;
+    error_t  ret           = SUCCESS;
+    auto&    host_ctx      = ctx.host;
+    auto     proxy_req     = std::make_shared<RequestUrl>(*ctx.req);
+    auto&    protocols     = SingleInstance<UrlProtocol>::get_instance();
+    proxy_req->port        = 80;
+    ctx.host->get_proxy_info(proxy_req->ip, proxy_req->port);
 
-    if (!upstream) {
-        upstream = SingleInstance<UpStreamModules>::get_instance().get(pass_proxy);
-    }
-
-    if (upstream) {
-        sp_trace("found upstream");
-    }
-
-    auto proxy  = upstream.get() ?
-                    std::static_pointer_cast<UpStreamConfCtx>(upstream->conf)->server : pass_proxy;
-    auto  n     = proxy.find(':');
-    if (n != std::string::npos) {
-        proxy_req->ip   = proxy.substr(0, n);
-        proxy_req->port = atoi(proxy.substr(n+1).c_str());
-    } else {
-        proxy_req->ip   = proxy;
-        proxy_req->port = 80;
-    }
-
-    auto  url_protocol = protocols.create(proxy_req);
-
+    auto     url_protocol  = protocols.create(proxy_req);
     if (!url_protocol) {
         sp_error("not found protocol %s for proxy", proxy_req->schema.c_str());
         return ERROR_UPSTREAM_NOT_FOUND;
     }
 
     if ((ret = url_protocol->open(proxy_req, DEFAULT)) != SUCCESS) {
-        sp_error("Failed open url protocol %s. %s, ret:%ld.",
-                  proxy_req->url.c_str(), host_conf->pass_proxy.c_str(), ret);
+        sp_error("Failed open url protocol %s. %s:%d, ret:%d.",
+                 proxy_req->url.c_str(), proxy_req->ip.c_str(), proxy_req->port, ret);
         return ret;
     }
 
-    auto http_rsp = std::dynamic_pointer_cast<HttpResponse>(
-            url_protocol->response());
+    auto http_rsp = std::dynamic_pointer_cast<HttpResponse>(url_protocol->response());
     HttpResponseSocket rsp(ctx.socket, ctx.ip, ctx.port);
-
-    rsp.init(http_rsp->status_code, &http_rsp->headers,
-             http_rsp->content_length, http_rsp->chunked);
+    rsp.init(http_rsp->status_code, &http_rsp->headers, http_rsp->content_length, http_rsp->chunked);
 
     if ((ret = rsp.write_header()) != SUCCESS) {
-        sp_error("write head status: %d, %lu, %d, %ld.", http_rsp->status_code,
+        sp_error("write head status: %d, %lu, %d, %d.", http_rsp->status_code,
                  http_rsp->headers.size(), http_rsp->content_length, ret);
         return ret;
     }
@@ -102,19 +77,15 @@ error_t HttpProxyPhaseHandler::handler(ConnContext &ctx) {
     size_t nr   = 0;
 
     while ((ret = url_protocol->read(buf, len, nr)) == SUCCESS) {
-        sp_info("url read len %ld", nr);
-
         ret = rsp.write(buf, nr);
-
         if (ret != SUCCESS) {
-            sp_error("failed write url protocol %ld.", ret);
+            sp_error("failed write url protocol %d.", ret);
             return ret;
         }
     }
 
-    sp_trace("final response code:%d, ret:%ld, eof:%d, chunked:%d",
-             http_rsp->status_code,
-             ret, ret == ERROR_HTTP_RES_EOF, http_rsp->chunked);
+    sp_trace("final response code:%d, ret:%d, eof:%d, chunked:%d",
+             http_rsp->status_code, ret, ret == ERROR_HTTP_RES_EOF, http_rsp->chunked);
 
     return (ret == ERROR_HTTP_RES_EOF || ret == SUCCESS) ?
                 SPS_PHASE_SUCCESS_NO_CONTINUE : ret;

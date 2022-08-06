@@ -96,8 +96,8 @@ error_t StreamHandler::play(ConnContext &ctx) {
     }
 
     if (!cache || ret != SUCCESS) {
-        sp_error("not publishing or edge for streaming! url %s http rsp %d, ret %d, method %s",
-                 url.c_str(), 404, ret, ctx.req->get_method());
+        sp_error("%s. not publishing or edge for streaming! url %s http rsp %d, ret %d, method %s",
+                 ctx.host->role().c_str(), url.c_str(), 404, ret, ctx.req->get_method());
         return ERROR_STREAM_SOURCE_NOT_EXITS;
     }
 

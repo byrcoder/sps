@@ -51,6 +51,10 @@ class HttpResponse : public Response {
     int   status_code    = -1;
     bool  chunked        = false;
     std::list<RequestHeader> headers;
+
+ public:
+    bool success() override;
+    std::string error() override;
 };
 
 typedef std::shared_ptr<HttpResponse> PHttpResponse;

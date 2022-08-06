@@ -35,9 +35,9 @@ SOFTWARE.
 
 #define HOST_OPTIONS \
             { "enabled",    "enabled",    OFFSET(enabled), CONF_OPT_TYPE_BOOL,   {.str = "on"} }, \
-            { "pass_proxy", "pass_proxy",    OFFSET(pass_proxy), CONF_OPT_TYPE_STRING,   {.str = "- pass_proxy"} }, \
-            { "pass_url",   "pass_url",      OFFSET(pass_url),   CONF_OPT_TYPE_STRING,   {.str = "- pass_url"} }, \
-            { "role",       "proxy/source",  OFFSET(role),       CONF_OPT_TYPE_STRING, {.str = "proxy"} }, \
+            { "pass_proxy", "pass_proxy",    OFFSET(pass_proxy), CONF_OPT_TYPE_STRING,   {.str = ""} }, \
+            { "pass_url",   "pass_url",      OFFSET(pass_url),   CONF_OPT_TYPE_STRING,   {.str = ""} }, \
+            { "role",       "edge/source",  OFFSET(role),       CONF_OPT_TYPE_STRING, {.str = "edge"} }, \
             { "streaming",  "streaming",     OFFSET(streaming),  CONF_OPT_TYPE_BOOL,   { .str = "on" }, }, \
             { "edge_avformat",  "stream_avformat",     OFFSET(edge_avformat),  CONF_OPT_TYPE_STRING,   { .str = "-" }, }
 
@@ -89,6 +89,7 @@ class HostModule : public IModule {
     std::string role();
     std::string ssl_key_file();
     std::string ssl_cert_file();
+    error_t     get_proxy_info(std::string& ip, int& port);
 
  public:
     /**
