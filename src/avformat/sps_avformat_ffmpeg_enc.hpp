@@ -64,12 +64,10 @@ class FFmpegAVMuxer : public IAVMuxer {
     PIWriter writer;
 
     //ffmpeg
-    AVFormatContext *ctx;
-    AVIOContext* pb;
-    uint8_t* avio_ctx_buffer;
-
+    AVFormatContext  *ctx;
+    AVIOContext      *pb;
     // ffmpeg timestamp
-    int64_t cur_timestamp;
+    int64_t          cur_timestamp;
     std::vector<int> stream_mapping;
 
 #ifdef FFMPEG_ENCODE_DEBUG

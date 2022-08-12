@@ -47,9 +47,9 @@ int FFmpegAVDemuxer::nested_io_open(AVFormatContext *s, AVIOContext **pb, const 
 }
 
 int FFmpegAVDemuxer::read_data(void* opaque, uint8_t* buf, int buf_size) {
-    auto ffmpeg = (FFmpegAVDemuxer*) opaque;
-    size_t nr = 0;
-    error_t ret = ffmpeg->rd->read(buf, buf_size, nr);
+    auto    ffmpeg = (FFmpegAVDemuxer*) opaque;
+    size_t  nr     = 0;
+    error_t ret    = ffmpeg->rd->read(buf, buf_size, nr);
     if (ret != SUCCESS) {
         sp_error("fail read ret %d", ret);
         nr = ret > 0 ? -ret : ret;
@@ -68,7 +68,6 @@ int FFmpegAVDemuxer::read_data(void* opaque, uint8_t* buf, int buf_size) {
 FFmpegAVDemuxer::FFmpegAVDemuxer(PIReader p) {
     rd            = std::move(p);
     cur_timestamp = -1;
-
     init_ffmpeg_ctx();
 
 #ifdef FFMPEG_DECODE_DEBUG
@@ -130,27 +129,24 @@ IAVContext* FFmpegAVDemuxer::get_av_ctx() {
 
 error_t FFmpegAVDemuxer::init() {
     ff_const59 AVInputFormat *in_fmt = nullptr;
-    AVDictionary  *in_fmt_opts  = nullptr;
-
-    int ret = 0;
-
-    ctx              = avformat_alloc_context();
-    avio_ctx_buffer  = (uint8_t*) av_malloc(FFMPEG_MAX_SIZE);
+    AVDictionary  *in_fmt_opts       = nullptr;
+    int            ret               = 0;
+    uint8_t        *avio_ctx_buffer  = (uint8_t*) av_malloc(FFMPEG_MAX_SIZE);
+    ctx                              = avformat_alloc_context();
 
     if (!avio_ctx_buffer) {
         sp_error("fail av_malloc %d", FFMPEG_MAX_SIZE);
         return ERROR_FFMPEG_OPEN;
     }
 
-    pb               = avio_alloc_context(avio_ctx_buffer, FFMPEG_MAX_SIZE, 0,
+    pb             = avio_alloc_context(avio_ctx_buffer, FFMPEG_MAX_SIZE, 0,
                                           this, read_data, NULL, NULL);
-    ctx->flags = AVFMT_FLAG_CUSTOM_IO;
+    ctx->flags     = AVFMT_FLAG_CUSTOM_IO;
     ctx->probesize = 1024 * 1024 * 1;
+    ctx->pb        = pb;
+    ctx->io_open   = nested_io_open;
+    ctx->format_probesize     = 1024 * 1024;
     ctx->max_analyze_duration = 4 * AV_TIME_BASE;
-
-    ctx->pb       = pb;
-    ctx->io_open  = nested_io_open;
-    ctx->format_probesize = 1024 * 1024;
 
     ret = avformat_open_input(&ctx, "", in_fmt, &in_fmt_opts);
     av_dict_free(&in_fmt_opts);
@@ -161,14 +157,12 @@ error_t FFmpegAVDemuxer::init() {
     }
 
     ret = avformat_find_stream_info(ctx, nullptr);
-
     if (ret < 0) {
         return ERROR_FFMPEG_OPEN;
     }
 
     // https://ffmpeg.org/doxygen/3.4/transcoding_8c-example.html
     ffmpeg_av_ctx = std::make_shared<FFmpegAVContext>(ctx);
-
     if ((ret = ffmpeg_av_ctx->init_input()) != SUCCESS) {
         return ret;
     }
@@ -181,19 +175,16 @@ AVFormatContext* FFmpegAVDemuxer::get_ctx() {
 }
 
 error_t FFmpegAVDemuxer::init_ffmpeg_ctx() {
-    pb = nullptr;
-    avio_ctx_buffer = nullptr;
+    pb  = nullptr;
     ctx = nullptr;
     return SUCCESS;
 }
 
 void FFmpegAVDemuxer::free_ffmpeg_ctx() {
-    if (pb) avio_context_free(&pb);
-
     // https://ffmpeg.org/pipermail/libav-user/2012-December/003257.html
     // avio_ctx_buffer manage by pb
-    // if (avio_ctx_buffer) av_freep(&avio_ctx_buffer);
-
+    if (pb->buffer) av_freep(&pb->buffer);
+    if (pb) avio_context_free(&pb);
     if (ctx) avformat_free_context(ctx);
 }
 

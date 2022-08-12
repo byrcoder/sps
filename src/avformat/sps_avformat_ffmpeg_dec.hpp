@@ -66,15 +66,12 @@ class FFmpegAVDemuxer : public IAVDemuxer {
     void    free_ffmpeg_ctx();
 
  private:
-    PIReader rd;
-
-    std::shared_ptr<FFmpegAVContext> ffmpeg_av_ctx;
-    AVFormatContext *ctx;
-    AVIOContext* pb;
-    uint8_t* avio_ctx_buffer;
-
+    PIReader         rd;
+    PFFmpegAVContext ffmpeg_av_ctx;
+    AVFormatContext  *ctx;
+    AVIOContext      *pb;
     // ffmpeg timestamp
-    int64_t cur_timestamp;
+    int64_t          cur_timestamp;
 
 #ifdef FFMPEG_DECODE_DEBUG
     PIWriter debug_output;

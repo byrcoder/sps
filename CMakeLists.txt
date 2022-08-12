@@ -81,24 +81,6 @@ if (SRT_ENABLED)
     file(APPEND ${AUTO_HEAD} "#define SRT_ENABLED\r\n")
 endif()
 
-# if (OPENSSL_ENABLED)
-#    file(APPEND ${AUTO_HEAD} "#define OPENSSL_ENABLED\r\n")
-# endif()
-
-#if (FFMPEG_ENABLED)
-#    file(APPEND ${AUTO_HEAD} "#define FFMPEG_ENABLED\r\n")
-#endif()
-
-#if (OPENSSL_ENABLED)
-#    if (OPENSSL_INCLUDE)
-#        include_directories(${OPENSSL_INCLUDE})
-#    endif()
-#
-#    if (OPENSSL_LIB)
-#        link_directories(${OPENSSL_LIB})
-#    endif()
-#endif()
-
 lib_opt(OPENSSL_ENABLED OPENSSL_INCLUDE OPENSSL_LIB)
 lib_opt(FFMPEG_ENABLED  FFMPEG_INCLUDE FFMPEG_LIB)
 
@@ -125,16 +107,14 @@ link_directories(
 
 include_directories(
         ${PROJECT_SOURCE_DIR}/src
-
         ${PROJECT_SOURCE_DIR}/src/avcodec
-
+        ${PROJECT_SOURCE_DIR}/src/avfilter
         ${PROJECT_SOURCE_DIR}/src/avformat
         ${PROJECT_SOURCE_DIR}/src/cache
         ${PROJECT_SOURCE_DIR}/src/co
         ${PROJECT_SOURCE_DIR}/src/install
         ${PROJECT_SOURCE_DIR}/src/io
         ${PROJECT_SOURCE_DIR}/src/librtmp
-        ${PROJECT_SOURCE_DIR}/src/kernel
         ${PROJECT_SOURCE_DIR}/src/log
 
         ${PROJECT_SOURCE_DIR}/src/module/
@@ -154,52 +134,42 @@ include_directories(
         ${PROJECT_SOURCE_DIR}/src/sync
         ${PROJECT_SOURCE_DIR}/src/url
         ${PROJECT_SOURCE_DIR}/src/util
-        )
+)
 
 file(GLOB SRC_LIST
-        "${PROJECT_SOURCE_DIR}/src/*.cpp"
-
+        ${PROJECT_SOURCE_DIR}/src/*.cpp
         ${PROJECT_SOURCE_DIR}/src/avcodec/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/avformat/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/cache/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/co/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/install/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/io/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/librtmp/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/log/*.cpp
 
-        "${PROJECT_SOURCE_DIR}/src/module/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/module/module/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/module/root/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/module/host/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/module/http/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/module/rtmp/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/module/server/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/module/srt/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/module/stream/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/module/tran/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/module/upstream/*.cpp"
-        "src/url/*.cpp"
+        ${PROJECT_SOURCE_DIR}/src/module/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/module/module/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/module/root/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/module/host/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/module/http/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/module/rtmp/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/module/server/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/module/srt/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/module/stream/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/module/tran/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/module/upstream/*.cpp
 
-        "${PROJECT_SOURCE_DIR}/src/avformat/*.cpp"
+        ${PROJECT_SOURCE_DIR}/src/st/co/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/st/io/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/st/sync/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/st/*.cpp
 
-        "${PROJECT_SOURCE_DIR}/src/cache/*.cpp"
+        ${PROJECT_SOURCE_DIR}/src/sync/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/url/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/util/*.cpp
+)
 
-        "${PROJECT_SOURCE_DIR}/src/co/*.cpp"
-
-        "${PROJECT_SOURCE_DIR}/src/install/*.cpp"
-
-        "${PROJECT_SOURCE_DIR}/src/log/*.cpp"
-
-        "${PROJECT_SOURCE_DIR}/src/io/*.cpp"
-
-        "${PROJECT_SOURCE_DIR}/src/librtmp/*.cpp"
-
-        "${PROJECT_SOURCE_DIR}/src/st/co/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/st/io/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/st/sync/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/st/*.cpp"
-
-        "${PROJECT_SOURCE_DIR}/src/sync/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/url/*.cpp"
-        "${PROJECT_SOURCE_DIR}/src/util/*.cpp"
-        )
-
-file(GLOB SRC_TEST_LIST
-        "${PROJECT_SOURCE_DIR}/test/*.cpp")
+file(GLOB SRC_TEST_LIST "${PROJECT_SOURCE_DIR}/test/*.cpp")
 
 message("src: ${SRC_LIST}"  test:"${SRC_TEST_LIST}")
 
@@ -207,7 +177,7 @@ add_executable(sps
         ${SRC_LIST}
         ${HEAD_LIST}
         ${PROJECT_SOURCE_DIR}/src/main/sps_main_sps.cpp
-        )
+)
 
 target_link_libraries(sps libst.a libhttp_parser.a librtmp.a)
 if (SRT_ENABLED)

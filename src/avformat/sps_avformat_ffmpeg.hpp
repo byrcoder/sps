@@ -38,11 +38,16 @@ SOFTWARE.
 extern "C" {
 
 #include <libavcodec/avcodec.h>
+#include <libavfilter/avfilter.h>
+#include <libavfilter/buffersink.h>
+#include <libavfilter/buffersrc.h>
 #include <libavformat/avformat.h>
 #include <libavformat/avio.h>
 #include <libswscale/swscale.h>
 #include <libavutil/avutil.h>
 #include <libavutil/imgutils.h>
+#include <libavutil/opt.h>
+#include <libavutil/pixdesc.h>
 
 }
 
@@ -100,6 +105,7 @@ class FFmpegAVContext : public IAVContext {
     AVFormatContext* ctx;
     std::vector<AVCodecContext*>  codecs;
 };
+typedef std::shared_ptr<FFmpegAVContext> PFFmpegAVContext;
 
 }  // namespace sps
 

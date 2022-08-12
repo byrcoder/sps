@@ -166,17 +166,16 @@ error_t FFmpegAVMuxer::init() {
         full_url = url->schema + "://" + full_url;
     }
 
-    ff_const59 AVOutputFormat* out_format = nullptr;
-    out_format = av_guess_format(nullptr, full_url.c_str(), nullptr);
-    int ret    = avformat_alloc_output_context2(&ctx, out_format, nullptr, full_url.c_str());
+    auto out_format = av_guess_format(nullptr, full_url.c_str(), nullptr);
+    int  ret        = avformat_alloc_output_context2(&ctx, out_format, nullptr, full_url.c_str());
 
     if (ret < 0 || !ctx || !out_format) {
         sp_error("Fail init ffmpeg url %s ret %d", full_url.c_str(), ret);
         return ERROR_FFMPEG_OPEN;
     }
 
-    avio_ctx_buffer  = (uint8_t*) av_malloc(FFMPEG_MAX_SIZE);
-    pb               = avio_alloc_context(avio_ctx_buffer, FFMPEG_MAX_SIZE, 1,
+    auto avio_buffer = (uint8_t*) av_malloc(FFMPEG_MAX_SIZE);
+    pb               = avio_alloc_context(avio_buffer, FFMPEG_MAX_SIZE, 1,
                                           this, nullptr, write_data, nullptr);
     ctx->pb          = pb;
     ctx->oformat     = out_format;
@@ -251,17 +250,14 @@ error_t FFmpegAVMuxer::on_av_stream(AVStream* new_stream) {
 #endif
 
 error_t FFmpegAVMuxer::init_ffmpeg_ctx() {
-    pb = nullptr;
-    avio_ctx_buffer = nullptr;
+    pb  = nullptr;
     ctx = nullptr;
     return SUCCESS;
 }
 
 void FFmpegAVMuxer::free_ffmpeg_ctx() {
+    if (pb->buffer) av_free(pb->buffer);
     if (pb) avio_context_free(&pb);
-
-    // if (avio_ctx_buffer) av_free(avio_ctx_buffer);
-
     if (ctx) avformat_free_context(ctx);
 }
 

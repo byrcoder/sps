@@ -23,7 +23,6 @@ SOFTWARE.
 
 #include <sps_log.hpp>
 
-#include <public.h>
 #include <cstdarg>
 
 namespace sps {
