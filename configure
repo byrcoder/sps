@@ -30,7 +30,7 @@ fi
 
 . auto/depends.sh
 
-echo "====== build sps ${BUILD_DIR}."
+echo "====== build sps ${BUILD_DIR}. cc=${CC} CXX=${CXX}"
 
 rm ${BUILD_DIR}/sps ${BUILD_DIR}/test_*
 
