@@ -3,8 +3,8 @@ project(sps)
 
 set(CMAKE_CXX_STANDARD 14)
 
-set(CMAKE_CXX_COMPILER g++)
-set(CMAKE_C_COMPILER gcc)
+# set(CMAKE_CXX_COMPILER g++)
+# set(CMAKE_C_COMPILER gcc)
 
 # srt option
 option(SRT_ENABLED "srt enabled" OFF)
@@ -173,68 +173,39 @@ file(GLOB SRC_TEST_LIST "${PROJECT_SOURCE_DIR}/test/*.cpp")
 
 message("src: ${SRC_LIST}"  test:"${SRC_TEST_LIST}")
 
-add_executable(sps
-        ${SRC_LIST}
-        ${HEAD_LIST}
-        ${PROJECT_SOURCE_DIR}/src/main/sps_main_sps.cpp
-)
+function(build_target exec src_list head_list main_list)
+    add_executable(${exec}
+            ${src_list}
+            ${main_list}
+    )
+    target_link_libraries(${exec} libst.a libhttp_parser.a librtmp.a)
+    if (SRT_ENABLED)
+        target_link_libraries(${exec} ${PROJECT_SOURCE_DIR}/3rdparty/srt/libsrt.a)
+    endif()
+    if (OPENSSL_ENABLED)
+        target_link_libraries(${exec} ${OPENSSL_LIB}/libssl.a ${OPENSSL_LIB}/libcrypto.a)
+    endif()
+    if (FFMPEG_ENABLED)
+        target_link_libraries(${exec} avformat avcodec avdevice avfilter avutil swresample swscale)
+    endif()
+endfunction(build_target)
 
-target_link_libraries(sps libst.a libhttp_parser.a librtmp.a)
+build_target(sps  "${SRC_LIST}" "${HEAD_LIST}" ${PROJECT_SOURCE_DIR}/src/main/sps_main_sps.cpp)
+build_target(udp_blackhole_server "${SRC_LIST}" "${HEAD_LIST}" ${PROJECT_SOURCE_DIR}/tools/udp_blackhole_server.cpp)
+build_target(udp_client "${SRC_LIST}" "${HEAD_LIST}" ${PROJECT_SOURCE_DIR}/tools/udp_client.cpp)
+
 if (SRT_ENABLED)
-    target_link_libraries(sps ${PROJECT_SOURCE_DIR}/3rdparty/srt/libsrt.a)
-endif()
-if (OPENSSL_ENABLED)
-    target_link_libraries(sps ${OPENSSL_LIB}/libssl.a ${OPENSSL_LIB}/libcrypto.a)
-endif()
-if (FFMPEG_ENABLED)
-    target_link_libraries(sps avformat avcodec avdevice avfilter avutil swresample swscale)
+    build_target(srt_http_client "${SRC_LIST}" "${HEAD_LIST}" ${PROJECT_SOURCE_DIR}/tools/srt_http_client.cpp)
 endif()
 
 if(ENABLE_UNITTESTS)
-    add_executable(test_all
-            ${SRC_LIST}
-            ${HEAD_LIST}
-            ${SRC_TEST_LIST}
-            )
-
-    target_link_libraries(test_all
-            libgtest.a
-            libst.a libhttp_parser.a libgtest.a librtmp.a pthread
-            )
-    if (SRT_ENABLED)
-        target_link_libraries(test_all ${PROJECT_SOURCE_DIR}/3rdparty/srt/libsrt.a)
-    endif()
-    if (OPENSSL_ENABLED)
-        target_link_libraries(test_all ${OPENSSL_LIB}/libssl.a ${OPENSSL_LIB}/libcrypto.a)
-    endif()
-
-    if (FFMPEG_ENABLED)
-        target_link_libraries(test_all avformat avcodec avdevice avfilter avutil swresample swscale)
-    endif()
-
+    build_target(test_all "${SRC_LIST}"  "${HEAD_LIST}" "${SRC_TEST_LIST}")
+    target_link_libraries(test_all libgtest.a pthread)
     add_test(
             NAME
             test_all
             COMMAND
             ${CMAKE_BINARY_DIR}/test_all
     )
-
     enable_testing()
 endif()
-
-if (SRT_ENABLED)
-    add_executable(srt_http_client
-        ${SRC_LIST}
-        ${HEAD_LIST}
-        ${PROJECT_SOURCE_DIR}/tools/srt_http_client.cpp
-        )
-    target_link_libraries(srt_http_client libst.a libhttp_parser.a librtmp.a)
-    target_link_libraries(srt_http_client ${PROJECT_SOURCE_DIR}/3rdparty/srt/libsrt.a)
-    if (OPENSSL_ENABLED)
-        target_link_libraries(srt_http_client ${OPENSSL_LIB}/libssl.a  ${OPENSSL_LIB}/libcrypto.a)
-    endif()
-    if (FFMPEG_ENABLED)
-        target_link_libraries(srt_http_client avformat avcodec avdevice avfilter avutil swresample swscale)
-    endif()
-endif()
-

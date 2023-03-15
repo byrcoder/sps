@@ -27,6 +27,7 @@ SOFTWARE.
 
 #include <sps_st_io_udp.hpp>
 #include <sps_log.hpp>
+#include <sps_st_co.hpp>
 
 namespace sps {
 
@@ -106,9 +107,10 @@ StUdpClientSocket::StUdpClientSocket(const std::string& peer_ip, int peer_port, 
     this->fd        = std::move(fd);
     this->peer_port = peer_port;
     this->peer_ip   = peer_ip;
+    this->connected = false;
 
     peer_addr.sin_family        =   AF_INET;
-    peer_addr.sin_addr.s_addr   =   htonl(INADDR_ANY);
+    inet_pton(AF_INET, peer_ip.c_str(), &peer_addr.sin_addr.s_addr);
     peer_addr.sin_port          =   htons(peer_port);
 }
 
@@ -119,6 +121,15 @@ void StUdpClientSocket::set_recv_timeout(utime_t tm) {
 
 utime_t StUdpClientSocket::get_recv_timeout() {
     return rtm;
+}
+
+error_t StUdpClientSocket::connect() {
+    error_t  ret = st_connect(fd->get_fd(), reinterpret_cast<const sockaddr *>(&peer_addr), sizeof(peer_addr), 10);
+    if (ret == 0) {
+        connected = true;
+    }
+
+    return ret;
 }
 
 error_t StUdpClientSocket::read_fully(void* buf, size_t size, ssize_t* nread) {
@@ -189,7 +200,8 @@ error_t StUdpClientSocket::write(void* buf, size_t size) {
 
     while (sent < size) {
         int n = st_sendto(fd->get_fd(), (char*) buf + sent, size - sent,
-                          (struct sockaddr *) &peer_addr, sizeof(peer_addr), stm);
+                          connected ? nullptr : (struct sockaddr *) &peer_addr,
+                          sizeof(peer_addr), stm);
 
         if (n < 0) {
             if (n < 0 && errno == ETIME) {
@@ -231,18 +243,17 @@ size_t UdpBuffer::size() {
 
 StUdpSessionClientSocket::StUdpSessionClientSocket(const std::string &cip, int cport, PUdpFd fd) :
         StUdpClientSocket(cip, cport, fd) {
-    cond = st_cond_new();
-    buffer_list_size = 0;
+    cond = IConditionFactory::get_instance().create_condition();
+    buffer_list_size     = 0;
     buffer_max_list_size = 4000;
 }
 
 StUdpSessionClientSocket::~StUdpSessionClientSocket() {
-    st_cond_destroy(cond);
 }
 
 error_t StUdpSessionClientSocket::read(void *buf, size_t size, size_t &nread) {
     if (buffer_lists.empty()) {
-        st_cond_timedwait(cond, get_recv_timeout());
+        cond->wait(get_recv_timeout());
     }
 
     if (buffer_lists.empty()) {
@@ -275,7 +286,7 @@ error_t StUdpSessionClientSocket::push(uint8_t* buf, size_t len) {
     buffer_lists.push_back(std::make_shared<UdpBuffer>(buf, len));
 
     if (empty) {
-        st_cond_broadcast(cond);
+        cond->signal();
     }
     ++buffer_list_size;
 
@@ -303,6 +314,7 @@ error_t StUdpServerSocket::listen(std::string sip, int sport, bool reuse_sport, 
     this->ip   = sip;
     this->port = sport;
     this->reuse_port = reuse_sport;
+    new_cond         = IConditionFactory::get_instance().create_condition();
 
     error_t ret = UdpFd::create_fd(sport, server_fd, reuse_port, reuse_sport);
 
@@ -312,6 +324,11 @@ error_t StUdpServerSocket::listen(std::string sip, int sport, bool reuse_sport, 
     }
 
     server_socket = std::make_shared<StUdpClientSocket>("", 0, server_fd);
+    ret           = ICoFactory::get_instance().start(shared_from_this());
+    if (ret != SUCCESS) {
+        sp_error("start udp server socket failed ret %d", ret);
+        return ret;
+    }
 
     delete [] buffer;
     buffer        = new uint8_t[buffer_size];
@@ -320,6 +337,16 @@ error_t StUdpServerSocket::listen(std::string sip, int sport, bool reuse_sport, 
 }
 
 PSocket StUdpServerSocket::accept() {
+    while (new_clients.empty()) {
+        new_cond->wait(SLEEP_FOREVER);
+    }
+
+    PSocket c = new_clients.front();
+    new_clients.pop_front();
+    return c;
+}
+
+error_t StUdpServerSocket::handler() {
     while (true) {
         size_t      nr    = 0;
         std::string cip;
@@ -333,14 +360,14 @@ PSocket StUdpServerSocket::accept() {
 
         PStUdpSessionClientSocket csocket = search_or_create(cip, cport, new_client);
         csocket->push(buffer, nr);
-
         // new socket
         if (new_client) {
-            return std::make_shared<UdpSessionSocket> (this, csocket, cip, cport);
+            new_clients.push_back(std::make_shared<UdpSessionSocket>(this, csocket, cip, cport));
+            new_cond->signal();
         }
     }
 
-    return nullptr;
+    return SUCCESS;
 }
 
 void StUdpServerSocket::on_destroy(UdpSessionSocket* session) {

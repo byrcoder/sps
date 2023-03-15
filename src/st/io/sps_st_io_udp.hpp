@@ -26,6 +26,8 @@ SOFTWARE.
 
 #include <sps_io_socket.hpp>
 #include <sps_st_io_tcp.hpp>
+#include <sps_co.hpp>
+#include <sps_sync.hpp>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netdb.h>
@@ -61,6 +63,7 @@ class StUdpClientSocket : public IReaderWriter {
     void    set_recv_timeout(utime_t tm) override;
     utime_t get_recv_timeout() override;
 
+    error_t connect();
     error_t read_fully(void* buf, size_t size, ssize_t* nread) override;
     error_t read(void* buf, size_t size, size_t& nread) override;
 
@@ -87,6 +90,7 @@ class StUdpClientSocket : public IReaderWriter {
     std::string peer_ip;
     int         peer_port;
     sockaddr_in peer_addr;
+    bool        connected;
 };
 
 typedef std::shared_ptr<StUdpClientSocket> PStUdpClientSocket;
@@ -128,7 +132,7 @@ class StUdpSessionClientSocket : public StUdpClientSocket {
 
  private:
     std::list<PUdpBuffer> buffer_lists;
-    st_cond_t cond;
+    PCondition cond;
     int buffer_max_list_size;
     int buffer_list_size;
 };
@@ -150,7 +154,8 @@ class IUdpSocketManager {
     virtual void on_destroy(UdpSessionSocket* session) = 0;
 };
 
-class StUdpServerSocket : public IServerSocket, public IUdpSocketManager {
+class StUdpServerSocket : public IServerSocket, public IUdpSocketManager, public ICoHandler,
+        public std::enable_shared_from_this<StUdpServerSocket> {
  public:
     StUdpServerSocket() = default;
     ~StUdpServerSocket();
@@ -158,6 +163,7 @@ class StUdpServerSocket : public IServerSocket, public IUdpSocketManager {
  public:
     error_t listen(std::string sip, int sport, bool reuse_sport, int back_log) override;
     PSocket accept() override;
+    error_t handler() override;
 
  public:
     void on_destroy(UdpSessionSocket* session) override;
@@ -178,6 +184,8 @@ class StUdpServerSocket : public IServerSocket, public IUdpSocketManager {
 
  private:
     std::map<std::string, std::weak_ptr<StUdpSessionClientSocket>> sessions;
+    std::list<std::shared_ptr<UdpSessionSocket>> new_clients;
+    PCondition new_cond;
 };
 
 }  // namespace sps
