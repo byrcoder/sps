@@ -36,7 +36,7 @@ class SrtServerStreamHandler : public IPhaseHandler {
     SrtServerStreamHandler();
 
  public:
-    error_t handler(ConnContext &ctx) override;
+    error_t handler(IHandlerContext &ctx) override;
 
  private:
     error_t publish(ConnContext &ctx);

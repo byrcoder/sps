@@ -28,8 +28,8 @@ SOFTWARE.
 #include <gtest/gtest.h>
 #include <sps_io_bits.hpp>
 #include <sps_log.hpp>
-#include <sps_st_io_ssl.hpp>
-#include <sps_st_io_tcp.hpp>
+#include <sps_sys_st_io_ssl.hpp>
+#include <sps_sys_st_io_tcp.hpp>
 
 using namespace sps;
 

@@ -1,8 +1,8 @@
-#include <sps_url.hpp>
-#include <sps_url_protocol.hpp>
-#include <sps_url_http.hpp>
+#include <sps_io_url.hpp>
+#include <sps_io_url_protocol.hpp>
+#include <sps_io_url_http.hpp>
 
-#include <sps_typedef.hpp>
+#include <sps_util_typedef.hpp>
 
 #include <gtest/gtest.h>
 #include <sps_io_memory.hpp>

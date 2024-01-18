@@ -28,7 +28,7 @@ SOFTWARE.
 #ifndef SPS_HTTP_PROXY_PHASE_HANDLER_HPP
 #define SPS_HTTP_PROXY_PHASE_HANDLER_HPP
 
-#include <sps_url.hpp>
+#include <sps_io_url.hpp>
 #include <sps_host_phase_handler.hpp>
 
 namespace sps {
@@ -39,7 +39,7 @@ class HttpProxyPhaseHandler : public IPhaseHandler {
     HttpProxyPhaseHandler();
 
  public:
-    error_t handler(ConnContext& ctx) override;
+    error_t handler(IHandlerContext& ctx) override;
 };
 
 }  // namespace sps

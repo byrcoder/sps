@@ -32,7 +32,7 @@ SOFTWARE.
 #include <sps_http_parser.hpp>
 #include <sps_http_socket.hpp>
 
-#include <sps_url_protocol.hpp>
+#include <sps_io_url_protocol.hpp>
 
 namespace sps {
 
@@ -40,8 +40,9 @@ HttpProxyPhaseHandler::HttpProxyPhaseHandler()
     : IPhaseHandler("http-router-handler") {
 }
 
-error_t HttpProxyPhaseHandler::handler(ConnContext &ctx) {
+error_t HttpProxyPhaseHandler::handler(IHandlerContext &c) {
     error_t  ret           = SUCCESS;
+    auto&   ctx            = *dynamic_cast<ConnContext*> (&c);
     auto&    host_ctx      = ctx.host;
     auto     proxy_req     = std::make_shared<RequestUrl>(*ctx.req);
     auto&    protocols     = SingleInstance<UrlProtocol>::get_instance();

@@ -36,9 +36,11 @@ HttpStreamPhaseHandler::HttpStreamPhaseHandler()
     : IPhaseHandler("http-stream-handler") {
 }
 
-error_t HttpStreamPhaseHandler::handler(ConnContext& ctx) {
+error_t HttpStreamPhaseHandler::handler(IHandlerContext& c) {
     error_t ret  = SUCCESS;
-    auto    rsp  = std::make_shared<HttpResponseSocket>(ctx.socket, ctx.socket->get_cip(), ctx.socket->get_port());
+    auto&   ctx  = *dynamic_cast<ConnContext*> (&c);
+    auto    rsp  = std::make_shared<HttpResponseSocket>(ctx.socket, ctx.socket->get_peer_ip(),
+                                                        ctx.socket->get_peer_port());
     auto    sh   = std::make_shared<StreamHandler>(rsp, ctx.req->method == "POST");
 
     rsp->init(200, nullptr, -1, false);

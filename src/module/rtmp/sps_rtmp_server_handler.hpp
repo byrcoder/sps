@@ -30,8 +30,8 @@ SOFTWARE.
 #include <string>
 
 #include <sps_host_phase_handler.hpp>
-#include <sps_librtmp.hpp>
-#include <sps_librtmp_packet.hpp>
+#include <sps_avformat_librtmp.hpp>
+#include <sps_avformat_librtmp_packet.hpp>
 
 namespace sps {
 
@@ -40,7 +40,7 @@ class RtmpServer404Handler : public IPhaseHandler {
     RtmpServer404Handler();
 
  public:
-    error_t handler(ConnContext &ctx) override;
+    error_t handler(IHandlerContext &ctx) override;
 };
 
 // rtmp handshake and connect
@@ -49,7 +49,7 @@ class RtmpPrepareHandler : public IPhaseHandler {
     RtmpPrepareHandler();
 
  public:
-    error_t handler(ConnContext& ctx) override;
+    error_t handler(IHandlerContext& ctx) override;
 };
 
 // rtmp server handshake

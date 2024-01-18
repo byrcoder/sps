@@ -29,7 +29,7 @@ SOFTWARE.
 #include <string>
 
 #include <sps_module.hpp>
-#include <sps_st_io_ssl.hpp>
+#include <sps_sys_st_io_ssl.hpp>
 #include <sps_stream_module.hpp>
 #include <sps_upstream_module.hpp>
 
@@ -38,13 +38,21 @@ SOFTWARE.
             { "pass_proxy", "pass_proxy",    OFFSET(pass_proxy), CONF_OPT_TYPE_STRING,   {.str = ""} }, \
             { "pass_url",   "pass_url",      OFFSET(pass_url),   CONF_OPT_TYPE_STRING,   {.str = ""} }, \
             { "role",       "edge/source",  OFFSET(role),       CONF_OPT_TYPE_STRING, {.str = "edge"} }, \
-            { "streaming",  "streaming",     OFFSET(streaming),  CONF_OPT_TYPE_BOOL,   { .str = "on" }, }, \
-            { "edge_avformat",  "stream_avformat",     OFFSET(edge_avformat),  CONF_OPT_TYPE_STRING,   { .str = "-" }, }
+            { "type",  "type(api/stream/proxy)",     OFFSET(type),  CONF_OPT_TYPE_STRING,   {.str = "proxy"}, }, \
+            { "edge_avformat",  "stream_avformat",     OFFSET(edge_avformat),  CONF_OPT_TYPE_STRING,   { .str = "-" }}
 
 namespace sps {
 
 extern const char* krole_edge;
 extern const char* krole_source;
+
+enum HostType {
+    STREAMING,
+    PROXYING,
+    API,
+};
+
+HostType string_hostype(const std::string& host);
 
 struct HostConfCtx : public ConfCtx {
     int         enabled;  // off when disabled, on enabled
@@ -52,7 +60,7 @@ struct HostConfCtx : public ConfCtx {
     std::string pass_url;     // pass_url
     std::string role;         // edge or source
 
-    int streaming;  // on, edge or source is rtmp/flv
+    std::string type;  // on, edge or source is rtmp/flv
     std::string edge_avformat;  // edge avformat
 
     std::string ssl_key_file;  // ssl key
@@ -82,6 +90,7 @@ class HostModule : public IModule {
     bool        publish();
     bool        edge();
     bool        is_streaming();
+    bool        is_api();
     bool        support_publish(const std::string& format);
     std::string edge_format();
     std::string pass_proxy();

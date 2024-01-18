@@ -24,7 +24,7 @@ SOFTWARE.
 #include <sps_server.hpp>
 
 #include <sps_log.hpp>
-#include <st/io/sps_st_io_ssl.hpp>
+#include <sps_sys_st_io_ssl.hpp>
 
 namespace sps {
 
@@ -45,6 +45,10 @@ error_t Server::init(PIConnHandlerFactory f,
     return SUCCESS;
 }
 
+void Server::stop() {
+    running = false;
+}
+
 #ifdef OPENSSL_ENABLED
 void Server::init_ssl(const std::string& crt_file, const std::string& key_file,
                       PISSLCertSearch searcher) {
@@ -60,6 +64,7 @@ void Server::init_ssl(const std::string& crt_file, const std::string& key_file,
 
 int Server::listen(std::string ip, int port, bool reuse_port, int backlog,
                    Transport transport) {
+    running     = true;
     tran        = transport;
     listen_ip   = ip;
     listen_port = port;
@@ -77,8 +82,8 @@ error_t Server::accept() {
         io->set_recv_timeout(recv_timeout);
         io->set_send_timeout(send_timeout);
         sp_trace("Accept client %s:%d -> %s:%d rcv_timeout: %llu, "
-                 "send_timeout: %llu", io->get_cip().c_str(), io->get_port(),
-                 listen_ip.c_str(), listen_port,
+                 "send_timeout: %llu", io->get_peer_ip().c_str(), io->get_peer_port(),
+                 io->get_self_ip().c_str(), io->get_self_port(),
                  recv_timeout, send_timeout);
 
         if (ICoFactory::get_instance().start(h) != SUCCESS) {
@@ -87,7 +92,7 @@ error_t Server::accept() {
         }
 
         SingleInstance<ConnManager>::get_instance().reg(h);
-    } while (true);
+    } while (running);
 
     return SUCCESS;
 }

@@ -29,9 +29,9 @@ SOFTWARE.
 #include <string>
 #include <utility>
 
-#include <sps_co.hpp>
+#include <sps_sys_co.hpp>
 #include <sps_io_socket.hpp>
-#include <sps_st_io_ssl.hpp>
+#include <sps_sys_st_io_ssl.hpp>
 
 namespace sps {
 
@@ -83,6 +83,7 @@ class Server : public ICoHandler {
  public:
     error_t init(PIConnHandlerFactory factory,
                  utime_t send_timeout, utime_t  rcv_timeout);
+    void stop();
 
 #ifdef OPENSSL_ENABLED
     void    init_ssl(const std::string& crt_file, const std::string& key_file,
@@ -97,6 +98,7 @@ class Server : public ICoHandler {
     error_t handler() override;
 
  protected:
+    bool                       running = false;
     PIConnHandlerFactory       factory;
     PIServerSocket             server_socket;
     utime_t                    recv_timeout = -1;

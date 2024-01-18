@@ -24,7 +24,7 @@ SOFTWARE.
 #ifndef SPS_UTIL_TIME_HPP
 #define SPS_UTIL_TIME_HPP
 
-#include <sps_typedef.hpp>
+#include <sps_util_typedef.hpp>
 
 namespace sps {
     utime_t update_time();

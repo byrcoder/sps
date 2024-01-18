@@ -25,7 +25,7 @@ SOFTWARE.
 #define SPS_AVFORMAT_RTMPENC_HPP
 
 #include <sps_avformat_enc.hpp>
-#include <sps_url_rtmp.hpp>
+#include <sps_io_url_rtmp.hpp>
 
 namespace sps {
 

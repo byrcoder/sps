@@ -37,10 +37,11 @@ SOFTWARE.
 #include <string>
 #include <utility>
 
-#include <sps_url.hpp>
+#include <sps_io_url.hpp>
 #include <sps_host_module.hpp>
 #include <sps_io_socket.hpp>
 #include <sps_server.hpp>
+#include <sps_server_handler.hpp>
 
 #define SPS_PHASE_CONTINUE 0
 #define SPS_PHASE_SUCCESS_NO_CONTINUE 1
@@ -50,46 +51,16 @@ namespace sps {
 /**
  * server conn context
  */
-struct ConnContext {
+struct ConnContext : public IHandlerContext {
     ConnContext(PRequestUrl r, PSocket s, IConnHandler* conn);
 
     IConnHandler* conn;  // rtmp or http conn
     PRequestUrl   req;   // client request. eg: http://github.com/byrcoder
-    PSocket       socket;  // client socket
 
     std::string ip;       // client ip
     int         port;     // client port
     PHostModule host;     // router host module
 };
-
-/**
- * work as nginx
- */
-class IPhaseHandler {
- public:
-    explicit IPhaseHandler(const char* name) : name(name) { }
-    const char* get_name() { return name; }
-
- public:
-    virtual error_t handler(ConnContext& ctx) = 0;
-
- private:
-    const char* name;
-};
-typedef std::shared_ptr<IPhaseHandler> PIPhaseHandler;
-
-/**
- * work as nginx http phase
- */
-class ServerPhaseHandler : public FifoRegisters<PIPhaseHandler> {
- public:
-    error_t handler(ConnContext& ctx);
-
- public:
-    ServerPhaseHandler();
-};
-
-typedef std::shared_ptr<ServerPhaseHandler> PServerPhaseHandler;
 
 }  // namespace sps
 

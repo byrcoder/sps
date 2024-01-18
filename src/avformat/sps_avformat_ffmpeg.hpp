@@ -31,7 +31,7 @@ SOFTWARE.
 #include <vector>
 
 #include <sps_avformat_packet.hpp>
-#include <sps_typedef.hpp>
+#include <sps_util_typedef.hpp>
 
 #ifdef FFMPEG_ENABLED
 

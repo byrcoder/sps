@@ -34,7 +34,7 @@ SOFTWARE.
 #include <memory>
 #include <string>
 
-#include <sps_typedef.hpp>
+#include <sps_util_typedef.hpp>
 
 #define SPS_IO_NO_TIMEOUT -1
 

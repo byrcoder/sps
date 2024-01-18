@@ -29,7 +29,7 @@ SOFTWARE.
 
 #include <sps_avformat_ffmpeg_dec.hpp>
 #include <sps_avformat_ffmpeg_enc.hpp>
-#include <sps_url_file.hpp>
+#include <sps_io_url_file.hpp>
 #include <sps_log.hpp>
 #include <sps_auto_header.hpp>
 

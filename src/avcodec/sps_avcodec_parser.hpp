@@ -24,7 +24,7 @@ SOFTWARE.
 #ifndef SPS_AVCODEC_PARSER_HPP
 #define SPS_AVCODEC_PARSER_HPP
 
-#include <sps_typedef.hpp>
+#include <sps_util_typedef.hpp>
 
 #include <sps_avformat_packet.hpp>
 #include <list>

@@ -24,7 +24,7 @@ SOFTWARE.
 #ifndef SPS_IO_BITS_HPP
 #define SPS_IO_BITS_HPP
 
-#include <sps_typedef.hpp>
+#include <sps_util_typedef.hpp>
 
 namespace sps {
 

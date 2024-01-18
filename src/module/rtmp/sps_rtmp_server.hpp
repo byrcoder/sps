@@ -28,7 +28,7 @@ SOFTWARE.
 #include <utility>
 
 #include <sps_host_phase_handler.hpp>
-#include <sps_librtmp.hpp>
+#include <sps_avformat_librtmp.hpp>
 #include <sps_server.hpp>
 
 namespace sps {

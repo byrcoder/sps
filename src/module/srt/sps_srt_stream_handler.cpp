@@ -36,8 +36,9 @@ SrtServerStreamHandler::SrtServerStreamHandler()
         : IPhaseHandler("srt-server") {
 }
 
-error_t SrtServerStreamHandler::handler(ConnContext &ctx) {
-    auto mode = ctx.req->get_param("m");
+error_t SrtServerStreamHandler::handler(IHandlerContext &c) {
+    auto& ctx  = *dynamic_cast<ConnContext*> (&c);
+    auto  mode = ctx.req->get_param("m");
 
     sp_info("sever srt host: %s, mode %s",  ctx.req->get_host(), mode.c_str());
 

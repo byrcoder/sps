@@ -27,10 +27,10 @@ SOFTWARE.
 #include <gtest/gtest.h>
 
 #include <sps_avformat_rtmpdec.hpp>
-#include <librtmp/sps_librtmp.hpp>
-#include <sps_url_rtmp.hpp>
-#include <sps_url_protocol.hpp>
-#include <sps_sync.hpp>
+#include <sps_avformat_librtmp.hpp>
+#include <sps_io_url_rtmp.hpp>
+#include <sps_io_url_protocol.hpp>
+#include <sps_sys_sync.hpp>
 
 using namespace sps;
 

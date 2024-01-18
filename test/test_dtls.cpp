@@ -27,7 +27,7 @@ SOFTWARE.
 
 #include <gtest/gtest.h>
 
-#include <sps_st_io_ssl.hpp>
+#include <sps_sys_st_io_ssl.hpp>
 
 using namespace sps;
 

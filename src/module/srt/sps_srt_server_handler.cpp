@@ -26,7 +26,7 @@ SOFTWARE.
 //
 
 #include <sps_srt_server_handler.hpp>
-#include <sps_st_io_srt.hpp>
+#include <sps_sys_st_io_srt.hpp>
 
 #ifdef SRT_ENABLED
 
@@ -107,7 +107,8 @@ SrtPrepareHandler::SrtPrepareHandler()
 }
 
 // TODO: impl stream parse
-error_t SrtPrepareHandler::handler(ConnContext &ctx) {
+error_t SrtPrepareHandler::handler(IHandlerContext &c) {
+    auto&   ctx  = *dynamic_cast<ConnContext*> (&c);
     StSrtSocket* srt_io = dynamic_cast<StSrtSocket*>(ctx.socket->get_io().get());
 
     if (srt_io == nullptr) {

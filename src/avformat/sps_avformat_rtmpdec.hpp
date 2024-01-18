@@ -30,7 +30,7 @@ SOFTWARE.
 #include <sps_io.hpp>
 #include <sps_io_bytes.hpp>
 
-#include <sps_url_rtmp.hpp>
+#include <sps_io_url_rtmp.hpp>
 
 namespace sps {
 

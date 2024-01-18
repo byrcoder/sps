@@ -36,7 +36,8 @@ HostRouterPhaseHandler::HostRouterPhaseHandler(
     this->not_found_handler = std::move(not_found_handler);
 }
 
-error_t HostRouterPhaseHandler::handler(ConnContext &ctx) {
+error_t HostRouterPhaseHandler::handler(IHandlerContext &c) {
+    auto&   ctx  = *dynamic_cast<ConnContext*> (&c);
     if (!ctx.req) {
         sp_error("host is empty");
     } else {

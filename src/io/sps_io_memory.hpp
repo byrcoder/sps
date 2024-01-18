@@ -27,7 +27,7 @@ SOFTWARE.
 #include <string>
 
 #include <sps_io.hpp>
-#include <sps_typedef.hpp>
+#include <sps_util_typedef.hpp>
 
 namespace sps {
 

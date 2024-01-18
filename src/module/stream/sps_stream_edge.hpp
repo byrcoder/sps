@@ -24,7 +24,7 @@ SOFTWARE.
 #ifndef SPS_STREAM_EDGE_HPP
 #define SPS_STREAM_EDGE_HPP
 
-#include <sps_typedef.hpp>
+#include <sps_util_typedef.hpp>
 #include <sps_stream.hpp>
 
 namespace sps {

@@ -24,7 +24,7 @@ SOFTWARE.
 #include <sps_http_phase_handler.hpp>
 #include <sps_http_socket.hpp>
 #include <log/sps_log.hpp>
-#include <sps_url_protocol.hpp>
+#include <sps_io_url_protocol.hpp>
 #include <memory>
 
 namespace sps {
@@ -33,9 +33,10 @@ HttpParsePhaseHandler::HttpParsePhaseHandler()
     : IPhaseHandler("http-parser-handler") {
 }
 
-error_t HttpParsePhaseHandler::handler(ConnContext &ctx) {
+error_t HttpParsePhaseHandler::handler(IHandlerContext &c) {
     auto http_parser = std::make_shared<HttpParser>();
     error_t ret = SUCCESS;
+    auto&   ctx = *dynamic_cast<ConnContext*> (&c);
 
     if ((ret = http_parser->parse_header(ctx.socket,
                                       HttpType::REQUEST)) <= SUCCESS) {
@@ -48,8 +49,8 @@ error_t HttpParsePhaseHandler::handler(ConnContext &ctx) {
                   ctx.ip, ctx.port, ctx.req->is_chunked(),
                   ctx.req->get_content_length());
 
-    sp_trace("Request %s:%d %s-%s-%s, chunked %d, content-length %d",
-             ctx.ip.c_str(), ctx.port,
+    sp_trace("Request %s:%d %s %s %s %s, chunked %d, content-length %d",
+             ctx.ip.c_str(), ctx.port, ctx.req->get_method(),
              ctx.req->host.c_str(), ctx.req->url.c_str(), ctx.req->params.c_str(),
              ctx.req->is_chunked(), ctx.req->get_content_length());
 
@@ -60,12 +61,12 @@ Http404PhaseHandler::Http404PhaseHandler()
     : IPhaseHandler("http-404-handler") {
 }
 
-error_t Http404PhaseHandler::handler(ConnContext& ctx) {
+error_t Http404PhaseHandler::handler(IHandlerContext& ctx) {
     auto socket = ctx.socket;
     PHttpResponseSocket http_socket = std::make_shared<HttpResponseSocket>(
             socket,
-            socket->get_cip(),
-            socket->get_port());
+            socket->get_peer_ip(),
+            socket->get_peer_port());
 
     if (!http_socket) {
         sp_error("Fatal not http socket type(socket):%s", typeid(ctx.socket.get()).name());

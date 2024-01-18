@@ -24,15 +24,32 @@ SOFTWARE.
 #include <sps_log.hpp>
 
 #include <cstdarg>
+#include <time.h>
+#include <sys/time.h>
 
 namespace sps {
 
-void SPSLog::printf(const char *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    vsnprintf(buf, sizeof(buf), fmt, ap);
-    va_end(ap);
-    printf(buf);
+void ConsoleLog::printf(LOG_LEVEL lev, const char *fmt, ...) {
+    timeval tv;
+    if (gettimeofday(&tv, nullptr) == -1) {
+        return;
+    }
+
+    struct tm tm;
+    localtime_r(&tv.tv_sec, &tm);
+
+    int len = snprintf(buf, sizeof(buf), "[%04d-%02d-%02d %02d:%02d:%02d.%03d] ",
+               tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
+               tm.tm_hour, tm.tm_min, tm.tm_sec, tv.tv_usec/1000);
+
+    va_list args;
+    va_start(args, fmt);
+    vsnprintf(buf + len, sizeof(buf) - len, fmt, args);
+    va_end(args);
+    ::printf(buf);
 }
+
+ILog* default_log = new ConsoleLog();
+ILog* log         = default_log;
 
 }

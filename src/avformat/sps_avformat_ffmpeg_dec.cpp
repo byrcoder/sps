@@ -34,7 +34,7 @@ SOFTWARE.
 #include <sps_io_bytes.hpp>
 #include <sps_log.hpp>
 
-#include <sps_url_file.hpp>
+#include <sps_io_url_file.hpp>
 
 #ifdef FFMPEG_ENABLED
 

@@ -1,6 +1,6 @@
 #include <sps_cache.hpp>
 #include <sps_cache_buffer.hpp>
-#include <sps_sync.hpp>
+#include <sps_sys_sync.hpp>
 #include <sps_log.hpp>
 
 #include <string>

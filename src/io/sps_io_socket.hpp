@@ -24,6 +24,11 @@ SOFTWARE.
 #ifndef SPS_IO_SOCKET_HPP
 #define SPS_IO_SOCKET_HPP
 
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <sys/socket.h>
+
 #include <climits>
 #include <list>
 #include <memory>
@@ -47,84 +52,45 @@ enum Transport {
     DEFAULT = 0xFF
 };
 
+bool addr2string(const struct sockaddr_in* addr, std::string& ip, int& port);
+
 const char* get_transport_name(Transport t);
 
 // 适配器io， 统一的类型
 class Socket : public IReaderWriter {
  public:
-    Socket()  {
-        init(nullptr, "", -1);
-    }
-
-    Socket(PIReaderWriter rw, const std::string& ip, int p) {
-        init(std::move(rw), ip, p);
-    }
+    Socket();
+    Socket(PIReaderWriter rw, const std::string& peer_ip, int peer_port,
+           const std::string& self_ip = "", int self_port = -1);
 
  public:
-    void init(PIReaderWriter rw, const std::string& ip, int p) {
-        this->io    = std::move(rw);
-        this->cip   = ip;
-        this->port  = p;
-    }
+    void init(PIReaderWriter rw, const std::string& ip, int p, const std::string& sip, int sp);
 
  public:
-    error_t read_fully(void* buf, size_t size, ssize_t* nread) override {
-        error_t ret = SUCCESS;
-        ssize_t n   = 0;
-        size_t  nr  = 0;
-
-        do {
-            nr  = 0;
-            ret = this->read((char*)buf+n, size-n, nr);
-
-            if (ret != SUCCESS) {
-                return ret;
-            }
-
-            n += nr;
-        } while (n < size);
-
-        return ret;
-    }
-
-    error_t read(void* buf, size_t size, size_t& nread) override   {
-        return io->read(buf, size, nread);
-    }
-
-    void   set_recv_timeout(utime_t tm) override {
-        io->set_recv_timeout(tm);
-    }
-
-    utime_t get_recv_timeout() override {
-        return io->get_recv_timeout();
-    }
-
-    bool seekable() override {
-        return io->seekable();
-    }
+    error_t read_fully(void* buf, size_t size, ssize_t* nread) override;
+    error_t read(void* buf, size_t size, size_t& nread) override;
+    void   set_recv_timeout(utime_t tm) override;
+    utime_t get_recv_timeout() override;
+    bool seekable() override;
 
  public:
-    error_t write(void* buf, size_t size) override {
-        return io->write(buf, size);
-    }
-
-    void    set_send_timeout(utime_t tm) override  {
-        return io->set_send_timeout(tm);
-    }
-
-    utime_t get_send_timeout() override  {
-        return io->get_send_timeout();
-    }
+    error_t write(void* buf, size_t size) override;
+    void    set_send_timeout(utime_t tm) override;
+    utime_t get_send_timeout() override;
 
  public:
-    PIReaderWriter get_io()   {  return io;   }
-    std::string    get_cip()   const     {  return cip;  }
-    int            get_port()   const    {  return port; }
+    PIReaderWriter get_io();
+    std::string    get_peer_ip() const;
+    int            get_peer_port() const;
+    std::string    get_self_ip()    const;
+    int            get_self_port()  const;
 
  protected:
     PIReaderWriter io;
-    std::string cip;
-    int         port;
+    std::string peer_ip;
+    int         peer_port;
+    std::string self_ip;
+    int         self_port;
 };
 
 typedef std::shared_ptr<Socket> PSocket;

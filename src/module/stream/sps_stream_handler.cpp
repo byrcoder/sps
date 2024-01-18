@@ -47,7 +47,8 @@ StreamHandler::StreamHandler(std::shared_ptr<Socket> io, bool pub) :
     this->pub = pub;
 }
 
-error_t StreamHandler::handler(ConnContext &ctx) {
+error_t StreamHandler::handler(IHandlerContext &c) {
+    auto&   ctx = *dynamic_cast<ConnContext*> (&c);
     return pub ? publish(ctx) : play(ctx);
 }
 

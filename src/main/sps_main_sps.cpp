@@ -21,15 +21,15 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#include <sps_co.hpp>
+#include <sps_sys_co.hpp>
 #include <sps_root_module.hpp>
 
 #include <sps_install.hpp>
 #include <sps_log.hpp>
 #include <sps_server_module.hpp>
-#include <sps_sync.hpp>
-#include <sps_typedef.hpp>
-#include <sps_url_protocol.hpp>
+#include <sps_sys_sync.hpp>
+#include <sps_util_typedef.hpp>
+#include <sps_io_url_protocol.hpp>
 
 sps::PRootModule core_module;
 

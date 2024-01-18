@@ -28,7 +28,7 @@ SOFTWARE.
 
 #include <sps_avformat_flvdec.hpp>
 #include <sps_avformat_flvenc.hpp>
-#include <sps_url_file.hpp>
+#include <sps_io_url_file.hpp>
 #include <sps_log.hpp>
 
 extern const char* filename;

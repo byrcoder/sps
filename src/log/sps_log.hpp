@@ -35,14 +35,22 @@ SOFTWARE.
 
 namespace sps {
 
-class ILog {
- public:
-    virtual void printf(const char*msg, ...) = 0;
+enum LOG_LEVEL {
+    DEBUG,
+    INFO,
+    TRACE,
+    WARN,
+    ERROR,
 };
 
-class SPSLog : public ILog {
+class ILog {
  public:
-    void printf(const char* fmt, ...) override;
+    virtual void printf(LOG_LEVEL lev, const char*msg, ...) = 0;
+};
+
+class ConsoleLog : public ILog {
+ public:
+    void printf(LOG_LEVEL lev, const char* fmt, ...) override;
 
  private:
     char buf[4096];
@@ -50,31 +58,33 @@ class SPSLog : public ILog {
 
 extern int get_context_id();
 
+extern ILog* log;
+
 };
 
 
-#define sp_error(msg , ...) printf("[%s:%d] [%d] " msg " (%d %s)\r\n", \
+#define sp_error(msg , ...) sps::log->printf(sps::LOG_LEVEL::ERROR, "[%s:%d] [%d] " msg " (%d %s)\r\n", \
     __FILENAME__, __LINE__, sps::get_context_id(),  ##__VA_ARGS__, errno, strerror(errno))
 
-#define sp_warn(msg , ...)  printf("[%s:%d] [%d] " msg "\r\n", \
+#define sp_warn(msg , ...)  sps::log->printf(sps::LOG_LEVEL::WARN, "[%s:%d] [%d] " msg "\r\n", \
     __FILENAME__, __LINE__, sps::get_context_id(), ##__VA_ARGS__)
 
-#define sp_trace(msg, ...)  printf("[%s:%d] [%d] " msg "\r\n", \
+#define sp_trace(msg, ...)  sps::log->printf(sps::LOG_LEVEL::TRACE, "[%s:%d] [%d] " msg "\r\n", \
     __FILENAME__, __LINE__, sps::get_context_id(), ##__VA_ARGS__)
 
-#define sp_info(msg, ...)   printf("[%s:%d] [%d] " msg "\r\n", \
+#define sp_info(msg, ...)   sps::log->printf(sps::LOG_LEVEL::INFO, "[%s:%d] [%d] " msg "\r\n", \
     __FILENAME__, __LINE__, sps::get_context_id(), ##__VA_ARGS__)
 
 #define sp_append_start(msg, ...)  \
-    printf("[%s:%d] " msg " ", __FILENAME__, __LINE__,  ##__VA_ARGS__)
+     sps::log->printf(sps::LOG_LEVEL::INFO, "[%s:%d] " msg " ", __FILENAME__, __LINE__,  ##__VA_ARGS__)
 
-#define sp_append(msg, ...)         printf(msg " ",  ##__VA_ARGS__)
-#define sp_append_end()             printf("\r\n");
+#define sp_append(msg, ...)         sps::log->printf(sps::LOG_LEVEL::INFO, msg " ",  ##__VA_ARGS__)
+#define sp_append_end()             sps::log->printf(sps::LOG_LEVEL::INFO,"\r\n");
 
 
 #ifdef SPS_HEAVY_LOG
 #define sp_debug(msg, ...)  \
-    printf("[%s:%d] " msg "\r\n", __FILENAME__, __LINE__,  ##__VA_ARGS__)
+    sps::log->printf(sps::LOG_LEVEL::DEBUG, "[%s:%d] " msg "\r\n", __FILENAME__, __LINE__,  ##__VA_ARGS__)
 #else
 #define sp_debug(msg, ...)
 #endif

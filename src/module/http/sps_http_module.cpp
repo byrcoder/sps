@@ -23,9 +23,9 @@ SOFTWARE.
 
 #include <sps_http_module.hpp>
 #include <sps_log.hpp>
-#include <module/host/sps_host_router_handler.hpp>
-#include "sps_http_server.hpp"
-#include "sps_http_adapter_phase_handler.hpp"
+#include <sps_host_router_handler.hpp>
+#include <sps_http_server.hpp>
+#include <sps_http_adapter_phase_handler.hpp>
 
 namespace sps {
 

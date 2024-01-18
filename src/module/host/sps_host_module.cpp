@@ -28,6 +28,18 @@ namespace sps {
 const char* krole_edge = "edge";
 const char* krole_source = "source";
 
+HostType string_hostype(const std::string& t) {
+    if (t == "stream") {
+        return HostType::STREAMING;
+    }
+
+    if (t == "api") {
+        return HostType::API;
+    }
+
+    return HostType::PROXYING;
+}
+
 error_t HostModule::post_sub_module(PIModule sub) {
     if (sub->is_module("stream")) {
         stream_module = std::dynamic_pointer_cast<StreamModule>(sub);
@@ -75,7 +87,12 @@ bool HostModule::edge() {
 
 bool HostModule::is_streaming() {
     auto host = static_cast<HostConfCtx*>(conf.get());
-    return host->streaming != 0;
+    return string_hostype(host->type) == STREAMING;
+}
+
+bool HostModule::is_api() {
+    auto host = static_cast<HostConfCtx*>(conf.get());
+    return string_hostype(host->type) == STREAMING;
 }
 
 bool HostModule::support_publish(const std::string& format) {

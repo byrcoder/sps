@@ -29,7 +29,7 @@ SOFTWARE.
 #include <string>
 #include <utility>
 
-#include <sps_url.hpp>
+#include <sps_io_url.hpp>
 #include <sps_io_socket.hpp>
 
 namespace sps {

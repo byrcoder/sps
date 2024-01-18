@@ -28,7 +28,7 @@ SOFTWARE.
 #include <sps_rtmp_server_handler.hpp>
 #include <sps_avformat_rtmpdec.hpp>
 
-#include <librtmp/sps_librtmp_packet.hpp>
+#include <sps_avformat_librtmp_packet.hpp>
 #include <sps_rtmp_server.hpp>
 
 namespace sps {
@@ -37,7 +37,8 @@ RtmpServer404Handler::RtmpServer404Handler()
     : IPhaseHandler("rtmp-404-handler") {
 }
 
-error_t RtmpServer404Handler::handler(ConnContext &ctx) {
+error_t RtmpServer404Handler::handler(IHandlerContext &c) {
+    auto&   ctx            = *dynamic_cast<ConnContext*> (&c);
     sp_error("Fail found host: %s", ctx.req ? ctx.req->get_host() : "");
     return ERROR_UPSTREAM_NOT_FOUND;
 }
@@ -46,7 +47,8 @@ RtmpPrepareHandler::RtmpPrepareHandler()
     : IPhaseHandler("rtmp-handshake-handler") {
 }
 
-error_t RtmpPrepareHandler::handler(ConnContext &ctx) {
+error_t RtmpPrepareHandler::handler(IHandlerContext &c) {
+    auto&            ctx = *dynamic_cast<ConnContext*> (&c);
     auto*            rt  = dynamic_cast<RtmpConnHandler*>(ctx.conn);
     error_t          ret = SUCCESS;
     RtmpServerHandshake shk(rt->hk.get());
@@ -74,8 +76,8 @@ error_t RtmpPrepareHandler::handler(ConnContext &ctx) {
         return ret;
     }
 
-    sp_trace("Request client %s:%d, %s", ctx.socket->get_cip().c_str(),
-            ctx.socket->get_port(), tc_url.c_str());
+    sp_trace("Request client %s:%d, %s", ctx.socket->get_peer_ip().c_str(),
+             ctx.socket->get_peer_port(), tc_url.c_str());
 
     return SUCCESS;
 }

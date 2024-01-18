@@ -27,7 +27,7 @@ SOFTWARE.
 #include <memory>
 #include <vector>
 
-#include <sps_typedef.hpp>
+#include <sps_util_typedef.hpp>
 #include <sps_avcodec_parser.hpp>
 #include <sps_avformat_packet.hpp>
 

@@ -30,6 +30,7 @@ SOFTWARE.
 
 #include <memory>
 
+#include <sps_http_api_phase_handler.hpp>
 #include <sps_http_proxy_phase_handler.hpp>
 #include <sps_http_stream_phase_handler.hpp>
 
@@ -42,11 +43,12 @@ class HttpAdapterPhaseHandler : public IPhaseHandler {
     HttpAdapterPhaseHandler();
 
  public:
-    error_t handler(ConnContext& ctx) override;
+    error_t handler(IHandlerContext& ctx) override;
 
  private:
     std::unique_ptr<HttpProxyPhaseHandler>   proxy_handler;
     std::unique_ptr<HttpStreamPhaseHandler>  stream_handler;
+    std::unique_ptr<HttpApiPhaseHandler>     api_handler;
 };
 
 }  // namespace sps

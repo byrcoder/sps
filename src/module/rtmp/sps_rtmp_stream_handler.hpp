@@ -34,7 +34,7 @@ class RtmpServerStreamHandler : public IPhaseHandler {
     RtmpServerStreamHandler();
 
  public:
-    error_t handler(ConnContext &ctx) override;
+    error_t handler(IHandlerContext &ctx) override;
 };
 
 }  // namespace sps

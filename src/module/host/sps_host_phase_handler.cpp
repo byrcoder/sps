@@ -29,32 +29,8 @@ ConnContext::ConnContext(PRequestUrl r, PSocket s, IConnHandler* conn) {
     this->conn = conn;
     req        = std::move(r);
     socket     = std::move(s);
-    ip         = socket->get_cip();
-    port       = socket->get_port();
-}
-
-error_t ServerPhaseHandler::handler(ConnContext& ctx) {
-    error_t ret = SUCCESS;
-
-    auto& filters = refs();
-
-    for (auto& f : filters) {
-        ret = f->handler(ctx);
-        if (ret == SPS_PHASE_SUCCESS_NO_CONTINUE) {
-            sp_debug("success %s handler", f->get_name());
-            return SUCCESS;
-        } else if (ret == SPS_PHASE_CONTINUE) {
-            continue;
-        } else {
-            sp_debug("failed handler ret:%d", ret);
-            return ret;
-        }
-    }
-
-    return ret;
-}
-
-ServerPhaseHandler::ServerPhaseHandler() {
+    ip         = socket->get_peer_ip();
+    port       = socket->get_peer_port();
 }
 
 }  // namespace sps

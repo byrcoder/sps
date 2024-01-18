@@ -24,7 +24,7 @@ SOFTWARE.
 #ifndef SPS_HTTP_PHASE_HANDLER_HPP
 #define SPS_HTTP_PHASE_HANDLER_HPP
 
-#include <sps_url.hpp>
+#include <sps_io_url.hpp>
 #include <sps_http_parser.hpp>
 #include <sps_host_phase_handler.hpp>
 #include <sps_server_module.hpp>
@@ -39,7 +39,7 @@ class HttpParsePhaseHandler : public IPhaseHandler {
     HttpParsePhaseHandler();
 
  public:
-    error_t handler(ConnContext& ctx) override;
+    error_t handler(IHandlerContext& ctx) override;
 };
 
 // 404 响应
@@ -49,7 +49,7 @@ class Http404PhaseHandler : public IPhaseHandler,
     Http404PhaseHandler();
 
  public:
-    error_t handler(ConnContext& ctx) override;
+    error_t handler(IHandlerContext& ctx) override;
 };
 
 }  // namespace sps

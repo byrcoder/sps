@@ -21,10 +21,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 *****************************************************************************/
 
-#include <sps_url_file.hpp>
-#include <sps_url_http.hpp>
-#include <sps_url_protocol.hpp>
-#include <sps_url_rtmp.hpp>
+#include <sps_io_url_file.hpp>
+#include <sps_io_url_http.hpp>
+#include <sps_io_url_protocol.hpp>
+#include <sps_io_url_rtmp.hpp>
 
 namespace sps {
 

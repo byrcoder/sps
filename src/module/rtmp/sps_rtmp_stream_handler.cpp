@@ -37,14 +37,14 @@ SOFTWARE.
 #include <sps_avformat_ffmpeg_dec.hpp>
 #include <sps_avformat_ffmpeg_enc.hpp>
 
-#include <sps_librtmp_packet.hpp>
+#include <sps_avformat_librtmp_packet.hpp>
 #include <sps_rtmp_server.hpp>
 #include <sps_rtmp_server_handler.hpp>
 
 #include <sps_stream.hpp>
 #include <sps_stream_handler.hpp>
 
-#include <sps_url_rtmp_ffmpeg.hpp>
+#include <sps_io_url_rtmp_ffmpeg.hpp>
 
 namespace sps {
 
@@ -52,7 +52,8 @@ RtmpServerStreamHandler::RtmpServerStreamHandler()
     : IPhaseHandler("rtmp-server") {
 }
 
-error_t RtmpServerStreamHandler::handler(ConnContext &ctx) {
+error_t RtmpServerStreamHandler::handler(IHandlerContext &c) {
+    auto&   ctx          = *dynamic_cast<ConnContext*> (&c);
     auto        rt       = dynamic_cast<RtmpConnHandler*>(ctx.conn);
 #ifdef FFMPEG_ENABLED
     auto        io       = std::make_shared<FFmpegRtmpUrlProtocol>(rt->hk);

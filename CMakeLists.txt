@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD 14)
 
 # srt option
 option(SRT_ENABLED "srt enabled" OFF)
+option(APP_ENABLED "srt enabled" ON)
 
 # openssl option
 option(OPENSSL_ENABLED "openssl enabled" OFF)
@@ -49,7 +50,8 @@ message("git version ${GIT_VERSION} ${GIT_VERSION} ${GIT_BRANCH}
         openssl_lib: ${OPENSSL_LIB}
         ffmpeg_enabled: ${FFMPEG_ENABLED}
         ffmpeg_include: ${FFMPEG_INCLUDE}
-        ffmpeg_lib: ${FFMPEG_LIB}")
+        ffmpeg_lib: ${FFMPEG_LIB}
+        app_enabled: ${APP_ENABLED}")
 
 # lib option
 function(lib_opt def incl lib)
@@ -106,15 +108,16 @@ link_directories(
         )
 
 include_directories(
+        ${PROJECT_SOURCE_DIR}/app
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_SOURCE_DIR}/src/avcodec
         ${PROJECT_SOURCE_DIR}/src/avfilter
         ${PROJECT_SOURCE_DIR}/src/avformat
         ${PROJECT_SOURCE_DIR}/src/cache
-        ${PROJECT_SOURCE_DIR}/src/co
         ${PROJECT_SOURCE_DIR}/src/install
         ${PROJECT_SOURCE_DIR}/src/io
-        ${PROJECT_SOURCE_DIR}/src/librtmp
+        ${PROJECT_SOURCE_DIR}/src/io/url
+
         ${PROJECT_SOURCE_DIR}/src/log
 
         ${PROJECT_SOURCE_DIR}/src/module/
@@ -127,12 +130,10 @@ include_directories(
         ${PROJECT_SOURCE_DIR}/src/module/stream/
         ${PROJECT_SOURCE_DIR}/src/module/upstream/
 
-        ${PROJECT_SOURCE_DIR}/src/st/co
-        ${PROJECT_SOURCE_DIR}/src/st/io
-        ${PROJECT_SOURCE_DIR}/src/st/sync
+        ${PROJECT_SOURCE_DIR}/src/sys/
+        ${PROJECT_SOURCE_DIR}/src/sys/st
+        ${PROJECT_SOURCE_DIR}/src/sys/st/io
 
-        ${PROJECT_SOURCE_DIR}/src/sync
-        ${PROJECT_SOURCE_DIR}/src/url
         ${PROJECT_SOURCE_DIR}/src/util
 )
 
@@ -141,10 +142,11 @@ file(GLOB SRC_LIST
         ${PROJECT_SOURCE_DIR}/src/avcodec/*.cpp
         ${PROJECT_SOURCE_DIR}/src/avformat/*.cpp
         ${PROJECT_SOURCE_DIR}/src/cache/*.cpp
-        ${PROJECT_SOURCE_DIR}/src/co/*.cpp
         ${PROJECT_SOURCE_DIR}/src/install/*.cpp
+
         ${PROJECT_SOURCE_DIR}/src/io/*.cpp
-        ${PROJECT_SOURCE_DIR}/src/librtmp/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/io/url/*.cpp
+
         ${PROJECT_SOURCE_DIR}/src/log/*.cpp
 
         ${PROJECT_SOURCE_DIR}/src/module/*.cpp
@@ -159,13 +161,10 @@ file(GLOB SRC_LIST
         ${PROJECT_SOURCE_DIR}/src/module/tran/*.cpp
         ${PROJECT_SOURCE_DIR}/src/module/upstream/*.cpp
 
-        ${PROJECT_SOURCE_DIR}/src/st/co/*.cpp
-        ${PROJECT_SOURCE_DIR}/src/st/io/*.cpp
-        ${PROJECT_SOURCE_DIR}/src/st/sync/*.cpp
-        ${PROJECT_SOURCE_DIR}/src/st/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/sys/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/sys/st/*.cpp
+        ${PROJECT_SOURCE_DIR}/src/sys/st/io/*.cpp
 
-        ${PROJECT_SOURCE_DIR}/src/sync/*.cpp
-        ${PROJECT_SOURCE_DIR}/src/url/*.cpp
         ${PROJECT_SOURCE_DIR}/src/util/*.cpp
 )
 
@@ -177,8 +176,8 @@ function(build_target exec src_list head_list main_list)
     add_executable(${exec}
             ${src_list}
             ${main_list}
-    )
-    target_link_libraries(${exec} libst.a libhttp_parser.a librtmp.a)
+            )
+    target_link_libraries(${exec} libst.a libhttp_parser.a librtmp.a pthread)
     if (SRT_ENABLED)
         target_link_libraries(${exec} ${PROJECT_SOURCE_DIR}/3rdparty/srt/libsrt.a)
     endif()
@@ -208,4 +207,10 @@ if(ENABLE_UNITTESTS)
             ${CMAKE_BINARY_DIR}/test_all
     )
     enable_testing()
+endif()
+
+if (APP_ENABLED)
+    file(GLOB SRC_APP_LIST ${PROJECT_SOURCE_DIR}/app/*.cpp)
+    message("app: ${SRC_APP_LIST}")
+    build_target(app  "${SRC_LIST}" "${HEAD_LIST}" ${SRC_APP_LIST})
 endif()

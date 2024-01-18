@@ -27,7 +27,7 @@ SOFTWARE.
 
 #include <sps_log.hpp>
 #include <sps_module.hpp>
-#include <sps_url_protocol.hpp>
+#include <sps_io_url_protocol.hpp>
 #include <avformat/sps_avformat_dec.hpp>
 #include <avformat/sps_avformat_enc.hpp>
 #include <avformat/sps_avformat_ffmpeg.hpp>

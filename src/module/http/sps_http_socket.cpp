@@ -175,11 +175,11 @@ error_t HttpResponseSocket::init(int s_code, std::list<RequestHeader> *hd,
 error_t HttpResponseSocket::write_header() {
     error_t  ret           = SUCCESS;
     bool     content_sent  = false;
+    bool     has_server    = false;
 
     std::stringstream  ss;
     ss << "HTTP/1.1 " << status_code << " " << http_status_str(
-            static_cast<http_status>(status_code)) << CRCN
-       << "Server: sps" << CRCN;
+            static_cast<http_status>(status_code)) << CRCN;
     if (chunked) {
         ss << "Transfer-Encoding: chunked" << CRCN;
     } else if (content_length >= 0) {
@@ -191,7 +191,15 @@ error_t HttpResponseSocket::write_header() {
         if (h.key == "Content-Length" && content_sent) {
             continue;
         }
+
+        if (h.key == "Server") {
+            has_server = true;
+        }
         ss << h.key << ": " << h.value << CRCN;
+    }
+
+    if (!has_server) {
+        ss << "Server: sps" << CRCN;
     }
     ss << CRCN;
 

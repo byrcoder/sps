@@ -36,7 +36,7 @@ class StreamHandler : public IPhaseHandler {
     StreamHandler(std::shared_ptr<Socket> io, bool publish);
 
  public:
-    error_t handler(ConnContext& ctx) override;
+    error_t handler(IHandlerContext& ctx) override;
     error_t publish(ConnContext &ctx);
     error_t play(ConnContext &ctx);
 
