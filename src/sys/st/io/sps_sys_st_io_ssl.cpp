@@ -553,8 +553,8 @@ error_t StSSLAcceptor::handler() {
             continue;
         }
 
-        ssl.push_socket(std::make_shared<Socket>(ssl_sock, sock->get_cip(),
-                sock->get_port()));
+        ssl.push_socket(std::make_shared<Socket>(ssl_sock, sock->get_peer_ip(),
+                sock->get_peer_port()));
 
     } while (true);
 

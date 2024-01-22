@@ -32,8 +32,8 @@ SOFTWARE.
 
 #include <memory>
 
-#include <sps_co.hpp>
-#include <sps_sync.hpp>
+#include <sps_sys_co.hpp>
+#include <sps_sys_sync.hpp>
 
 namespace sps {
 
