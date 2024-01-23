@@ -26,6 +26,18 @@ SOFTWARE.
 
 namespace sps {
 
+IConnection::IConnection(PSocket sock) {
+    this->socket = std::move(sock);
+}
+
+void IConnection::set_context(PIContext ctx) {
+    this->context = std::move(ctx);
+}
+
+PIContext IConnection::get_context() {
+    return context;
+}
+
 IPhaseHandler::IPhaseHandler(const char *name) {
     this->name = name;
 }
@@ -34,7 +46,7 @@ const char *IPhaseHandler::get_name() {
     return name;
 }
 
-error_t ServerPhaseHandler::handler(IHandlerContext& ctx) {
+error_t ServerPhaseHandler::handler(IConnection& ctx) {
     error_t ret = SUCCESS;
 
     auto& filters = refs();
@@ -42,12 +54,12 @@ error_t ServerPhaseHandler::handler(IHandlerContext& ctx) {
     for (auto& f : filters) {
         ret = f->handler(ctx);
         if (ret == SPS_PHASE_SUCCESS_NO_CONTINUE) {
-            sp_debug("success %s handler", f->get_name());
+            sp_debug("success %s http_server", f->get_name());
             return SUCCESS;
         } else if (ret == SPS_PHASE_CONTINUE) {
             continue;
         } else {
-            sp_debug("failed handler ret:%d", ret);
+            sp_debug("failed http_server ret:%d", ret);
             return ret;
         }
     }
@@ -56,6 +68,28 @@ error_t ServerPhaseHandler::handler(IHandlerContext& ctx) {
 }
 
 ServerPhaseHandler::ServerPhaseHandler() {
+}
+
+PIConnHandler ServerBase::create(PSocket io) {
+    return std::make_shared<Connection>(std::move(io), shared_from_this());
+}
+
+Connection::Connection(PSocket io, PServerBase server) : IConnHandler(io) {
+    this->server = std::move(server);
+}
+
+error_t Connection::handler() {
+    IConnection ctx(io);
+    error_t     ret = SUCCESS;
+
+    do {
+        if ((ret = server->handler(ctx)) != SUCCESS) {
+            return ret;
+        }
+        sp_debug("success http_server ret %d", ret);
+    } while (true);
+
+    return SUCCESS;
 }
 
 }

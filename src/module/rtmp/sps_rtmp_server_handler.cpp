@@ -34,24 +34,24 @@ SOFTWARE.
 namespace sps {
 
 RtmpServer404Handler::RtmpServer404Handler()
-    : IPhaseHandler("rtmp-404-handler") {
+    : IPhaseHandler("rtmp-404-http_server") {
 }
 
-error_t RtmpServer404Handler::handler(IHandlerContext &c) {
-    auto&   ctx            = *dynamic_cast<ConnContext*> (&c);
-    sp_error("Fail found host: %s", ctx.req ? ctx.req->get_host() : "");
+error_t RtmpServer404Handler::handler(IConnection &c) {
+    auto& ctx = *dynamic_cast<HostContext*>(c.get_context().get());
+    sp_error("Fail found host: %s", ctx.req->get_host());
     return ERROR_UPSTREAM_NOT_FOUND;
 }
 
 RtmpPrepareHandler::RtmpPrepareHandler()
-    : IPhaseHandler("rtmp-handshake-handler") {
+    : IPhaseHandler("rtmp-handshake-http_server") {
 }
 
-error_t RtmpPrepareHandler::handler(IHandlerContext &c) {
-    auto&            ctx = *dynamic_cast<ConnContext*> (&c);
-    auto*            rt  = dynamic_cast<RtmpConnHandler*>(ctx.conn);
-    error_t          ret = SUCCESS;
-    RtmpServerHandshake shk(rt->hk.get());
+error_t RtmpPrepareHandler::handler(IConnection &c) {
+    auto     hook =  std::make_shared<RtmpHook>(c.socket);;
+    error_t  ret  = SUCCESS;
+    auto     ctx  = std::make_shared<RtmpContext>(nullptr, c.socket);
+    RtmpServerHandshake shk(hook.get());
 
     // handshake
     if ((ret = shk.handshake()) != SUCCESS) {
@@ -60,24 +60,24 @@ error_t RtmpPrepareHandler::handler(IHandlerContext &c) {
     }
 
     // connect
-    RtmpPreRequest pre(rt->hk.get());
+    RtmpPreRequest pre(hook.get());
     if ((ret = pre.connect()) != SUCCESS) {
         sp_error("Fail s-connect %d", ret);
         return ret;
     }
 
-    rt->playing    = pre.playing;
-    rt->publishing = pre.publishing;
-
-    ctx.req = std::make_shared<RequestUrl>();
-    std::string tc_url = pre.tc_url + pre.stream_params;
-    if ((ret = ctx.req->parse_url(tc_url)) != SUCCESS) {
+    ctx->playing    = pre.playing;
+    ctx->publishing = pre.publishing;
+    ctx->req        = std::make_shared<RequestUrl>();
+    auto tc_url     = pre.tc_url + pre.stream_params;
+    if ((ret = ctx->req->parse_url(tc_url)) != SUCCESS) {
         sp_error("Fail parse tc_url %s %d", tc_url.c_str(), ret);
         return ret;
     }
 
-    sp_trace("Request client %s:%d, %s", ctx.socket->get_peer_ip().c_str(),
-             ctx.socket->get_peer_port(), tc_url.c_str());
+    sp_trace("Request client %s:%d, %s", c.socket->get_peer_ip().c_str(),
+             c.socket->get_peer_port(), tc_url.c_str());
+    c.set_context(ctx);
 
     return SUCCESS;
 }

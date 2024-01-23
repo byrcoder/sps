@@ -39,7 +39,7 @@ class HttpParsePhaseHandler : public IPhaseHandler {
     HttpParsePhaseHandler();
 
  public:
-    error_t handler(IHandlerContext& ctx) override;
+    error_t handler(IConnection& ctx) override;
 };
 
 // 404 响应
@@ -49,7 +49,7 @@ class Http404PhaseHandler : public IPhaseHandler,
     Http404PhaseHandler();
 
  public:
-    error_t handler(IHandlerContext& ctx) override;
+    error_t handler(IConnection& ctx) override;
 };
 
 }  // namespace sps

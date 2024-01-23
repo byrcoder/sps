@@ -82,22 +82,21 @@ error_t SrtModule::install() {
             continue;
         }
 
-        if ((ret = ServerModule::get_router(s.get(), hr))
-            != SUCCESS) {
+        if ((ret = ServerModule::get_router(s.get(), hr)) != SUCCESS) {
             sp_error("fail get router ret %d", ret);
             return ret;
         }
 
-        auto srt_handler = std::make_shared<ServerPhaseHandler>();
+        auto srt_server = std::make_shared<SrtServer>();
 
-        // srt streamid parse
-        srt_handler->reg(std::make_shared<SrtPrepareHandler>());
+        // srt stream id parse
+        srt_server->reg(std::make_shared<SrtPrepareHandler>());
         // srt host router and publishing or play
-        srt_handler->reg(std::make_shared<HostRouterPhaseHandler>(
+        srt_server->reg(std::make_shared<HostRouterPhaseHandler>(
                 hr, std::make_shared<SrtServerStreamHandler>(),
                 nullptr));
 
-        s->pre_install(std::make_shared<SrtConnHandlerFactory>(srt_handler));
+        s->pre_install(srt_server);
 
         if ((ret = s->install()) != SUCCESS) {
             sp_error("failed install %s rtmp server", s->module_name.c_str());

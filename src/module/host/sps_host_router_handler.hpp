@@ -36,7 +36,7 @@ class HostRouterPhaseHandler : public IPhaseHandler {
                                     PIPhaseHandler not_found_handler);
 
  public:
-    error_t handler(IHandlerContext& ctx) override;
+    error_t handler(IConnection& ctx) override;
 
  private:
     PHostModulesRouter  router;

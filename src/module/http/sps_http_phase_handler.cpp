@@ -23,6 +23,7 @@ SOFTWARE.
 
 #include <sps_http_phase_handler.hpp>
 #include <sps_http_socket.hpp>
+#include <sps_http_server.hpp>
 #include <log/sps_log.hpp>
 #include <sps_io_url_protocol.hpp>
 #include <memory>
@@ -30,38 +31,37 @@ SOFTWARE.
 namespace sps {
 
 HttpParsePhaseHandler::HttpParsePhaseHandler()
-    : IPhaseHandler("http-parser-handler") {
+    : IPhaseHandler("http-parser-http_server") {
 }
 
-error_t HttpParsePhaseHandler::handler(IHandlerContext &c) {
+error_t HttpParsePhaseHandler::handler(IConnection &c) {
     auto http_parser = std::make_shared<HttpParser>();
-    error_t ret = SUCCESS;
-    auto&   ctx = *dynamic_cast<ConnContext*> (&c);
+    error_t ret      = SUCCESS;
 
-    if ((ret = http_parser->parse_header(ctx.socket,
+    if ((ret = http_parser->parse_header(c.socket,
                                       HttpType::REQUEST)) <= SUCCESS) {
         sp_debug("failed get http request ret:%d", ret);
         return ret;
     }
 
-    ctx.req    = http_parser->get_request();
-    ctx.socket = std::make_shared<HttpRequestSocket>(ctx.socket,
-                  ctx.ip, ctx.port, ctx.req->is_chunked(),
-                  ctx.req->get_content_length());
+    auto req  = http_parser->get_request();
+    auto ctx = std::make_shared<HttpContext>(req);
+                                                                                 ;
+    c.set_context(ctx);
 
     sp_trace("Request %s:%d %s %s %s %s, chunked %d, content-length %d",
-             ctx.ip.c_str(), ctx.port, ctx.req->get_method(),
-             ctx.req->host.c_str(), ctx.req->url.c_str(), ctx.req->params.c_str(),
-             ctx.req->is_chunked(), ctx.req->get_content_length());
+             req->ip.c_str(), req->port, req->get_method(),
+             req->host.c_str(), req->url.c_str(), req->params.c_str(),
+             req->is_chunked(), req->get_content_length());
 
     return SPS_PHASE_CONTINUE;
 }
 
 Http404PhaseHandler::Http404PhaseHandler()
-    : IPhaseHandler("http-404-handler") {
+    : IPhaseHandler("http-404-http_server") {
 }
 
-error_t Http404PhaseHandler::handler(IHandlerContext& ctx) {
+error_t Http404PhaseHandler::handler(IConnection& ctx) {
     auto socket = ctx.socket;
     PHttpResponseSocket http_socket = std::make_shared<HttpResponseSocket>(
             socket,

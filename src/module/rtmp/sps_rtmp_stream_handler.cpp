@@ -52,12 +52,11 @@ RtmpServerStreamHandler::RtmpServerStreamHandler()
     : IPhaseHandler("rtmp-server") {
 }
 
-error_t RtmpServerStreamHandler::handler(IHandlerContext &c) {
-    auto&   ctx          = *dynamic_cast<ConnContext*> (&c);
-    auto        rt       = dynamic_cast<RtmpConnHandler*>(ctx.conn);
+error_t RtmpServerStreamHandler::handler(IConnection &c) {
+    auto&       ctx      = *dynamic_cast<RtmpContext*>(c.get_context().get());
 #ifdef FFMPEG_ENABLED
-    auto        io       = std::make_shared<FFmpegRtmpUrlProtocol>(rt->hk);
-    auto        sh       = std::make_shared<StreamHandler>(io, rt->publishing);
+    auto        io       = std::make_shared<FFmpegRtmpUrlProtocol>(ctx.hk);
+    auto        sh       = std::make_shared<StreamHandler>(io, ctx.publishing);
     auto        flv_url  = "http://" + ctx.req->host + ctx.req->path + ".flv";
     if (!ctx.req->params.empty()) {
         flv_url += "?" + ctx.req->params;
@@ -66,12 +65,12 @@ error_t RtmpServerStreamHandler::handler(IHandlerContext &c) {
 
     RequestUrl::from(flv_url, flv_req);
     ctx.req     = flv_req;
-    return sh->handler(ctx);
+    return sh->handler(c);
 #else
     ctx.req->ext = "-";
-    auto    io   = std::make_shared<RtmpUrlProtocol>(rt->hk);
-    auto    sh   = std::make_shared<StreamHandler>(io, rt->publishing);
-    return sh->handler(ctx);
+    auto    io   = std::make_shared<RtmpUrlProtocol>(ctx.hk);
+    auto    sh   = std::make_shared<StreamHandler>(io, ctx.publishing);
+    return sh->handler(c);
 #endif
 }
 

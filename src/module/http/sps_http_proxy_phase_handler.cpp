@@ -30,6 +30,7 @@ SOFTWARE.
 #include <memory>
 
 #include <sps_http_parser.hpp>
+#include <sps_http_server.hpp>
 #include <sps_http_socket.hpp>
 
 #include <sps_io_url_protocol.hpp>
@@ -37,16 +38,19 @@ SOFTWARE.
 namespace sps {
 
 HttpProxyPhaseHandler::HttpProxyPhaseHandler()
-    : IPhaseHandler("http-router-handler") {
+    : IPhaseHandler("http-router-http_server") {
 }
 
-error_t HttpProxyPhaseHandler::handler(IHandlerContext &c) {
+error_t HttpProxyPhaseHandler::handler(IConnection &c) {
     error_t  ret           = SUCCESS;
-    auto&   ctx            = *dynamic_cast<ConnContext*> (&c);
+    auto&    ctx           = *dynamic_cast<HttpContext*> (c.get_context().get());
     auto&    host_ctx      = ctx.host;
     auto     proxy_req     = std::make_shared<RequestUrl>(*ctx.req);
     auto&    protocols     = SingleInstance<UrlProtocol>::get_instance();
     proxy_req->port        = 80;
+    auto sock              = std::make_shared<HttpRequestSocket>(
+                              c.socket, ctx.req->ip, ctx.req->port,
+                              ctx.req->is_chunked(), ctx.req->get_content_length());
     ctx.host->get_proxy_info(proxy_req->ip, proxy_req->port);
 
     auto     url_protocol  = protocols.create(proxy_req);
@@ -62,7 +66,7 @@ error_t HttpProxyPhaseHandler::handler(IHandlerContext &c) {
     }
 
     auto http_rsp = std::dynamic_pointer_cast<HttpResponse>(url_protocol->response());
-    HttpResponseSocket rsp(ctx.socket, ctx.ip, ctx.port);
+    HttpResponseSocket rsp(sock, ctx.req->ip, ctx.req->port);
     rsp.init(http_rsp->status_code, &http_rsp->headers, http_rsp->content_length, http_rsp->chunked);
 
     if ((ret = rsp.write_header()) != SUCCESS) {

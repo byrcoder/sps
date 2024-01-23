@@ -88,16 +88,17 @@ error_t RtmpModule::install() {
             return ret;
         }
 
-        auto rtmp_handler = std::make_shared<sps::ServerPhaseHandler>();
+        // simplify rtmp server
+        auto rtmp_server = std::make_shared<RtmpServer>();
 
         // rtmp handshake, play/publish
-        rtmp_handler->reg(std::make_shared<sps::RtmpPrepareHandler>());
-        // rtmp host router -> do host handler or default rtmp 404
-        rtmp_handler->reg(std::make_shared<sps::HostRouterPhaseHandler>(
+        rtmp_server->reg(std::make_shared<sps::RtmpPrepareHandler>());
+        // rtmp host router -> do host http_server or default rtmp 404
+        rtmp_server->reg(std::make_shared<sps::HostRouterPhaseHandler>(
                 hr, std::make_shared<sps::RtmpServerStreamHandler>(),
                 rtmp_404));
 
-        s->pre_install(std::make_shared<RtmpConnHandlerFactory>(rtmp_handler));
+        s->pre_install(rtmp_server);
 
         if ((ret = s->install()) != SUCCESS) {
             sp_error("failed install %s rtmp server", s->module_name.c_str());

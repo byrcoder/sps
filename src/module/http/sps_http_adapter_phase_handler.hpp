@@ -43,7 +43,7 @@ class HttpAdapterPhaseHandler : public IPhaseHandler {
     HttpAdapterPhaseHandler();
 
  public:
-    error_t handler(IHandlerContext& ctx) override;
+    error_t handler(IConnection& ctx) override;
 
  private:
     std::unique_ptr<HttpProxyPhaseHandler>   proxy_handler;

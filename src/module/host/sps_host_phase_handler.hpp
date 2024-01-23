@@ -51,14 +51,10 @@ namespace sps {
 /**
  * server conn context
  */
-struct ConnContext : public IHandlerContext {
-    ConnContext(PRequestUrl r, PSocket s, IConnHandler* conn);
-
-    IConnHandler* conn;  // rtmp or http conn
-    PRequestUrl   req;   // client request. eg: http://github.com/byrcoder
-
-    std::string ip;       // client ip
-    int         port;     // client port
+struct HostContext : public IContext {
+    HostContext(PRequestUrl req);
+    std::string req_host;
+    PRequestUrl req;
     PHostModule host;     // router host module
 };
 

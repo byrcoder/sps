@@ -129,7 +129,7 @@ error_t ServerModule::install() {
     server              = std::make_shared<Server>();
 
     if (!socket_handler) {
-        sp_error("fail install empty handler server!");
+        sp_error("fail install empty http_server server!");
         return ERROR_CONFIG_INSTALL;
     }
 

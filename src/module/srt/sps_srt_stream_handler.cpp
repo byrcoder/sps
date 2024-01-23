@@ -36,21 +36,21 @@ SrtServerStreamHandler::SrtServerStreamHandler()
         : IPhaseHandler("srt-server") {
 }
 
-error_t SrtServerStreamHandler::handler(IHandlerContext &c) {
-    auto& ctx  = *dynamic_cast<ConnContext*> (&c);
+error_t SrtServerStreamHandler::handler(IConnection &c) {
+    auto& ctx  = *dynamic_cast<HostContext*>(c.get_context().get());
     auto  mode = ctx.req->get_param("m");
 
     sp_info("sever srt host: %s, mode %s",  ctx.req->get_host(), mode.c_str());
 
     if (ctx.req->method == "request") {
-        return play(ctx);
+        return play(c);
     } else {
-        return publish(ctx);
+        return publish(c);
     }
 }
 
-error_t SrtServerStreamHandler::publish(ConnContext &ctx) {
-
+error_t SrtServerStreamHandler::publish(IConnection &c) {
+    auto& ctx          = *dynamic_cast<HostContext*>(c.get_context().get());
     std::string url    =  ctx.req->host + ctx.req->get_path();
     std::string ts_url = "ts://" + url;
     auto cache         = StreamCache::get_streamcache(url);
@@ -67,7 +67,7 @@ error_t SrtServerStreamHandler::publish(ConnContext &ctx) {
     // only for ts
     auto ts_cache = StreamCache::create_raw_streamcache(ts_url);
     auto ts_handler = std::make_shared<TsCache>(ts_cache);
-    TsDemuxer demuxer(ctx.socket, ts_handler);
+    TsDemuxer demuxer(c.socket, ts_handler);
 
     do {
         PAVPacket packet;
@@ -84,7 +84,8 @@ final:
     return ret;  // ignore
 }
 
-error_t SrtServerStreamHandler::play(ConnContext &ctx) {
+error_t SrtServerStreamHandler::play(IConnection &c) {
+    auto& ctx          = *dynamic_cast<HostContext*>(c.get_context().get());
     std::string url    =  ctx.req->host + ctx.req->get_path();
     std::string ts_url = "ts://" + url;
     auto cache         = StreamCache::get_streamcache(ts_url);
@@ -107,7 +108,7 @@ error_t SrtServerStreamHandler::play(ConnContext &ctx) {
         }
 
         for (auto& p : vpb) {
-            if ((ret = ctx.socket->write(p->buffer(), p->size())) != SUCCESS) {
+            if ((ret = c.socket->write(p->buffer(), p->size())) != SUCCESS) {
                 sp_error("fail playing send ret %d", ret);
                 break;
             }

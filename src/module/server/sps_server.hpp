@@ -43,6 +43,7 @@ typedef std::shared_ptr<IConnHandler> PIConnHandler;
  */
 class ConnManager : public Registers<ConnManager, PIConnHandler> {
 };
+typedef std::shared_ptr<ConnManager> PConnManager;
 
 /**
  * this work for every connection
@@ -53,27 +54,29 @@ class IConnHandler: public ICoHandler,
     explicit IConnHandler(PSocket io);
 
  public:
+    void set_conn_manager(PConnManager manager);
     void on_stop() override;
 
  public:
     PSocket io;
+    PConnManager conn_manger;
 };
 typedef std::shared_ptr<IConnHandler> PIConnHandler;
 
 /**
- * every kind connection-handler has a factory
+ * every kind connection-http_server has a factory
  */
 class IConnHandlerFactory {
  public:
     ~IConnHandlerFactory() = default;
 
  public:
-    virtual PIConnHandler create(std::shared_ptr<Socket> io) = 0;
+    virtual PIConnHandler create(PSocket io) = 0;
 };
 typedef std::shared_ptr<IConnHandlerFactory> PIConnHandlerFactory;
 
 /**
- * every server must impl listener, handler factory 和 handler
+ * every server must impl listener, http_server factory 和 http_server
  */
 class Server : public ICoHandler {
  public:
@@ -98,6 +101,7 @@ class Server : public ICoHandler {
     error_t handler() override;
 
  protected:
+    PConnManager               conn_manager;
     bool                       running = false;
     PIConnHandlerFactory       factory;
     PIServerSocket             server_socket;

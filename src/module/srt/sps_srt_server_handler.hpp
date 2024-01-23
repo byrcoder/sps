@@ -39,7 +39,7 @@ class SrtPrepareHandler : public IPhaseHandler {
     SrtPrepareHandler();
 
  public:
-    error_t handler(IHandlerContext& ctx) override;
+    error_t handler(IConnection& ctx) override;
 };
 
 }  // namespace sps

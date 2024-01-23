@@ -30,30 +30,26 @@ namespace sps {
 HostRouterPhaseHandler::HostRouterPhaseHandler(
         PHostModulesRouter router,
         PIPhaseHandler df, PIPhaseHandler not_found_handler) :
-          IPhaseHandler("host-router-handler") {
+          IPhaseHandler("host-router-http_server") {
     this->router          = std::move(router);
     this->host_handler    = std::move(df);
     this->not_found_handler = std::move(not_found_handler);
 }
 
-error_t HostRouterPhaseHandler::handler(IHandlerContext &c) {
-    auto&   ctx  = *dynamic_cast<ConnContext*> (&c);
-    if (!ctx.req) {
-        sp_error("host is empty");
-    } else {
-        ctx.host = router->find_host(ctx.req->host);
-    }
+error_t HostRouterPhaseHandler::handler(IConnection &c) {
+    auto&   ctx  = *dynamic_cast<HostContext*> (c.get_context().get());
+    ctx.host = router->find_host(ctx.req->host);
 
     if (!ctx.host) {
-        sp_error("Not found host:%s", ctx.req ? ctx.req->host.c_str() : "");
+        sp_error("Not found host:%s", ctx.req->host.c_str());
 
         if (not_found_handler) {
-            return not_found_handler->handler(ctx);
+            return not_found_handler->handler(c);
         }
         return ERROR_HOST_NOT_EXISTS;
     }
 
-    return host_handler->handler(ctx);
+    return host_handler->handler(c);
 }
 
 }  // namespace sps

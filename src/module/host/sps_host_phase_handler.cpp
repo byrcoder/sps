@@ -25,12 +25,8 @@ SOFTWARE.
 
 namespace sps {
 
-ConnContext::ConnContext(PRequestUrl r, PSocket s, IConnHandler* conn) {
-    this->conn = conn;
-    req        = std::move(r);
-    socket     = std::move(s);
-    ip         = socket->get_peer_ip();
-    port       = socket->get_peer_port();
+HostContext::HostContext(PRequestUrl r) {
+    req = std::move(r);
 }
 
 }  // namespace sps

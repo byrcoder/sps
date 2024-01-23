@@ -23,38 +23,9 @@ SOFTWARE.
 
 #include <sps_http_server.hpp>
 
-#include <sps_host_router_handler.hpp>
-#include <sps_http_proxy_phase_handler.hpp>
-#include <sps_http_socket.hpp>
-
-#include <sps_log.hpp>
-
 namespace sps {
 
-HttpConnHandler::HttpConnHandler(PSocket io, PServerPhaseHandler& handler) :
-        IConnHandler(std::move(io)), hd(handler) {
-}
-
-error_t HttpConnHandler::handler() {
-    ConnContext ctx(nullptr, io, this);
-    error_t     ret = SUCCESS;
-
-    do {
-        if ((ret = hd->handler(ctx)) != SUCCESS) {
-            return ret;
-        }
-        sp_debug("success handler ret %d", ret);
-    } while (true);
-
-    return SUCCESS;
-}
-
-HttpConnHandlerFactory::HttpConnHandlerFactory(PServerPhaseHandler hd) {
-    handler = std::move(hd);
-}
-
-PIConnHandler HttpConnHandlerFactory::create(PSocket io) {
-    return std::make_shared<HttpConnHandler>(io, handler);
+HttpContext::HttpContext(PRequestUrl r) : HostContext(std::move(r)) {
 }
 
 }  // namespace sps

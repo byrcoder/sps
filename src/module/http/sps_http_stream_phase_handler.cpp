@@ -33,31 +33,34 @@ SOFTWARE.
 namespace sps {
 
 HttpStreamPhaseHandler::HttpStreamPhaseHandler()
-    : IPhaseHandler("http-stream-handler") {
+    : IPhaseHandler("http-stream-http_server") {
 }
 
-error_t HttpStreamPhaseHandler::handler(IHandlerContext& c) {
+error_t HttpStreamPhaseHandler::handler(IConnection& c) {
     error_t ret  = SUCCESS;
-    auto&   ctx  = *dynamic_cast<ConnContext*> (&c);
-    auto    rsp  = std::make_shared<HttpResponseSocket>(ctx.socket, ctx.socket->get_peer_ip(),
-                                                        ctx.socket->get_peer_port());
+    auto&   ctx  = *dynamic_cast<HostContext*> (c.get_context().get());
+    auto    sock = std::make_shared<HttpRequestSocket>(
+                       c.socket, ctx.req->ip, ctx.req->port,
+                       ctx.req->is_chunked(), ctx.req->get_content_length());
+    auto    rsp  = std::make_shared<HttpResponseSocket>(sock, sock->get_peer_ip(),
+                                                        sock->get_peer_port());
     auto    sh   = std::make_shared<StreamHandler>(rsp, ctx.req->method == "POST");
 
     rsp->init(200, nullptr, -1, false);
-    ret = sh->handler(ctx);
+    ret = sh->handler(c);
 
     if (ret == ERROR_STREAM_PUBLISH_NOT_SUPPORT) {
         rsp->init(403, nullptr, -1, false);
         ret = rsp->write_header();
         sp_warn("Response %s:%d not-support %s-%s-%s status %d %d",
-                ctx.ip.c_str(), ctx.port,
+                ctx.req->ip.c_str(), ctx.req->port,
                 ctx.req->get_host(), ctx.req->get_url(), ctx.req->get_params(), 403, ret);
         return ret;
     } else if (ret == ERROR_STREAM_SOURCE_NOT_EXITS) {
         rsp->init(404, nullptr, -1, false);
         ret = rsp->write_header();
         sp_trace("Response not-exits %s:%d %s-%s-%s status %d %d",
-                 ctx.ip.c_str(), ctx.port,
+                 ctx.req->ip.c_str(), ctx.req->port,
                  ctx.req->get_host(), ctx.req->get_url(), ctx.req->get_params(), 404, ret);
         return ret;
     }

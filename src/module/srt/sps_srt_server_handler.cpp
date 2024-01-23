@@ -26,6 +26,7 @@ SOFTWARE.
 //
 
 #include <sps_srt_server_handler.hpp>
+#include <sps_srt_server.hpp>
 #include <sps_sys_st_io_srt.hpp>
 
 #ifdef SRT_ENABLED
@@ -103,13 +104,12 @@ PRequestUrl get_url_by_streamid(const std::string& streamid) {
 }
 
 SrtPrepareHandler::SrtPrepareHandler()
-        : IPhaseHandler("srt-streamid-handler") {
+        : IPhaseHandler("srt-streamid-http_server") {
 }
 
 // TODO: impl stream parse
-error_t SrtPrepareHandler::handler(IHandlerContext &c) {
-    auto&   ctx  = *dynamic_cast<ConnContext*> (&c);
-    StSrtSocket* srt_io = dynamic_cast<StSrtSocket*>(ctx.socket->get_io().get());
+error_t SrtPrepareHandler::handler(IConnection &c) {
+    auto   srt_io = dynamic_cast<StSrtSocket*>(c.socket->get_io().get());
 
     if (srt_io == nullptr) {
         sp_error("not srt io");
@@ -118,13 +118,13 @@ error_t SrtPrepareHandler::handler(IHandlerContext &c) {
 
     // streamid=#!::h=live/livestream,m=publish
     auto streamid = srt_io->get_streamid();
-
-    ctx.req = get_url_by_streamid(streamid);
-
-    if (!ctx.req) {
+    auto req      = get_url_by_streamid(streamid);
+    if (!req) {
         sp_error("fail parse streamid");
         return ERROR_SRT_STREAM_ID;
     }
+    auto ctx = std::make_shared<SrtContext>(req);
+    c.set_context(ctx);
 
     return SUCCESS;
 }

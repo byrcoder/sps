@@ -32,8 +32,12 @@ IConnHandler::IConnHandler(PSocket io) {
     this->io = std::move(io);
 }
 
+void IConnHandler::set_conn_manager(PConnManager manager) {
+    conn_manger = std::move(manager);
+}
+
 void IConnHandler::on_stop() {
-    SingleInstance<ConnManager>::get_instance().cancel(shared_from_this());
+    conn_manger->cancel(shared_from_this());
 }
 
 error_t Server::init(PIConnHandlerFactory f,
@@ -41,6 +45,7 @@ error_t Server::init(PIConnHandlerFactory f,
     factory         = std::move(f);
     recv_timeout    = rtm;
     send_timeout    = stm;
+    conn_manager    = std::make_shared<ConnManager>();
 
     return SUCCESS;
 }
@@ -79,19 +84,26 @@ error_t Server::accept() {
         auto io = server_socket->accept();
         auto h  = factory->create(io);
 
+        if (!h) {
+            sp_error("failed start nullptr http_server");
+            continue;
+        }
+
         io->set_recv_timeout(recv_timeout);
         io->set_send_timeout(send_timeout);
+        h->set_conn_manager(conn_manager);
+
         sp_trace("Accept client %s:%d -> %s:%d rcv_timeout: %llu, "
                  "send_timeout: %llu", io->get_peer_ip().c_str(), io->get_peer_port(),
                  io->get_self_ip().c_str(), io->get_self_port(),
                  recv_timeout, send_timeout);
 
         if (ICoFactory::get_instance().start(h) != SUCCESS) {
-            sp_error("failed start handler");
+            sp_error("failed start http_server");
             continue;
         }
 
-        SingleInstance<ConnManager>::get_instance().reg(h);
+        conn_manager->reg(h);
     } while (running);
 
     return SUCCESS;

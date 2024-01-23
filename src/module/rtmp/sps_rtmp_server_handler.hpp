@@ -40,7 +40,7 @@ class RtmpServer404Handler : public IPhaseHandler {
     RtmpServer404Handler();
 
  public:
-    error_t handler(IHandlerContext &ctx) override;
+    error_t handler(IConnection &ctx) override;
 };
 
 // rtmp handshake and connect
@@ -49,7 +49,7 @@ class RtmpPrepareHandler : public IPhaseHandler {
     RtmpPrepareHandler();
 
  public:
-    error_t handler(IHandlerContext& ctx) override;
+    error_t handler(IConnection& ctx) override;
 };
 
 // rtmp server handshake

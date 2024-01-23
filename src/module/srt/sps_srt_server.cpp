@@ -31,30 +31,7 @@ SOFTWARE.
 
 namespace sps {
 
-SrtConnHandler::SrtConnHandler(PSocket io, PServerPhaseHandler& handler) :
-        IConnHandler(std::move(io)), hd(handler) {
-}
-
-error_t SrtConnHandler::handler() {
-    ConnContext ctx(nullptr, io, this);
-    do {
-        error_t ret = SUCCESS;
-
-        if ((ret = hd->handler(ctx)) != SUCCESS) {
-            return ret;
-        }
-        sp_trace("success handler ret %d", ret);
-    } while (true);
-
-    return SUCCESS;
-}
-
-SrtConnHandlerFactory::SrtConnHandlerFactory(PServerPhaseHandler hd) {
-    handler = std::move(hd);
-}
-
-PIConnHandler SrtConnHandlerFactory::create(PSocket io) {
-    return std::make_shared<SrtConnHandler>(io, handler);
+SrtContext::SrtContext(PRequestUrl req) : HostContext(std::move(req)) {
 }
 
 }  // namespace sps

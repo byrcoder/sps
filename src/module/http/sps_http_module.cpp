@@ -24,8 +24,10 @@ SOFTWARE.
 #include <sps_http_module.hpp>
 #include <sps_log.hpp>
 #include <sps_host_router_handler.hpp>
-#include <sps_http_server.hpp>
+
 #include <sps_http_adapter_phase_handler.hpp>
+#include <sps_http_phase_handler.hpp>
+#include <sps_http_server.hpp>
 
 namespace sps {
 
@@ -85,16 +87,14 @@ error_t HttpModule::install() {
             return ret;
         }
 
-        auto http_handler = std::make_shared<sps::ServerPhaseHandler>();
+        // simplify http server
+        auto http_server = std::make_shared<HttpServer>();
+        auto handler     = std::make_shared<sps::HostRouterPhaseHandler>(
+            hr, std::make_shared<sps::HttpAdapterPhaseHandler>(), http_404_phase);
+        http_server->reg(std::make_shared<HttpParsePhaseHandler>());
+        http_server->reg(handler);
 
-        // http header parser
-        http_handler->reg(std::make_shared<sps::HttpParsePhaseHandler>());
-        // host router -> do host handler or default return 404
-        http_handler->reg(std::make_shared<sps::HostRouterPhaseHandler>(
-                          hr, std::make_shared<sps::HttpAdapterPhaseHandler>(),
-                          http_404_phase));
-
-        s->pre_install(std::make_shared<HttpConnHandlerFactory>(http_handler));
+        s->pre_install(http_server);
 
         if ((ret = s->install()) != SUCCESS) {
             sp_error("failed install %s http server",

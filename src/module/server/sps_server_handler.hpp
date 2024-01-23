@@ -33,12 +33,24 @@ SOFTWARE.
 
 namespace sps {
 
-class IHandlerContext {
+class IContext {
  public:
-    virtual ~IHandlerContext() = default;
+    virtual ~IContext() = default;
+};
+typedef std::shared_ptr<IContext> PIContext;
+
+class IConnection {
+ public:
+    explicit IConnection(PSocket sock);
+    virtual ~IConnection() = default;
+
+ public:
+    void set_context(PIContext);
+    PIContext get_context();
 
  public:
     PSocket socket;  // client socket
+    PIContext context;
 };
 
 /**
@@ -50,7 +62,7 @@ class IPhaseHandler {
     const char* get_name();
 
  public:
-    virtual error_t handler(IHandlerContext& ctx) = 0;
+    virtual error_t handler(IConnection& ctx) = 0;
 
  private:
     const char* name;
@@ -62,13 +74,31 @@ typedef std::shared_ptr<IPhaseHandler> PIPhaseHandler;
  */
 class ServerPhaseHandler : public FifoRegisters<PIPhaseHandler> {
  public:
-    error_t handler(IHandlerContext& ctx);
+    error_t handler(IConnection& ctx);
 
  public:
     ServerPhaseHandler();
 };
 
 typedef std::shared_ptr<ServerPhaseHandler> PServerPhaseHandler;
+
+class ServerBase : public ServerPhaseHandler, public IConnHandlerFactory,
+                   public std::enable_shared_from_this<ServerBase> {
+ public:
+    PIConnHandler create(PSocket io) override;
+};
+typedef std::shared_ptr<ServerBase> PServerBase;
+
+class Connection : public IConnHandler {
+ public:
+    Connection(PSocket io, PServerBase server);
+
+ public:
+    error_t handler() override;
+
+ private:
+    PServerBase server;
+};
 
 }
 

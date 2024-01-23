@@ -29,33 +29,10 @@ SOFTWARE.
 
 namespace sps {
 
-RtmpConnHandler::RtmpConnHandler(PSocket io, PServerPhaseHandler& handler) :
-        IConnHandler(std::move(io)), hd(handler) {
-    hk = std::make_shared<RtmpHook>(this->io);
+RtmpContext::RtmpContext(PRequestUrl r, PSocket io) : HostContext(std::move(r)) {
+    hk = std::make_shared<RtmpHook>(std::move(io));
     publishing = false;
     playing    = false;
-}
-
-error_t RtmpConnHandler::handler() {
-    ConnContext ctx(nullptr, io, this);
-    do {
-        error_t ret = SUCCESS;
-
-        if ((ret = hd->handler(ctx)) != SUCCESS) {
-            return ret;
-        }
-        sp_trace("success handler ret %d", ret);
-    } while (true);
-
-    return SUCCESS;
-}
-
-RtmpConnHandlerFactory::RtmpConnHandlerFactory(PServerPhaseHandler hd) {
-    handler = std::move(hd);
-}
-
-PIConnHandler RtmpConnHandlerFactory::create(PSocket io) {
-    return std::make_shared<RtmpConnHandler>(io, handler);
 }
 
 }  // namespace sps

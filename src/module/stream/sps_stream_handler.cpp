@@ -43,16 +43,16 @@ std::string StreamHandler::get_cache_key(PRequestUrl& req) {
 }
 
 StreamHandler::StreamHandler(std::shared_ptr<Socket> io, bool pub) :
-    IPhaseHandler("stream-handler"), io(std::move(io)) {
+    IPhaseHandler("stream-http_server"), io(std::move(io)) {
     this->pub = pub;
 }
 
-error_t StreamHandler::handler(IHandlerContext &c) {
-    auto&   ctx = *dynamic_cast<ConnContext*> (&c);
+error_t StreamHandler::handler(IConnection &c) {
+    auto& ctx = *dynamic_cast<HostContext*> (c.get_context().get());
     return pub ? publish(ctx) : play(ctx);
 }
 
-error_t StreamHandler::publish(ConnContext &ctx) {
+error_t StreamHandler::publish(HostContext &ctx) {
     if (!ctx.host->publish() || !ctx.host->support_publish(ctx.req->ext)) {
         sp_error("not support publish! %s", ctx.req->get_host());
         return ERROR_STREAM_PUBLISH_NOT_SUPPORT;
@@ -84,7 +84,7 @@ error_t StreamHandler::publish(ConnContext &ctx) {
     return ret;  // ignore
 }
 
-error_t StreamHandler::play(ConnContext &ctx) {
+error_t StreamHandler::play(HostContext &ctx) {
     error_t     ret     = SUCCESS;
     std::string url     = get_cache_key(ctx.req);
     auto        cache   = StreamCache::get_streamcache(url);

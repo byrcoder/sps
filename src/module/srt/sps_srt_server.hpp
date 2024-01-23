@@ -34,24 +34,13 @@ SOFTWARE.
 
 namespace sps {
 
-class SrtConnHandler : public IConnHandler {
- public:
-    explicit SrtConnHandler(PSocket io, PServerPhaseHandler& handler);
+typedef ServerBase SrtServer;
+typedef Connection SrtConnection ;
+typedef std::shared_ptr<SrtServer> PSrtServer;
 
+class SrtContext : public HostContext {
  public:
-    error_t handler() override;
-
- public:
-    PServerPhaseHandler& hd;
-};
-
-class SrtConnHandlerFactory : public IConnHandlerFactory {
- public:
-    explicit SrtConnHandlerFactory(PServerPhaseHandler hd);
-    PIConnHandler create(PSocket io) override;
-
- private:
-    PServerPhaseHandler handler;
+    SrtContext(PRequestUrl req);
 };
 
 }  // namespace sps

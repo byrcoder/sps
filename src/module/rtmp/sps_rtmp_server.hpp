@@ -33,27 +33,18 @@ SOFTWARE.
 
 namespace sps {
 
-class RtmpConnHandler : public IConnHandler {
+typedef ServerBase RtmpServer;
+typedef Connection RtmpConnection ;
+typedef std::shared_ptr<ServerBase> PRtmpServer;
+
+class RtmpContext : public HostContext {
  public:
-    explicit RtmpConnHandler(PSocket io, PServerPhaseHandler& handler);
+    explicit RtmpContext(PRequestUrl r, PSocket io);
 
  public:
-    error_t handler() override;
-
- public:
-    PServerPhaseHandler& hd;
     std::shared_ptr<RtmpHook> hk;
     bool publishing;
     bool playing;
-};
-
-class RtmpConnHandlerFactory : public IConnHandlerFactory {
- public:
-    explicit RtmpConnHandlerFactory(PServerPhaseHandler hd);
-    PIConnHandler create(PSocket io) override;
-
- private:
-    PServerPhaseHandler handler;
 };
 
 }  // namespace sps

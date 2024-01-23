@@ -27,31 +27,21 @@ SOFTWARE.
 #include <memory>
 #include <utility>
 
-#include <sps_http_phase_handler.hpp>
-#include <sps_io_socket.hpp>
-#include <sps_server.hpp>
+#include <sps_server_handler.hpp>
+#include <sps_io_url.hpp>
+#include <sps_host_phase_handler.hpp>
 
 namespace sps {
 
-class HttpConnHandler : public IConnHandler {
- public:
-    explicit HttpConnHandler(PSocket io, PServerPhaseHandler& handler);
+typedef ServerBase HttpServer;
+typedef Connection HttpConnection ;
+typedef std::shared_ptr<HttpServer> PHttpServer;
 
+class HttpContext : public HostContext {
  public:
-    error_t handler() override;
-
- public:
-    PServerPhaseHandler& hd;
+    explicit HttpContext(PRequestUrl r);
 };
 
-class HttpConnHandlerFactory : public IConnHandlerFactory {
- public:
-    explicit HttpConnHandlerFactory(PServerPhaseHandler hd);
-    PIConnHandler create(PSocket io) override;
-
- private:
-    PServerPhaseHandler handler;
-};
 
 }  // namespace sps
 

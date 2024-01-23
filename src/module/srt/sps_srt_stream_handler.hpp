@@ -36,12 +36,12 @@ class SrtServerStreamHandler : public IPhaseHandler {
     SrtServerStreamHandler();
 
  public:
-    error_t handler(IHandlerContext &ctx) override;
+    error_t handler(IConnection &ctx) override;
 
  private:
-    error_t publish(ConnContext &ctx);
+    error_t publish(IConnection &ctx);
 
-    error_t play(ConnContext &ctx);
+    error_t play(IConnection &ctx);
 };
 
 }  // namespace sps

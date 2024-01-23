@@ -29,7 +29,7 @@ HttpApiPhaseHandler::HttpApiPhaseHandler() : IPhaseHandler("api") {
 
 }
 
-error_t HttpApiPhaseHandler::handler(IHandlerContext &ctx) {
+error_t HttpApiPhaseHandler::handler(IConnection &ctx) {
     return ERROR_HTTP_RSP_NOT_OK;
 }
 

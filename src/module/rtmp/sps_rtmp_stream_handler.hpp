@@ -28,13 +28,13 @@ SOFTWARE.
 
 namespace sps {
 
-// rtmp handler
+// rtmp http_server
 class RtmpServerStreamHandler : public IPhaseHandler {
  public:
     RtmpServerStreamHandler();
 
  public:
-    error_t handler(IHandlerContext &ctx) override;
+    error_t handler(IConnection &ctx) override;
 };
 
 }  // namespace sps

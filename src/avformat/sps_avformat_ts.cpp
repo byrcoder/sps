@@ -776,7 +776,7 @@ error_t TsContext::decode(uint8_t* p, size_t len) {
     if (pkt_handler &&
         (ret = pkt_handler->on_packet(p, len, program->program_type,
                 pkt.payload_unit_start_indicator)) != SUCCESS) {
-        sp_error("fail handler ts packet ret %d", ret);
+        sp_error("fail http_server ts packet ret %d", ret);
         return ret;
     }
 

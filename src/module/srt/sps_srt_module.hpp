@@ -53,7 +53,7 @@ static const ConfigOption srt_options[] = {
 
         {"srt_tlpktdrop",       "srt tlpktdrop",       OFFSET(srt_tlpktdrop),      CONF_OPT_TYPE_INT, { .str = "0" },   },
         {"srt_nakreport",       "srt nakreport",       OFFSET(srt_nakreport),      CONF_OPT_TYPE_INT, { .str = "0" },   },
-        {"srt_transtype",       "srt transtype",       OFFSET(srt_tlpktdrop),      CONF_OPT_TYPE_STRING, { .str = "live" },   },
+        {"srt_transtype",       "srt transtype",       OFFSET(srt_transtype),      CONF_OPT_TYPE_STRING, { .str = "live" },   },
 
         {"server",              "server sub module",       0,              CONF_OPT_TYPE_SUBMODULE, { .str = "" },   },
 

@@ -30,20 +30,20 @@ SOFTWARE.
 namespace sps {
 
 HttpAdapterPhaseHandler::HttpAdapterPhaseHandler()
-        : IPhaseHandler("adapter-handler") {
+        : IPhaseHandler("adapter-http_server") {
     proxy_handler  = std::make_unique<HttpProxyPhaseHandler>();
     stream_handler = std::make_unique<HttpStreamPhaseHandler>();
     api_handler    = std::make_unique<HttpApiPhaseHandler>();
 }
 
-error_t HttpAdapterPhaseHandler::handler(IHandlerContext &c) {
-    auto&   ctx  = *dynamic_cast<ConnContext*> (&c);
+error_t HttpAdapterPhaseHandler::handler(IConnection &c) {
+    auto& ctx = *dynamic_cast<HostContext*>(c.get_context().get());
     if (ctx.host->is_streaming()) {
-        return stream_handler->handler(ctx);
+        return stream_handler->handler(c);
     } else if (ctx.host->is_api()) {
-        return api_handler->handler(ctx);
+        return api_handler->handler(c);
     } else {
-        return proxy_handler->handler(ctx);
+        return proxy_handler->handler(c);
     }
 }
 
